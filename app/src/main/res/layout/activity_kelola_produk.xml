@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="#F9F9FB"
+    android:padding="16dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:layout_marginBottom="16dp">
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="DAFTAR PRODUK" android:textSize="20sp" android:textStyle="bold" android:textColor="#2D3142"/>
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Kelola menu suvenir Anda." android:textSize="12sp" android:textColor="#64748B"/>
+        </LinearLayout>
+
+        <Button
+            android:id="@+id/btnTambahProdukBaru"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="+ Tambah"
+            android:backgroundTint="#DD3827"
+            android:textColor="#FFFFFF"/>
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:background="#FDE8E5"
+        android:padding="12dp"
+        android:layout_marginBottom="8dp">
+        <TextView android:layout_width="0dp" android:layout_weight="2" android:layout_height="wrap_content" android:text="Info Produk" android:textStyle="bold" android:textColor="#DD3827" android:textSize="12sp"/>
+        <TextView android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:text="Harga" android:textStyle="bold" android:textColor="#DD3827" android:textSize="12sp" android:gravity="center"/>
+        <TextView android:layout_width="40dp" android:layout_height="wrap_content" android:text="Aksi" android:textStyle="bold" android:textColor="#DD3827" android:textSize="12sp" android:gravity="center"/>
+    </LinearLayout>
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1">
+        <LinearLayout
+            android:id="@+id/llDaftarProdukAdmin"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"/>
+    </ScrollView>
+</LinearLayout>

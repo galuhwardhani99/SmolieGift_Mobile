@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="#F9F9FB"
+    android:padding="16dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:layout_marginBottom="16dp">
+
+        <TextView
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:layout_height="wrap_content"
+            android:text="Laporan Penjualan"
+            android:textStyle="bold"
+            android:textColor="#2D3142"
+            android:textSize="20sp" />
+
+        <Button
+            android:id="@+id/btnCetakPdf"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Cetak PDF"
+            android:backgroundTint="#0D6EFD"
+            android:textColor="#FFFFFF"
+            android:textSize="12sp" />
+    </LinearLayout>
+
+    <androidx.cardview.widget.CardView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:cardBackgroundColor="#2D3142"
+        app:cardCornerRadius="12dp"
+        app:cardElevation="4dp"
+        android:layout_marginBottom="16dp">
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="20dp"
+            android:gravity="center">
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Total Pendapatan Sukses" android:textColor="#64748B" android:textSize="14sp"/>
+            <TextView android:id="@+id/tvTotalPendapatanAdmin" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Rp 0" android:textColor="#FFFFFF" android:textStyle="bold" android:textSize="28sp" android:layout_marginTop="4dp"/>
+        </LinearLayout>
+    </androidx.cardview.widget.CardView>
+
+    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Riwayat Transaksi Selesai:" android:textColor="#64748B" android:textStyle="bold" android:layout_marginBottom="8dp"/>
+
+    <ScrollView android:layout_width="match_parent" android:layout_height="match_parent">
+        <LinearLayout
+            android:id="@+id/llDaftarLaporan"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"/>
+    </ScrollView>
+</LinearLayout>

@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal"
+    android:background="#FFFFFF"
+    android:padding="12dp"
+    android:gravity="center_vertical"
+    android:layout_marginBottom="4dp">
+
+    <TextView
+        android:id="@+id/tvNamaKategori"
+        android:layout_width="0dp"
+        android:layout_weight="1"
+        android:layout_height="wrap_content"
+        android:text="Nama Kategori"
+        android:textSize="16sp"
+        android:textColor="#2D3142"
+        android:textStyle="bold"/>
+
+    <Button
+        android:id="@+id/btnEditKategori"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:text="✏️"
+        android:backgroundTint="#F9F9FB"
+        android:textColor="#0D6EFD"
+        android:padding="0dp"
+        android:layout_marginEnd="4dp"/>
+
+    <Button
+        android:id="@+id/btnHapusKategori"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:text="🗑"
+        android:backgroundTint="#F9F9FB"
+        android:textColor="#DD3827"
+        android:padding="0dp"/>
+</LinearLayout>
