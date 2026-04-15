@@ -27,7 +27,7 @@ class AdminTransaksiActivity : AppCompatActivity() {
     }
 
     private fun muatDataPesanan() {
-        llDaftar.removeAllViews() // Bersihkan layar sebelum memuat ulang
+        llDaftar.removeAllViews()
         val db = dbHelper.readableDatabase
         val cursor: Cursor = db.rawQuery(
             "SELECT * FROM ${DatabaseHelper.TABLE_TRANSACTIONS} ORDER BY ${DatabaseHelper.COLUMN_TRANS_ID} DESC",
@@ -37,30 +37,33 @@ class AdminTransaksiActivity : AppCompatActivity() {
 
         if (cursor.count == 0) {
             val tvKosong = TextView(this)
-            tvKosong.text = "Belum ada pesanan yang masuk atau semua pesanan sudah diselesaikan."
-            tvKosong.setPadding(16, 16, 16, 16)
+            tvKosong.text = "Belum ada pesanan yang masuk."
+            tvKosong.setPadding(32, 32, 32, 32)
+            tvKosong.gravity = android.view.Gravity.CENTER
             llDaftar.addView(tvKosong)
         } else {
             while (cursor.moveToNext()) {
                 val id = cursor.getInt(cursor.getColumnIndexOrThrow(DatabaseHelper.COLUMN_TRANS_ID))
-                val nama =
-                    cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COLUMN_CUSTOMER_NAME))
-                val metode =
-                    cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COLUMN_PAYMENT_METHOD))
-                val total =
-                    cursor.getInt(cursor.getColumnIndexOrThrow(DatabaseHelper.COLUMN_GRAND_TOTAL))
+                val nama = cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COLUMN_CUSTOMER_NAME))
+                // KOREKSI: Tambahkan pengambilan data nomor WA dari database
+                val wa = cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COLUMN_CUSTOMER_WA))
+                val metode = cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COLUMN_PAYMENT_METHOD))
+                val total = cursor.getInt(cursor.getColumnIndexOrThrow(DatabaseHelper.COLUMN_GRAND_TOTAL))
 
                 val itemView = inflater.inflate(R.layout.item_transaksi_admin, llDaftar, false)
 
                 itemView.findViewById<TextView>(R.id.tvAdminTransId).text = "#INV-0$id"
                 itemView.findViewById<TextView>(R.id.tvAdminTransNama).text = "Pemesan: $nama"
+
+                // KOREKSI: Tampilkan nomor WA pelanggan ke TextView (Data real)
+                itemView.findViewById<TextView>(R.id.tvAdminTransWa).text = "WA: $wa"
+
                 itemView.findViewById<TextView>(R.id.tvAdminTransMetode).text = "Metode: $metode"
                 itemView.findViewById<TextView>(R.id.tvAdminTransTotal).text = "Rp $total"
 
                 // --- LOGIKA TOMBOL ---
                 val btnSelesai = itemView.findViewById<Button>(R.id.btnSelesaiPesanan)
 
-                // Logika Selesaikan Pesanan (Pindah ke DB Laporan)
                 btnSelesai.setOnClickListener {
                     konfirmasiSelesai(id, nama)
                 }
@@ -75,17 +78,15 @@ class AdminTransaksiActivity : AppCompatActivity() {
     private fun konfirmasiSelesai(id: Int, nama: String) {
         AlertDialog.Builder(this)
             .setTitle("Pesanan Selesai?")
-            .setMessage("Pesanan atas nama $nama sudah selesai diproses? Data ini akan dipindahkan ke Laporan Penjualan.")
-            .setPositiveButton("Ya, Sudah") { _, _ ->
-                // PANGGIL FUNGSI PINDAH KE HISTORY
+            .setMessage("Pesanan atas nama $nama sudah selesai? Data akan dipindahkan ke Laporan.")
+            .setPositiveButton("Ya, Selesai") { _, _ ->
                 val sukses = dbHelper.selesaikanPesanan(id)
-
                 if (sukses) {
                     Toast.makeText(this, "Berhasil masuk ke Laporan!", Toast.LENGTH_SHORT).show()
-                    muatDataPesanan() // Refresh halaman
+                    muatDataPesanan()
                 }
             }
-            .setNegativeButton("Belum", null)
+            .setNegativeButton("Batal", null)
             .show()
     }
 }

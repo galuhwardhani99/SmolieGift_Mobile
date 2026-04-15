@@ -39,7 +39,6 @@ android {
 }
 
 dependencies {
-    implementation("com.android.volley:volley:1.2.1")
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)
     implementation(libs.material)
