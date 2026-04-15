@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="horizontal"
@@ -33,18 +34,29 @@
         android:id="@+id/btnAdminEditProd"
         android:layout_width="40dp"
         android:layout_height="40dp"
-        android:text="✏️"
+        app:icon="@drawable/edit"
+        app:iconTint="#000000"
+        app:iconGravity="textStart"
+        app:iconPadding="0dp"
         android:backgroundTint="#F9F9FB"
-        android:textColor="#0D6EFD"
+        android:insetTop="0dp"
+        android:insetBottom="0dp"
         android:padding="0dp"
-        android:layout_marginEnd="4dp"/>
+        android:layout_marginEnd="8dp"
+        app:cornerRadius="8dp"/>
 
     <Button
         android:id="@+id/btnAdminHapusProd"
         android:layout_width="40dp"
         android:layout_height="40dp"
-        android:text="🗑"
+        app:icon="@drawable/trash"
+        app:iconTint="#000000"
+        app:iconGravity="textStart"
+        app:iconPadding="0dp"
         android:backgroundTint="#F9F9FB"
-        android:textColor="#DD3827"
-        android:padding="0dp"/>
+        android:insetTop="0dp"
+        android:insetBottom="0dp"
+        android:padding="0dp"
+        app:cornerRadius="8dp"/>
+
 </LinearLayout>

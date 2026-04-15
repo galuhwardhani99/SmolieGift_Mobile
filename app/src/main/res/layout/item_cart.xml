@@ -16,6 +16,7 @@
         android:gravity="center_vertical">
 
         <ImageView
+            android:id="@+id/ivItemImage"
             android:layout_width="50dp"
             android:layout_height="50dp"
             android:background="#EEEEEE"
@@ -53,12 +54,14 @@
             android:layout_height="wrap_content"
             android:orientation="horizontal"
             android:gravity="center_vertical">
+
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="x"
                 android:textSize="12sp"
                 android:textColor="#64748B"/>
+
             <TextView
                 android:id="@+id/tvItemQty"
                 android:layout_width="wrap_content"
@@ -69,12 +72,20 @@
                 android:layout_marginStart="4dp"
                 android:layout_marginEnd="16dp"/>
 
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="🗑️"
-                android:textSize="18sp"
-                android:textColor="#DD3827"/>
+            <Button
+                android:id="@+id/btnHapusItemKeranjang"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                app:icon="@drawable/trash"
+                app:iconTint="#000000"
+                app:iconGravity="textStart"
+                app:iconPadding="0dp"
+                android:backgroundTint="#FFF0F0"
+                android:insetTop="0dp"
+                android:insetBottom="0dp"
+                android:padding="0dp"
+                app:cornerRadius="8dp"/>
+
         </LinearLayout>
     </LinearLayout>
 </androidx.cardview.widget.CardView>

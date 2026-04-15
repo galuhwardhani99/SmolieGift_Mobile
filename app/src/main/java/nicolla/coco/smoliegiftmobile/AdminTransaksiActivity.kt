@@ -83,29 +83,6 @@ class AdminTransaksiActivity : AppCompatActivity() {
         db.close()
     }
 
-    private fun bukaWhatsApp(nomorWa: String, namaPelanggan: String) {
-        try {
-            // Mengubah "08..." menjadi "628..." agar terbaca oleh API WhatsApp
-            var nomorFormat = nomorWa
-            if (nomorFormat.startsWith("0")) {
-                nomorFormat = "62" + nomorFormat.substring(1)
-            }
-
-            val pesanText =
-                "Halo kak $namaPelanggan, ini dari Admin Smolie Gift. Pesanan kakak sudah kami terima ya! 👋"
-            val uri = Uri.parse(
-                "https://api.whatsapp.com/send?phone=$nomorFormat&text=${
-                    Uri.encode(pesanText)
-                }"
-            )
-            val intent = Intent(Intent.ACTION_VIEW, uri)
-            startActivity(intent)
-        } catch (e: Exception) {
-            Toast.makeText(this, "Aplikasi WhatsApp tidak ditemukan di HP ini", Toast.LENGTH_SHORT)
-                .show()
-        }
-    }
-
     private fun konfirmasiSelesai(id: Int, nama: String) {
         AlertDialog.Builder(this)
             .setTitle("Pesanan Selesai?")
