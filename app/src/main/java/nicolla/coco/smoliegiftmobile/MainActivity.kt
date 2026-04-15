@@ -38,9 +38,7 @@ class MainActivity : AppCompatActivity() {
         // WebChromeClient penting jika web Anda memiliki fitur alert() javascript atau upload file/foto
         webView.webChromeClient = WebChromeClient()
 
-        // Masukkan URL utama website Laravel Anda
-        // Pastikan IP Address ini (192.168.1.102) adalah IP Laptop Anda yang aktif saat ini
-        webView.loadUrl("http://192.168.1.104:8000")
+        // Masukkan URL utama website Laravel And
 
         // ---------------------------------------------------------
         // PENANGANAN TOMBOL BACK MODERN
