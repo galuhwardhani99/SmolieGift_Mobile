@@ -108,6 +108,11 @@ class DatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME
         return user
     }
 
+    fun getUserByEmail(email: String): Cursor? {
+        val db = this.readableDatabase
+        return db.rawQuery("SELECT * FROM $TABLE_USERS WHERE $COLUMN_EMAIL = ?", arrayOf(email))
+    }
+
     // --- KERANJANG ---
     // KOREKSI: Tambahkan parameter imageBase64
     fun tambahKeKeranjang(namaProduk: String, qty: Int, totalHarga: Int, imageBase64: String?): Boolean {

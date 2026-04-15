@@ -1,8 +1,10 @@
 package nicolla.coco.smoliegiftmobile
 
 import android.app.AlertDialog
+import android.content.Intent
 import android.database.Cursor
 import android.graphics.BitmapFactory
+import android.net.Uri
 import android.os.Bundle
 import android.util.Base64
 import android.view.LayoutInflater
@@ -63,7 +65,7 @@ class AdminTransaksiActivity : AppCompatActivity() {
                 itemView.findViewById<TextView>(R.id.tvAdminTransMetode).text = "Metode: $metode"
                 itemView.findViewById<TextView>(R.id.tvAdminTransTotal).text = "Rp $total"
 
-                // --- LOGIKA MENAMPILKAN THUMBNAIL DESAIN KUSTOM ---
+                // --- KOREKSI 1: KEMBALIKAN LOGIKA GAMBAR KUSTOM ---
                 val ivCustomDesign = itemView.findViewById<ImageView>(R.id.ivCustomDesignAdmin)
                 val llContainerImage = itemView.findViewById<LinearLayout>(R.id.llContainerImage)
 
@@ -71,21 +73,29 @@ class AdminTransaksiActivity : AppCompatActivity() {
                     try {
                         val decodedString = Base64.decode(customImageBase64, Base64.DEFAULT)
                         val decodedByte = BitmapFactory.decodeByteArray(decodedString, 0, decodedString.size)
-
                         ivCustomDesign.setImageBitmap(decodedByte)
-
-                        // KOREKSI: Munculkan seluruh kontainer (Label + Gambar)
                         llContainerImage.visibility = View.VISIBLE
                     } catch (e: Exception) {
                         llContainerImage.visibility = View.GONE
                     }
                 } else {
-                    // KOREKSI: Sembunyikan kontainer jika tidak ada desain kustom
                     llContainerImage.visibility = View.GONE
                 }
 
-                // --- LOGIKA TOMBOL ---
+                // --- KOREKSI 2: AMANKAN TOMBOL WA & SELESAI ---
                 val btnSelesai = itemView.findViewById<Button>(R.id.btnSelesaiPesanan)
+                // Menggunakan Button? (nullable) agar tidak crash jika temanmu belum menaruh ID-nya di XML
+                val btnWa = itemView.findViewById<Button?>(R.id.btnHubungiWa)
+
+                btnWa?.setOnClickListener {
+                    // Otomatis mengubah "08..." menjadi "628..." agar WhatsApp API jalan
+                    var noWaFormatted = wa.trim()
+                    if (noWaFormatted.startsWith("0")) {
+                        noWaFormatted = "62" + noWaFormatted.substring(1)
+                    }
+                    bukaWhatsApp(noWaFormatted, nama)
+                }
+
                 btnSelesai.setOnClickListener {
                     konfirmasiSelesai(id, nama)
                 }
@@ -95,6 +105,19 @@ class AdminTransaksiActivity : AppCompatActivity() {
         }
         cursor.close()
         db.close()
+    }
+
+    private fun bukaWhatsApp(nomor: String, nama: String) {
+        val message = "Halo $nama, saya Admin Smolie Gift. Ingin mengonfirmasi pesanan Anda."
+        val url = "https://api.whatsapp.com/send?phone=$nomor&text=${Uri.encode(message)}"
+
+        try {
+            val intent = Intent(Intent.ACTION_VIEW)
+            intent.data = Uri.parse(url)
+            startActivity(intent)
+        } catch (e: Exception) {
+            Toast.makeText(this, "WhatsApp tidak terinstal di perangkat ini.", Toast.LENGTH_SHORT).show()
+        }
     }
 
     private fun konfirmasiSelesai(id: Int, nama: String) {

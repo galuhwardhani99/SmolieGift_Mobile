@@ -178,6 +178,7 @@
                             app:strokeWidth="1dp"/>
 
                         <EditText
+                            android:id="@+id/etCatatan"
                             android:layout_width="match_parent"
                             android:layout_height="80dp"
                             android:background="#FFFFFF"
