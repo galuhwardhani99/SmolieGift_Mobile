@@ -42,7 +42,6 @@ class AdminLaporanActivity : AppCompatActivity() {
             while (cursor.moveToNext()) {
                 val id = cursor.getInt(cursor.getColumnIndexOrThrow(DatabaseHelper.COLUMN_TRANS_ID))
                 val nama = cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COLUMN_CUSTOMER_NAME))
-                val wa = cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COLUMN_CUSTOMER_WA))
                 val total = cursor.getInt(cursor.getColumnIndexOrThrow(DatabaseHelper.COLUMN_GRAND_TOTAL))
 
                 totalPendapatan += total
@@ -51,11 +50,9 @@ class AdminLaporanActivity : AppCompatActivity() {
 
                 itemView.findViewById<TextView>(R.id.tvAdminTransId).text = "SELESAI (INV-0$id)"
                 itemView.findViewById<TextView>(R.id.tvAdminTransNama).text = "Pemesan: $nama"
-                itemView.findViewById<TextView>(R.id.tvAdminTransWa).text = "WA: $wa"
                 itemView.findViewById<TextView>(R.id.tvAdminTransTotal).text = "Rp $total"
 
                 // Sembunyikan tombol aksi karena ini hanya halaman riwayat
-                itemView.findViewById<Button>(R.id.btnHubungiWa).visibility = View.GONE
                 itemView.findViewById<Button>(R.id.btnSelesaiPesanan).visibility = View.GONE
 
                 container.addView(itemView)

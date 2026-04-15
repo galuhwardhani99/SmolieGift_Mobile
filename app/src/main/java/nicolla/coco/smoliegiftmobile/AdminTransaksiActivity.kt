@@ -1,9 +1,7 @@
 package nicolla.coco.smoliegiftmobile
 
 import android.app.AlertDialog
-import android.content.Intent
 import android.database.Cursor
-import android.net.Uri
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.widget.Button
@@ -47,8 +45,6 @@ class AdminTransaksiActivity : AppCompatActivity() {
                 val id = cursor.getInt(cursor.getColumnIndexOrThrow(DatabaseHelper.COLUMN_TRANS_ID))
                 val nama =
                     cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COLUMN_CUSTOMER_NAME))
-                val wa =
-                    cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COLUMN_CUSTOMER_WA))
                 val metode =
                     cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COLUMN_PAYMENT_METHOD))
                 val total =
@@ -58,20 +54,13 @@ class AdminTransaksiActivity : AppCompatActivity() {
 
                 itemView.findViewById<TextView>(R.id.tvAdminTransId).text = "#INV-0$id"
                 itemView.findViewById<TextView>(R.id.tvAdminTransNama).text = "Pemesan: $nama"
-                itemView.findViewById<TextView>(R.id.tvAdminTransWa).text = "WA: $wa"
                 itemView.findViewById<TextView>(R.id.tvAdminTransMetode).text = "Metode: $metode"
                 itemView.findViewById<TextView>(R.id.tvAdminTransTotal).text = "Rp $total"
 
-                // --- LOGIKA TOMBOL BARU ---
-                val btnWa = itemView.findViewById<Button>(R.id.btnHubungiWa)
+                // --- LOGIKA TOMBOL ---
                 val btnSelesai = itemView.findViewById<Button>(R.id.btnSelesaiPesanan)
 
-                // 1. Logika Klik WA
-                btnWa.setOnClickListener {
-                    bukaWhatsApp(wa, nama)
-                }
-
-                // 2. Logika Selesaikan Pesanan (Hapus dari DB)
+                // Logika Selesaikan Pesanan (Pindah ke DB Laporan)
                 btnSelesai.setOnClickListener {
                     konfirmasiSelesai(id, nama)
                 }
