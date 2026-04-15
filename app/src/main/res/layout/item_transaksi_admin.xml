@@ -43,6 +43,17 @@
         <TextView android:id="@+id/tvAdminTransTotal" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Rp 50000" android:textColor="#DD3827" android:textStyle="bold" android:textSize="16sp" android:gravity="end" android:layout_marginTop="8dp"/>
 
         <Button
+            android:id="@+id/btnHubungiWa"
+            android:layout_width="match_parent"
+            android:layout_height="40dp"
+            android:text="Hubungi WA"
+            android:backgroundTint="#25D366"
+            android:textColor="#FFFFFF"
+            android:textSize="12sp"
+            android:layout_marginTop="16dp"
+            app:cornerRadius="8dp"/>
+
+        <Button
             android:id="@+id/btnSelesaiPesanan"
             android:layout_width="match_parent"
             android:layout_height="40dp"
@@ -50,7 +61,7 @@
             android:backgroundTint="#64748B"
             android:textColor="#FFFFFF"
             android:textSize="12sp"
-            android:layout_marginTop="16dp"
+            android:layout_marginTop="8dp"
             app:cornerRadius="8dp"/>
 
     </LinearLayout>

@@ -1,7 +1,9 @@
 package nicolla.coco.smoliegiftmobile
 
 import android.app.AlertDialog
+import android.content.Intent
 import android.database.Cursor
+import android.net.Uri
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.widget.Button
@@ -45,7 +47,6 @@ class AdminTransaksiActivity : AppCompatActivity() {
             while (cursor.moveToNext()) {
                 val id = cursor.getInt(cursor.getColumnIndexOrThrow(DatabaseHelper.COLUMN_TRANS_ID))
                 val nama = cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COLUMN_CUSTOMER_NAME))
-                // KOREKSI: Tambahkan pengambilan data nomor WA dari database
                 val wa = cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COLUMN_CUSTOMER_WA))
                 val metode = cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COLUMN_PAYMENT_METHOD))
                 val total = cursor.getInt(cursor.getColumnIndexOrThrow(DatabaseHelper.COLUMN_GRAND_TOTAL))
@@ -54,15 +55,16 @@ class AdminTransaksiActivity : AppCompatActivity() {
 
                 itemView.findViewById<TextView>(R.id.tvAdminTransId).text = "#INV-0$id"
                 itemView.findViewById<TextView>(R.id.tvAdminTransNama).text = "Pemesan: $nama"
-
-                // KOREKSI: Tampilkan nomor WA pelanggan ke TextView (Data real)
                 itemView.findViewById<TextView>(R.id.tvAdminTransWa).text = "WA: $wa"
-
                 itemView.findViewById<TextView>(R.id.tvAdminTransMetode).text = "Metode: $metode"
                 itemView.findViewById<TextView>(R.id.tvAdminTransTotal).text = "Rp $total"
 
-                // --- LOGIKA TOMBOL ---
+                val btnWa = itemView.findViewById<Button>(R.id.btnHubungiWa)
                 val btnSelesai = itemView.findViewById<Button>(R.id.btnSelesaiPesanan)
+
+                btnWa.setOnClickListener {
+                    bukaWhatsApp(wa, nama)
+                }
 
                 btnSelesai.setOnClickListener {
                     konfirmasiSelesai(id, nama)
@@ -73,6 +75,14 @@ class AdminTransaksiActivity : AppCompatActivity() {
         }
         cursor.close()
         db.close()
+    }
+
+    private fun bukaWhatsApp(nomor: String, nama: String) {
+        val message = "Halo $nama, saya Admin Smolie Gift. Ingin mengonfirmasi pesanan Anda."
+        val url = "https://api.whatsapp.com/send?phone=$nomor&text=${Uri.encode(message)}"
+        val intent = Intent(Intent.ACTION_VIEW)
+        intent.data = Uri.parse(url)
+        startActivity(intent)
     }
 
     private fun konfirmasiSelesai(id: Int, nama: String) {

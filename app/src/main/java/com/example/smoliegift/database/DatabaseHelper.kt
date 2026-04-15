@@ -101,6 +101,11 @@ class DatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME
         return user
     }
 
+    fun getUserByEmail(email: String): Cursor? {
+        val db = this.readableDatabase
+        return db.rawQuery("SELECT * FROM $TABLE_USERS WHERE $COLUMN_EMAIL = ?", arrayOf(email))
+    }
+
     // --- KERANJANG ---
     fun tambahKeKeranjang(namaProduk: String, qty: Int, totalHarga: Int): Boolean {
         val db = this.writableDatabase

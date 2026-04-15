@@ -7,7 +7,7 @@ import android.widget.EditText
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
-import com.example.smoliegift.database.DatabaseHelper // Pastikan nama package ini sesuai dengan folder Anda
+import com.example.smoliegift.database.DatabaseHelper
 
 class LoginActivity : AppCompatActivity() {
 
@@ -38,15 +38,17 @@ class LoginActivity : AppCompatActivity() {
             if (user != null) {
                 Toast.makeText(this, "Selamat datang, ${user.name}!", Toast.LENGTH_SHORT).show()
 
-                // KODE YANG DISESUAIKAN: Arahkan ke Dashboard Native sesuai tipe akun (Admin / Pembeli)
                 val intent = if (user.usertype == "admin") {
                     Intent(this, AdminDashboardActivity::class.java)
                 } else {
                     Intent(this, PembeliDashboardActivity::class.java)
                 }
+                
+                // Kirim email ke dashboard untuk mengambil data profil
+                intent.putExtra("USER_EMAIL", user.email)
 
                 startActivity(intent)
-                finish() // Tutup halaman login agar tidak bisa di-back
+                finish()
 
             } else {
                 Toast.makeText(this, "Email atau password salah", Toast.LENGTH_SHORT).show()

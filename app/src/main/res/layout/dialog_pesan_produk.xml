@@ -92,6 +92,7 @@
                         android:layout_marginBottom="16dp">
 
                         <RadioButton
+                            android:id="@+id/rbKemasanPlastik"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:checked="true"
@@ -99,12 +100,14 @@
                             android:text="Plastik &amp; Kawat Emas" />
 
                         <RadioButton
+                            android:id="@+id/rbKemasanTile"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:buttonTint="#DD3827"
                             android:text="Bungkus Tile (+Rp 1.000)" />
 
                         <RadioButton
+                            android:id="@+id/rbKemasanBox"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:buttonTint="#DD3827"
@@ -121,12 +124,14 @@
                         android:textStyle="bold" />
 
                     <CheckBox
+                        android:id="@+id/cbExtraSablon"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:buttonTint="#DD3827"
                         android:text="Sablon Nama / Inisial (+Rp 500)" />
 
                     <CheckBox
+                        android:id="@+id/cbExtraThanksCard"
                         android:layout_width="match_parent"
                         android:buttonTint="#DD3827"
                         android:layout_height="wrap_content"
@@ -158,9 +163,10 @@
                             android:textSize="11sp" />
 
                         <Button
+                            android:id="@+id/btnPilihFile"
                             android:layout_width="wrap_content"
                             android:layout_height="40dp"
-                            android:layout_marginBottom="12dp"
+                            android:layout_marginBottom="4dp"
                             android:backgroundTint="#FFFFFF"
                             android:text="Pilih File"
                             android:textAllCaps="false"
@@ -170,7 +176,17 @@
                             app:strokeColor="#EEEEEE"
                             app:strokeWidth="1dp"/>
 
+                        <TextView
+                            android:id="@+id/tvNamaFile"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Belum ada file dipilih"
+                            android:textColor="#64748B"
+                            android:textSize="11sp"
+                            android:layout_marginBottom="12dp" />
+
                         <EditText
+                            android:id="@+id/etCatatan"
                             android:layout_width="match_parent"
                             android:layout_height="80dp"
                             android:background="#FFFFFF"
