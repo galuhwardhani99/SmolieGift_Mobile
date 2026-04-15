@@ -2,9 +2,13 @@ package nicolla.coco.smoliegiftmobile
 
 import android.app.AlertDialog
 import android.database.Cursor
+import android.graphics.BitmapFactory
 import android.os.Bundle
+import android.util.Base64
 import android.view.LayoutInflater
+import android.view.View
 import android.widget.Button
+import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
@@ -45,25 +49,43 @@ class AdminTransaksiActivity : AppCompatActivity() {
             while (cursor.moveToNext()) {
                 val id = cursor.getInt(cursor.getColumnIndexOrThrow(DatabaseHelper.COLUMN_TRANS_ID))
                 val nama = cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COLUMN_CUSTOMER_NAME))
-                // KOREKSI: Tambahkan pengambilan data nomor WA dari database
                 val wa = cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COLUMN_CUSTOMER_WA))
                 val metode = cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COLUMN_PAYMENT_METHOD))
                 val total = cursor.getInt(cursor.getColumnIndexOrThrow(DatabaseHelper.COLUMN_GRAND_TOTAL))
+                val customImageBase64 = cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COLUMN_CUSTOM_IMAGE))
 
                 val itemView = inflater.inflate(R.layout.item_transaksi_admin, llDaftar, false)
 
+                // Set Data Teks
                 itemView.findViewById<TextView>(R.id.tvAdminTransId).text = "#INV-0$id"
                 itemView.findViewById<TextView>(R.id.tvAdminTransNama).text = "Pemesan: $nama"
-
-                // KOREKSI: Tampilkan nomor WA pelanggan ke TextView (Data real)
                 itemView.findViewById<TextView>(R.id.tvAdminTransWa).text = "WA: $wa"
-
                 itemView.findViewById<TextView>(R.id.tvAdminTransMetode).text = "Metode: $metode"
                 itemView.findViewById<TextView>(R.id.tvAdminTransTotal).text = "Rp $total"
 
+                // --- LOGIKA MENAMPILKAN THUMBNAIL DESAIN KUSTOM ---
+                val ivCustomDesign = itemView.findViewById<ImageView>(R.id.ivCustomDesignAdmin)
+                val llContainerImage = itemView.findViewById<LinearLayout>(R.id.llContainerImage)
+
+                if (!customImageBase64.isNullOrEmpty()) {
+                    try {
+                        val decodedString = Base64.decode(customImageBase64, Base64.DEFAULT)
+                        val decodedByte = BitmapFactory.decodeByteArray(decodedString, 0, decodedString.size)
+
+                        ivCustomDesign.setImageBitmap(decodedByte)
+
+                        // KOREKSI: Munculkan seluruh kontainer (Label + Gambar)
+                        llContainerImage.visibility = View.VISIBLE
+                    } catch (e: Exception) {
+                        llContainerImage.visibility = View.GONE
+                    }
+                } else {
+                    // KOREKSI: Sembunyikan kontainer jika tidak ada desain kustom
+                    llContainerImage.visibility = View.GONE
+                }
+
                 // --- LOGIKA TOMBOL ---
                 val btnSelesai = itemView.findViewById<Button>(R.id.btnSelesaiPesanan)
-
                 btnSelesai.setOnClickListener {
                     konfirmasiSelesai(id, nama)
                 }

@@ -33,7 +33,7 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:text="Gantungan Pita"
+                    android:text=""
                     android:textColor="#2D3142"
                     android:textSize="20sp"
                     android:textStyle="bold" />
@@ -73,8 +73,9 @@
                         android:id="@+id/spWarna"
                         android:layout_width="match_parent"
                         android:layout_height="48dp"
-                        android:background="#F5F6F8"
-                        android:layout_marginBottom="16dp" />
+                        android:background="@drawable/bg_spinner"
+                        android:layout_marginBottom="16dp"
+                        android:spinnerMode="dropdown"/>
 
                     <TextView
                         android:layout_width="wrap_content"
@@ -92,22 +93,25 @@
                         android:layout_marginBottom="16dp">
 
                         <RadioButton
+                            android:id="@+id/rbPlastik"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:checked="true"
-                            android:buttonTint="#DD3827"
+                            app:buttonTint="#DD3827"
                             android:text="Plastik &amp; Kawat Emas" />
 
                         <RadioButton
+                            android:id="@+id/rbTile"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:buttonTint="#DD3827"
+                            app:buttonTint="#DD3827"
                             android:text="Bungkus Tile (+Rp 1.000)" />
 
                         <RadioButton
+                            android:id="@+id/rbBox"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:buttonTint="#DD3827"
+                            app:buttonTint="#DD3827"
                             android:text="Box Eksklusif (+Rp 2.500)" />
                     </RadioGroup>
 
@@ -121,14 +125,16 @@
                         android:textStyle="bold" />
 
                     <CheckBox
+                        android:id="@+id/cbSablon"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:buttonTint="#DD3827"
+                        app:buttonTint="#DD3827"
                         android:text="Sablon Nama / Inisial (+Rp 500)" />
 
                     <CheckBox
+                        android:id="@+id/cbThanksCard"
                         android:layout_width="match_parent"
-                        android:buttonTint="#DD3827"
+                        app:buttonTint="#DD3827"
                         android:layout_height="wrap_content"
                         android:layout_marginBottom="16dp"
                         android:text="Thanks Card (+Rp 300)" />
@@ -158,6 +164,7 @@
                             android:textSize="11sp" />
 
                         <Button
+                            android:id="@+id/btnPilihFile"
                             android:layout_width="wrap_content"
                             android:layout_height="40dp"
                             android:layout_marginBottom="12dp"

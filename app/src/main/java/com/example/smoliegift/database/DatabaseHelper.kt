@@ -10,7 +10,8 @@ import com.example.smoliegift.models.User
 class DatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME, null, DATABASE_VERSION) {
 
     companion object {
-        private const val DATABASE_VERSION = 7
+        // KOREKSI: Naikkan versi ke 8 agar database di HP ter-reset dengan struktur baru
+        private const val DATABASE_VERSION = 8
         private const val DATABASE_NAME = "SmolieGift.db"
 
         const val TABLE_USERS = "users"
@@ -29,6 +30,7 @@ class DatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME
         const val COLUMN_PRODUCT_NAME = "product_name"
         const val COLUMN_QTY = "qty"
         const val COLUMN_TOTAL_PRICE = "total_price"
+        const val COLUMN_CUSTOM_IMAGE = "custom_image" // Kolom Gambar Kustom
 
         const val TABLE_PRODUCTS = "products"
         const val COLUMN_PROD_ID = "prod_id"
@@ -54,11 +56,16 @@ class DatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME
 
     override fun onCreate(db: SQLiteDatabase) {
         db.execSQL("CREATE TABLE $TABLE_USERS ($COLUMN_ID INTEGER PRIMARY KEY AUTOINCREMENT, $COLUMN_NAME TEXT, $COLUMN_EMAIL TEXT UNIQUE, $COLUMN_USERNAME TEXT, $COLUMN_GENDER TEXT, $COLUMN_PHONE TEXT, $COLUMN_ADDRESS TEXT, $COLUMN_PASSWORD TEXT, $COLUMN_USERTYPE TEXT)")
-        db.execSQL("CREATE TABLE $TABLE_CART ($COLUMN_CART_ID INTEGER PRIMARY KEY AUTOINCREMENT, $COLUMN_PRODUCT_NAME TEXT, $COLUMN_QTY INTEGER, $COLUMN_TOTAL_PRICE INTEGER)")
+
+        // KOREKSI: Tambahkan COLUMN_CUSTOM_IMAGE di Tabel Cart
+        db.execSQL("CREATE TABLE $TABLE_CART ($COLUMN_CART_ID INTEGER PRIMARY KEY AUTOINCREMENT, $COLUMN_PRODUCT_NAME TEXT, $COLUMN_QTY INTEGER, $COLUMN_TOTAL_PRICE INTEGER, $COLUMN_CUSTOM_IMAGE TEXT)")
+
         db.execSQL("CREATE TABLE $TABLE_PRODUCTS ($COLUMN_PROD_ID INTEGER PRIMARY KEY AUTOINCREMENT, $COLUMN_PROD_NAME TEXT, $COLUMN_PROD_CAT TEXT, $COLUMN_PROD_PRICE INTEGER, $COLUMN_PROD_STOCK INTEGER, $COLUMN_PROD_IMAGE TEXT)")
         db.execSQL("CREATE TABLE $TABLE_CATEGORIES ($COLUMN_CAT_ID INTEGER PRIMARY KEY AUTOINCREMENT, $COLUMN_CAT_NAME TEXT UNIQUE)")
-        db.execSQL("CREATE TABLE $TABLE_TRANSACTIONS ($COLUMN_TRANS_ID INTEGER PRIMARY KEY AUTOINCREMENT, $COLUMN_CUSTOMER_NAME TEXT, $COLUMN_CUSTOMER_WA TEXT, $COLUMN_PAYMENT_METHOD TEXT, $COLUMN_GRAND_TOTAL INTEGER)")
-        db.execSQL("CREATE TABLE $TABLE_HISTORY ($COLUMN_TRANS_ID INTEGER PRIMARY KEY AUTOINCREMENT, $COLUMN_CUSTOMER_NAME TEXT, $COLUMN_CUSTOMER_WA TEXT, $COLUMN_PAYMENT_METHOD TEXT, $COLUMN_GRAND_TOTAL INTEGER)")
+
+        // KOREKSI: Tambahkan COLUMN_CUSTOM_IMAGE di Tabel Transaksi & History
+        db.execSQL("CREATE TABLE $TABLE_TRANSACTIONS ($COLUMN_TRANS_ID INTEGER PRIMARY KEY AUTOINCREMENT, $COLUMN_CUSTOMER_NAME TEXT, $COLUMN_CUSTOMER_WA TEXT, $COLUMN_PAYMENT_METHOD TEXT, $COLUMN_GRAND_TOTAL INTEGER, $COLUMN_CUSTOM_IMAGE TEXT)")
+        db.execSQL("CREATE TABLE $TABLE_HISTORY ($COLUMN_TRANS_ID INTEGER PRIMARY KEY AUTOINCREMENT, $COLUMN_CUSTOMER_NAME TEXT, $COLUMN_CUSTOMER_WA TEXT, $COLUMN_PAYMENT_METHOD TEXT, $COLUMN_GRAND_TOTAL INTEGER, $COLUMN_CUSTOM_IMAGE TEXT)")
 
         val adminValues = ContentValues().apply {
             put(COLUMN_NAME, "Admin Smolie")
@@ -102,9 +109,15 @@ class DatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME
     }
 
     // --- KERANJANG ---
-    fun tambahKeKeranjang(namaProduk: String, qty: Int, totalHarga: Int): Boolean {
+    // KOREKSI: Tambahkan parameter imageBase64
+    fun tambahKeKeranjang(namaProduk: String, qty: Int, totalHarga: Int, imageBase64: String?): Boolean {
         val db = this.writableDatabase
-        val values = ContentValues().apply { put(COLUMN_PRODUCT_NAME, namaProduk); put(COLUMN_QTY, qty); put(COLUMN_TOTAL_PRICE, totalHarga) }
+        val values = ContentValues().apply {
+            put(COLUMN_PRODUCT_NAME, namaProduk)
+            put(COLUMN_QTY, qty)
+            put(COLUMN_TOTAL_PRICE, totalHarga)
+            put(COLUMN_CUSTOM_IMAGE, imageBase64)
+        }
         val result = db.insert(TABLE_CART, null, values)
         db.close()
         return result != -1L
@@ -167,9 +180,16 @@ class DatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME
     }
 
     // --- TRANSAKSI & LAPORAN ---
-    fun buatPesanan(namaPemesan: String, noWa: String, metodeBayar: String, total: Int): Boolean {
+    // KOREKSI: Tambahkan parameter imageBase64 agar tersimpan di Transaksi Header
+    fun buatPesanan(namaPemesan: String, noWa: String, metodeBayar: String, total: Int, imageBase64: String?): Boolean {
         val db = this.writableDatabase
-        val values = ContentValues().apply { put(COLUMN_CUSTOMER_NAME, namaPemesan); put(COLUMN_CUSTOMER_WA, noWa); put(COLUMN_PAYMENT_METHOD, metodeBayar); put(COLUMN_GRAND_TOTAL, total) }
+        val values = ContentValues().apply {
+            put(COLUMN_CUSTOMER_NAME, namaPemesan)
+            put(COLUMN_CUSTOMER_WA, noWa)
+            put(COLUMN_PAYMENT_METHOD, metodeBayar)
+            put(COLUMN_GRAND_TOTAL, total)
+            put(COLUMN_CUSTOM_IMAGE, imageBase64) // Simpan gambar kustom
+        }
         val result = db.insert(TABLE_TRANSACTIONS, null, values); db.close()
         return result != -1L
     }
@@ -183,6 +203,8 @@ class DatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME
                 put(COLUMN_CUSTOMER_WA, cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_CUSTOMER_WA)))
                 put(COLUMN_PAYMENT_METHOD, cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_PAYMENT_METHOD)))
                 put(COLUMN_GRAND_TOTAL, cursor.getInt(cursor.getColumnIndexOrThrow(COLUMN_GRAND_TOTAL)))
+                // KOREKSI: Pindahkan juga data gambarnya ke History
+                put(COLUMN_CUSTOM_IMAGE, cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_CUSTOM_IMAGE)))
             }
             db.insert(TABLE_HISTORY, null, values)
             db.delete(TABLE_TRANSACTIONS, "$COLUMN_TRANS_ID=?", arrayOf(idPesanan.toString()))
