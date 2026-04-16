@@ -136,14 +136,75 @@
                         android:layout_width="match_parent"
                         app:buttonTint="#DD3827"
                         android:layout_height="wrap_content"
-                        android:layout_marginBottom="16dp"
                         android:text="Thanks Card (+Rp 300)" />
+
+                    <CheckBox
+                        android:id="@+id/cbInvitedCard"
+                        android:layout_width="match_parent"
+                        app:buttonTint="#DD3827"
+                        android:layout_height="wrap_content"
+                        android:layout_marginBottom="8dp"
+                        android:text="Invited Card (Cetak Tanggal) (+Rp 400)" />
+
+                    <LinearLayout
+                        android:id="@+id/llContainerTanggalAcara"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:visibility="gone"
+                        android:background="#FFF5F5"
+                        android:padding="12dp"
+                        android:layout_marginBottom="16dp">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Tentukan Waktu Acara"
+                            android:textColor="#DD3827"
+                            android:textSize="12sp"
+                            android:textStyle="bold"
+                            android:layout_marginBottom="8dp"/>
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="horizontal">
+
+                            <Button
+                                android:id="@+id/btnPilihTanggal"
+                                android:layout_width="0dp"
+                                android:layout_weight="1"
+                                android:layout_height="40dp"
+                                android:text="Pilih Tanggal"
+                                android:textSize="10sp"
+                                android:textColor="#64748B"
+                                android:backgroundTint="#FFFFFF"
+                                app:strokeColor="#DDDDDD"
+                                app:strokeWidth="1dp"
+                                android:layout_marginEnd="4dp"
+                                app:cornerRadius="6dp"/>
+
+                            <Button
+                                android:id="@+id/btnPilihWaktu"
+                                android:layout_width="0dp"
+                                android:layout_weight="1"
+                                android:layout_height="40dp"
+                                android:text="Pilih Waktu"
+                                android:textSize="10sp"
+                                android:textColor="#64748B"
+                                android:backgroundTint="#FFFFFF"
+                                app:strokeColor="#DDDDDD"
+                                app:strokeWidth="1dp"
+                                android:layout_marginStart="4dp"
+                                app:cornerRadius="6dp"/>
+                        </LinearLayout>
+                    </LinearLayout>
 
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginBottom="16dp"
-                        android:background="#FFF5F5"
+                        android:background="#F5F6F8"
                         android:orientation="vertical"
                         android:padding="16dp">
 
@@ -151,7 +212,7 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:text="Custom Desain &amp; Catatan"
-                            android:textColor="#DD3827"
+                            android:textColor="#2D3142"
                             android:textSize="13sp"
                             android:textStyle="bold" />
 

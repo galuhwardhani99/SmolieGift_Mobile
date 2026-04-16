@@ -1,9 +1,12 @@
 package nicolla.coco.smoliegiftmobile
 
+import android.app.DatePickerDialog
 import android.app.Dialog
+import android.app.TimePickerDialog
 import android.content.Intent
 import android.database.Cursor
 import android.graphics.BitmapFactory
+import android.graphics.Color
 import android.net.Uri
 import android.os.Bundle
 import android.provider.OpenableColumns
@@ -20,6 +23,7 @@ import androidx.appcompat.widget.Toolbar
 import com.example.smoliegift.database.DatabaseHelper
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import java.io.InputStream
+import java.util.Calendar
 
 class PembeliDashboardActivity : AppCompatActivity() {
 
@@ -187,6 +191,15 @@ class PembeliDashboardActivity : AppCompatActivity() {
         val cbThanks = dialog.findViewById<CheckBox>(R.id.cbThanksCard)
         val btnMin = dialog.findViewById<Button>(R.id.btnMinQty)
         val btnPlus = dialog.findViewById<Button>(R.id.btnPlusQty)
+        val etCatatan = dialog.findViewById<EditText>(R.id.etCatatan)
+
+        val cbInvitedCard = dialog.findViewById<CheckBox>(R.id.cbInvitedCard)
+        val llContainerTanggalAcara = dialog.findViewById<LinearLayout>(R.id.llContainerTanggalAcara)
+        val btnPilihTanggal = dialog.findViewById<Button>(R.id.btnPilihTanggal)
+        val btnPilihWaktu = dialog.findViewById<Button>(R.id.btnPilihWaktu)
+
+        var tanggalAcaraTerpilih = ""
+        var waktuAcaraTerpilih = ""
 
         btnPilihFileRef = btnUpload
         tvJudul.text = namaProduk
@@ -204,6 +217,7 @@ class PembeliDashboardActivity : AppCompatActivity() {
             }
             if (cbSablon.isChecked) tambahanHarga += 500
             if (cbThanks.isChecked) tambahanHarga += 300
+            if (cbInvitedCard.isChecked) tambahanHarga += 400 // Harga tambahan Invited Card
 
             val totalPerItem = hargaDasar + tambahanHarga
             val totalFinal = totalPerItem * qtySaatIni
@@ -213,6 +227,49 @@ class PembeliDashboardActivity : AppCompatActivity() {
         rgKemasan.setOnCheckedChangeListener { _, _ -> updateHargaTotal() }
         cbSablon.setOnCheckedChangeListener { _, _ -> updateHargaTotal() }
         cbThanks.setOnCheckedChangeListener { _, _ -> updateHargaTotal() }
+
+        cbInvitedCard.setOnCheckedChangeListener { _, isChecked ->
+            if (isChecked) {
+                llContainerTanggalAcara.visibility = View.VISIBLE
+            } else {
+                llContainerTanggalAcara.visibility = View.GONE
+                btnPilihTanggal.text = "Pilih Tanggal"
+                btnPilihWaktu.text = "Pilih Waktu"
+                btnPilihTanggal.setTextColor(Color.parseColor("#64748B"))
+                btnPilihWaktu.setTextColor(Color.parseColor("#64748B"))
+                tanggalAcaraTerpilih = ""
+                waktuAcaraTerpilih = ""
+            }
+            updateHargaTotal()
+        }
+
+        btnPilihTanggal.setOnClickListener {
+            val kalender = Calendar.getInstance()
+            val tahun = kalender.get(Calendar.YEAR)
+            val bulan = kalender.get(Calendar.MONTH)
+            val hari = kalender.get(Calendar.DAY_OF_MONTH)
+
+            val datePicker = DatePickerDialog(this, { _, year, month, dayOfMonth ->
+                tanggalAcaraTerpilih = "$dayOfMonth/${month + 1}/$year"
+                btnPilihTanggal.text = tanggalAcaraTerpilih
+                btnPilihTanggal.setTextColor(Color.parseColor("#DD3827"))
+            }, tahun, bulan, hari)
+            datePicker.show()
+        }
+
+        btnPilihWaktu.setOnClickListener {
+            val kalender = Calendar.getInstance()
+            val jam = kalender.get(Calendar.HOUR_OF_DAY)
+            val menit = kalender.get(Calendar.MINUTE)
+
+            val timePicker = TimePickerDialog(this, { _, hourOfDay, minute ->
+                val jamFormat = String.format("%02d:%02d", hourOfDay, minute)
+                waktuAcaraTerpilih = jamFormat
+                btnPilihWaktu.text = jamFormat
+                btnPilihWaktu.setTextColor(Color.parseColor("#DD3827"))
+            }, jam, menit, true) // true untuk format 24 jam
+            timePicker.show()
+        }
 
         btnMin.setOnClickListener {
             if (qtySaatIni > 1) {
@@ -240,7 +297,14 @@ class PembeliDashboardActivity : AppCompatActivity() {
 
             val totalHargaFix = try { totalText.toInt() } catch (e: Exception) { (hargaDasar * qtySaatIni) }
 
-            val berhasil = dbHelper.tambahKeKeranjang(namaProduk, qtySaatIni, totalHargaFix, currentCustomImageBase64)
+            var infoTambahan = ""
+            if (cbInvitedCard.isChecked && (tanggalAcaraTerpilih.isNotEmpty() || waktuAcaraTerpilih.isNotEmpty())) {
+                infoTambahan = " (Invited Card: $tanggalAcaraTerpilih $waktuAcaraTerpilih)"
+            }
+
+            val namaProdukFinal = namaProduk + infoTambahan
+
+            val berhasil = dbHelper.tambahKeKeranjang(namaProdukFinal, qtySaatIni, totalHargaFix, currentCustomImageBase64)
             if (berhasil) {
                 Toast.makeText(this, "Berhasil masuk keranjang!", Toast.LENGTH_SHORT).show()
                 dialog.dismiss()
