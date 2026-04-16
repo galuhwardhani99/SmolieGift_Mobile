@@ -58,14 +58,12 @@ class AdminTransaksiActivity : AppCompatActivity() {
 
                 val itemView = inflater.inflate(R.layout.item_transaksi_admin, llDaftar, false)
 
-                // Set Data Teks
                 itemView.findViewById<TextView>(R.id.tvAdminTransId).text = "#INV-0$id"
                 itemView.findViewById<TextView>(R.id.tvAdminTransNama).text = "Pemesan: $nama"
                 itemView.findViewById<TextView>(R.id.tvAdminTransWa).text = "WA: $wa"
                 itemView.findViewById<TextView>(R.id.tvAdminTransMetode).text = "Metode: $metode"
                 itemView.findViewById<TextView>(R.id.tvAdminTransTotal).text = "Rp $total"
 
-                // --- KOREKSI 1: KEMBALIKAN LOGIKA GAMBAR KUSTOM ---
                 val ivCustomDesign = itemView.findViewById<ImageView>(R.id.ivCustomDesignAdmin)
                 val llContainerImage = itemView.findViewById<LinearLayout>(R.id.llContainerImage)
 
@@ -82,19 +80,7 @@ class AdminTransaksiActivity : AppCompatActivity() {
                     llContainerImage.visibility = View.GONE
                 }
 
-                // --- KOREKSI 2: AMANKAN TOMBOL WA & SELESAI ---
                 val btnSelesai = itemView.findViewById<Button>(R.id.btnSelesaiPesanan)
-                // Menggunakan Button? (nullable) agar tidak crash jika temanmu belum menaruh ID-nya di XML
-                val btnWa = itemView.findViewById<Button?>(R.id.btnHubungiWa)
-
-                btnWa?.setOnClickListener {
-                    // Otomatis mengubah "08..." menjadi "628..." agar WhatsApp API jalan
-                    var noWaFormatted = wa.trim()
-                    if (noWaFormatted.startsWith("0")) {
-                        noWaFormatted = "62" + noWaFormatted.substring(1)
-                    }
-                    bukaWhatsApp(noWaFormatted, nama)
-                }
 
                 btnSelesai.setOnClickListener {
                     konfirmasiSelesai(id, nama)
@@ -107,18 +93,6 @@ class AdminTransaksiActivity : AppCompatActivity() {
         db.close()
     }
 
-    private fun bukaWhatsApp(nomor: String, nama: String) {
-        val message = "Halo $nama, saya Admin Smolie Gift. Ingin mengonfirmasi pesanan Anda."
-        val url = "https://api.whatsapp.com/send?phone=$nomor&text=${Uri.encode(message)}"
-
-        try {
-            val intent = Intent(Intent.ACTION_VIEW)
-            intent.data = Uri.parse(url)
-            startActivity(intent)
-        } catch (e: Exception) {
-            Toast.makeText(this, "WhatsApp tidak terinstal di perangkat ini.", Toast.LENGTH_SHORT).show()
-        }
-    }
 
     private fun konfirmasiSelesai(id: Int, nama: String) {
         AlertDialog.Builder(this)

@@ -20,29 +20,19 @@ class MainActivity : AppCompatActivity() {
 
         webView = findViewById(R.id.webView)
 
-        // Pengaturan website
         val webSettings: WebSettings = webView.settings
         webSettings.javaScriptEnabled = true
         webSettings.domStorageEnabled = true
 
-        // PENTING: Tambahkan ini agar fitur zoom, cache, dan rendering UI lebih baik
         webSettings.loadWithOverviewMode = true
         webSettings.useWideViewPort = true
-        webSettings.setSupportZoom(false) // Biasanya aplikasi web-view mematikan fitur zoom agar terlihat seperti aplikasi native
+        webSettings.setSupportZoom(false)
         webSettings.builtInZoomControls = false
         webSettings.displayZoomControls = false
 
-        // WebViewClient agar link dibuka di dalam aplikasi, bukan dilempar ke Chrome
         webView.webViewClient = WebViewClient()
-
-        // WebChromeClient penting jika web Anda memiliki fitur alert() javascript atau upload file/foto
         webView.webChromeClient = WebChromeClient()
 
-        // Masukkan URL utama website Laravel And
-
-        // ---------------------------------------------------------
-        // PENANGANAN TOMBOL BACK MODERN
-        // ---------------------------------------------------------
         onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
             override fun handleOnBackPressed() {
                 if (webView.canGoBack()) {

@@ -24,11 +24,9 @@ class AdminDashboardActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_admin_dashboard)
 
-        // Setup Toolbar
         toolbar = findViewById(R.id.toolbarAdmin)
         setSupportActionBar(toolbar)
 
-        // Inisialisasi Layout Content
         layoutHome = findViewById(R.id.layoutHome)
         layoutProfile = findViewById(R.id.layoutProfile)
 
@@ -39,7 +37,6 @@ class AdminDashboardActivity : AppCompatActivity() {
         val cvMenuLaporan = findViewById<CardView>(R.id.cvMenuLaporan)
         val bottomNav = findViewById<BottomNavigationView>(R.id.bottomNavigation)
 
-        // LOGIKA BOTTOM NAVIGATION
         bottomNav.setOnItemSelectedListener { item ->
             when (item.itemId) {
                 R.id.navigation_home -> {
@@ -54,7 +51,6 @@ class AdminDashboardActivity : AppCompatActivity() {
             }
         }
 
-        // --- Klik Menu Dashboard ---
         btnModeKasir.setOnClickListener {
             Toast.makeText(this, "Membuka Mode Kasir...", Toast.LENGTH_SHORT).show()
         }

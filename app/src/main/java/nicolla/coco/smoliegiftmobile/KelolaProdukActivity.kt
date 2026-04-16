@@ -131,8 +131,6 @@ class KelolaProdukActivity : AppCompatActivity() {
         layout.setPadding(40, 20, 40, 20)
 
         val inputNama = EditText(this).apply { hint = "Nama Produk" }
-        
-        // Ganti EditText Kategori jadi Spinner
         val spinnerKategori = Spinner(this)
         val kategoriAdapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, getKategoriList())
         kategoriAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
@@ -191,15 +189,13 @@ class KelolaProdukActivity : AppCompatActivity() {
             hint = "Nama Produk"
             setText(nama)
         }
-        
-        // Ganti EditText Kategori jadi Spinner
+
         val spinnerKategori = Spinner(this)
         val listKategori = getKategoriList()
         val kategoriAdapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, listKategori)
         kategoriAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
         spinnerKategori.adapter = kategoriAdapter
-        
-        // Set posisi spinner ke kategori lama
+
         val pos = listKategori.indexOf(kategoriLama)
         if (pos >= 0) spinnerKategori.setSelection(pos)
 

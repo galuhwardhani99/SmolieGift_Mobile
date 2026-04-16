@@ -4,5 +4,5 @@ data class User(
     val id: Int = -1,
     val name: String,
     val email: String,
-    val usertype: String // 'admin' atau 'pembeli'
+    val usertype: String
 )

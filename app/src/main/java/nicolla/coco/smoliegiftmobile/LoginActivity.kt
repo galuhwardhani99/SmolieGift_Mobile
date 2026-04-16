@@ -43,8 +43,7 @@ class LoginActivity : AppCompatActivity() {
                 } else {
                     Intent(this, PembeliDashboardActivity::class.java)
                 }
-                
-                // Kirim email ke dashboard untuk mengambil data profil
+
                 intent.putExtra("USER_EMAIL", user.email)
 
                 startActivity(intent)

@@ -22,7 +22,6 @@ class AdminLaporanActivity : AppCompatActivity() {
         val llDaftar = findViewById<LinearLayout>(R.id.llDaftarLaporan)
         val tvPendapatan = findViewById<TextView>(R.id.tvTotalPendapatanAdmin)
 
-        // Memuat data dan langsung mengambil total pendapatannya
         val totalPendapatanGlobal = muatDataLaporan(llDaftar)
         tvPendapatan.text = "Rp $totalPendapatanGlobal"
     }
@@ -52,7 +51,6 @@ class AdminLaporanActivity : AppCompatActivity() {
                 itemView.findViewById<TextView>(R.id.tvAdminTransNama).text = "Pemesan: $nama"
                 itemView.findViewById<TextView>(R.id.tvAdminTransTotal).text = "Rp $total"
 
-                // Sembunyikan tombol aksi karena ini hanya halaman riwayat
                 itemView.findViewById<Button>(R.id.btnSelesaiPesanan).visibility = View.GONE
 
                 container.addView(itemView)
