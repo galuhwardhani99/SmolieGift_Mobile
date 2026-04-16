@@ -20,8 +20,10 @@ import android.widget.*
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.Toolbar
+import androidx.fragment.app.Fragment
 import com.example.smoliegift.database.DatabaseHelper
 import com.google.android.material.bottomnavigation.BottomNavigationView
+import org.json.JSONArray
 import java.io.InputStream
 import java.util.Calendar
 
@@ -30,9 +32,12 @@ class PembeliDashboardActivity : AppCompatActivity() {
     private lateinit var dbHelper: DatabaseHelper
     private lateinit var gridLayoutProduk: GridLayout
     private lateinit var layoutHome: ScrollView
+    private lateinit var fragmentContainer: FrameLayout
     private lateinit var layoutProfile: ScrollView
     private lateinit var toolbar: Toolbar
     private var isAdminView: Boolean = false
+    private var currentUserEmail: String? = null
+    private var currentUserName: String? = null
 
     private var currentCustomImageBase64: String? = null
     private var btnPilihFileRef: Button? = null
@@ -63,12 +68,14 @@ class PembeliDashboardActivity : AppCompatActivity() {
 
         dbHelper = DatabaseHelper(this)
         isAdminView = intent.getBooleanExtra("IS_ADMIN_VIEW", false)
+        currentUserEmail = intent.getStringExtra("USER_EMAIL")
 
         toolbar = findViewById(R.id.toolbarPembeli)
         setSupportActionBar(toolbar)
 
         gridLayoutProduk = findViewById(R.id.glDaftarProdukPembeli)
         layoutHome = findViewById(R.id.layoutHomePembeli)
+        fragmentContainer = findViewById(R.id.fragmentContainerPembeli)
         layoutProfile = findViewById(R.id.layoutProfilePembeli)
 
         val bottomNav = findViewById<BottomNavigationView>(R.id.bottomNavPembeli)
@@ -81,13 +88,19 @@ class PembeliDashboardActivity : AppCompatActivity() {
         }
 
         btnLihatKeranjang.setOnClickListener {
-            startActivity(Intent(this, CartActivity::class.java))
+            val intent = Intent(this, CartActivity::class.java)
+            intent.putExtra("USER_EMAIL", currentUserEmail)
+            startActivity(intent)
         }
 
         bottomNav.setOnItemSelectedListener { item ->
             when (item.itemId) {
                 R.id.navigation_home -> {
                     showHome()
+                    true
+                }
+                R.id.navigation_history -> {
+                    showHistory()
                     true
                 }
                 R.id.navigation_profile -> {
@@ -98,9 +111,8 @@ class PembeliDashboardActivity : AppCompatActivity() {
             }
         }
 
-        val userEmail = intent.getStringExtra("USER_EMAIL")
-        if (userEmail != null) {
-            loadUserProfile(userEmail)
+        if (currentUserEmail != null) {
+            loadUserProfile(currentUserEmail!!)
         }
 
         loadKatalogProduk()
@@ -108,12 +120,28 @@ class PembeliDashboardActivity : AppCompatActivity() {
 
     private fun showHome() {
         layoutHome.visibility = View.VISIBLE
+        fragmentContainer.visibility = View.GONE
         layoutProfile.visibility = View.GONE
         toolbar.title = if (isAdminView) "Katalog Produk (Admin)" else "Smolie Gift"
     }
 
+    private fun showHistory() {
+        layoutHome.visibility = View.GONE
+        fragmentContainer.visibility = View.VISIBLE
+        layoutProfile.visibility = View.GONE
+        toolbar.title = "Riwayat Pesanan"
+        
+        if (currentUserEmail != null) {
+            val fragment = HistoryFragment.newInstance(currentUserEmail!!)
+            supportFragmentManager.beginTransaction()
+                .replace(R.id.fragmentContainerPembeli, fragment)
+                .commit()
+        }
+    }
+
     private fun showProfile() {
         layoutHome.visibility = View.GONE
+        fragmentContainer.visibility = View.GONE
         layoutProfile.visibility = View.VISIBLE
         toolbar.title = "Profil Saya"
     }
@@ -122,6 +150,7 @@ class PembeliDashboardActivity : AppCompatActivity() {
         val cursor = dbHelper.getUserByEmail(email)
         if (cursor != null && cursor.moveToFirst()) {
             val name = cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COLUMN_NAME))
+            currentUserName = name
             findViewById<TextView>(R.id.tvProfileName).text = name
             findViewById<TextView>(R.id.tvProfileEmail).text = email
             findViewById<TextView>(R.id.tvProfileUsername).text = "Username: " + cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COLUMN_USERNAME))
@@ -168,7 +197,7 @@ class PembeliDashboardActivity : AppCompatActivity() {
                     btnPesan.visibility = View.GONE
                 } else {
                     btnPesan.setOnClickListener {
-                        tampilkanDialogPesanan(nama, harga)
+                        tampilkanDialogPesanan(nama, harga, fotoBase64)
                     }
                 }
 
@@ -182,7 +211,7 @@ class PembeliDashboardActivity : AppCompatActivity() {
         cursor.close()
     }
 
-    private fun tampilkanDialogPesanan(namaProduk: String, hargaDasar: Int) {
+    private fun tampilkanDialogPesanan(namaProduk: String, hargaDasar: Int, fotoProdukBase64: String?) {
         val dialog = Dialog(this)
         dialog.requestWindowFeature(Window.FEATURE_NO_TITLE)
         dialog.setContentView(R.layout.dialog_pesan_produk)
@@ -231,7 +260,7 @@ class PembeliDashboardActivity : AppCompatActivity() {
             }
             if (cbSablon.isChecked) tambahanHarga += 500
             if (cbThanks.isChecked) tambahanHarga += 300
-            if (cbInvitedCard.isChecked) tambahanHarga += 400 // Harga tambahan Invited Card
+            if (cbInvitedCard.isChecked) tambahanHarga += 400
 
             val totalPerItem = hargaDasar + tambahanHarga
             val totalFinal = totalPerItem * qtySaatIni
@@ -281,7 +310,7 @@ class PembeliDashboardActivity : AppCompatActivity() {
                 waktuAcaraTerpilih = jamFormat
                 btnPilihWaktu.text = jamFormat
                 btnPilihWaktu.setTextColor(Color.parseColor("#DD3827"))
-            }, jam, menit, true) // true untuk format 24 jam
+            }, jam, menit, true)
             timePicker.show()
         }
 
@@ -316,15 +345,19 @@ class PembeliDashboardActivity : AppCompatActivity() {
                 eventInfo = "$tanggalAcaraTerpilih $waktuAcaraTerpilih"
             }
 
-            val berhasil = dbHelper.tambahKeKeranjang(namaProduk, qtySaatIni, totalHargaFix, currentCustomImageBase64)
-            // Note: Since tambahKeKeranjang doesn't store eventInfo yet, we might need to add it to cart as well or handle it at checkout.
-            // For now, let's append it to product name in cart so it flows through.
-            if (eventInfo != null) {
-                dbHelper.kosongkanKeranjang() // Optional: based on requirements
-                dbHelper.tambahKeKeranjang(namaProduk + " (Invited Card: $eventInfo)", qtySaatIni, totalHargaFix, currentCustomImageBase64)
+            val namaProdukFinal = if (eventInfo != null) {
+                "$namaProduk (Invited Card: $eventInfo)"
+            } else {
+                namaProduk
             }
 
-            Toast.makeText(this, "Berhasil masuk keranjang!", Toast.LENGTH_SHORT).show()
+            val berhasil = dbHelper.tambahKeKeranjang(namaProdukFinal, qtySaatIni, totalHargaFix, currentCustomImageBase64, fotoProdukBase64)
+            
+            if (berhasil) {
+                Toast.makeText(this, "Berhasil masuk keranjang!", Toast.LENGTH_SHORT).show()
+            } else {
+                Toast.makeText(this, "Gagal masuk keranjang!", Toast.LENGTH_SHORT).show()
+            }
             dialog.dismiss()
         }
 

@@ -13,6 +13,7 @@ import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import com.example.smoliegift.database.DatabaseHelper
+import org.json.JSONArray
 import java.text.SimpleDateFormat
 import java.util.Locale
 
@@ -52,22 +53,50 @@ class AdminLaporanActivity : AppCompatActivity() {
                 val rawDate = cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COLUMN_TRANS_DATE))
                 val customImageBase64 = cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COLUMN_CUSTOM_IMAGE))
                 val eventInfo = cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COLUMN_EVENT_INFO))
+                val itemsJson = cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COLUMN_ITEMS_JSON))
+                val wa = cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COLUMN_CUSTOMER_WA))
 
                 totalPendapatan += total
 
                 val itemView = inflater.inflate(R.layout.item_transaksi_admin, container, false)
 
-                itemView.findViewById<TextView>(R.id.tvAdminTransId).text = "SELESAI (INV-0$id)"
+                itemView.findViewById<TextView>(R.id.tvAdminTransId).text = "#INV-0$id"
+                
+                // STATUS SELESAI WARNA HIJAU
+                val tvStatus = itemView.findViewById<TextView>(R.id.tvAdminTransStatusLabel)
+                tvStatus.text = "SELESAI"
+                tvStatus.setTextColor(Color.parseColor("#2E7D32"))
+                
                 itemView.findViewById<TextView>(R.id.tvAdminTransNama).text = "Pemesan: $nama"
                 itemView.findViewById<TextView>(R.id.tvAdminTransTotal).text = "Rp $total"
+                itemView.findViewById<TextView>(R.id.tvAdminTransWa).text = "WA: $wa"
+
+                // MENAMPILKAN DAFTAR PRODUK YANG DIBELI
+                val tvProduk = itemView.findViewById<TextView>(R.id.tvAdminTransProduk)
+                if (!itemsJson.isNullOrEmpty()) {
+                    try {
+                        val jsonArray = JSONArray(itemsJson)
+                        val sb = StringBuilder("Produk:\n")
+                        for (i in 0 until jsonArray.length()) {
+                            val obj = jsonArray.getJSONObject(i)
+                            val pName = obj.getString("name")
+                            val pQty = obj.getInt("qty")
+                            sb.append("- $pName ($pQty pcs)\n")
+                        }
+                        tvProduk.text = sb.toString().trim()
+                    } catch (e: Exception) {
+                        tvProduk.text = "Produk: Error memuat data"
+                    }
+                } else {
+                    tvProduk.text = "Produk: Tidak ada detail"
+                }
 
                 // Menampilkan Info Tanggal/Waktu Acara jika ada (Input Pembeli)
                 val tvTanggal = itemView.findViewById<TextView>(R.id.tvAdminTransTanggal)
                 if (!eventInfo.isNullOrEmpty()) {
-                    tvTanggal.text = "Waktu Acara: $eventInfo"
+                    tvTanggal.text = "Pesanan Invite Card : $eventInfo"
                     tvTanggal.setTextColor(Color.parseColor("#DD3827"))
                 } else {
-                    // Jika reguler, tampilkan waktu transaksi sistem
                     try {
                         val inputFormat = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
                         val outputFormat = SimpleDateFormat("EEEE, dd MMM yyyy HH:mm", Locale("id", "ID"))
@@ -101,7 +130,6 @@ class AdminLaporanActivity : AppCompatActivity() {
                 }
 
                 // Sembunyikan elemen yang tidak perlu di laporan
-                itemView.findViewById<TextView>(R.id.tvAdminTransWa).visibility = View.GONE
                 itemView.findViewById<Button>(R.id.btnSelesaiPesanan).visibility = View.GONE
 
                 container.addView(itemView)

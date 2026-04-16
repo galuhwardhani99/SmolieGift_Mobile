@@ -29,6 +29,7 @@
                 android:layout_marginEnd="8dp"/>
 
             <TextView
+                android:id="@+id/tvAdminTransStatusLabel"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Pesanan Baru"
@@ -55,11 +56,22 @@
                 android:layout_height="wrap_content"
                 android:orientation="vertical">
 
-                <TextView android:id="@+id/tvAdminTransNama" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Nama Pemesan: Coco" android:textColor="#2D3142" android:textStyle="bold" android:textSize="15sp"/>
-                <TextView android:id="@+id/tvAdminTransWa" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="WA: 08123456789" android:textColor="#64748B" android:textSize="12sp" android:layout_marginTop="4dp"/>
-                <TextView android:id="@+id/tvAdminTransMetode" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Metode: Tunai" android:textColor="#64748B" android:textSize="12sp" android:layout_marginTop="2dp"/>
-                <TextView android:id="@+id/tvAdminTransTanggal" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Tanggal: -" android:textColor="#64748B" android:textSize="12sp" android:layout_marginTop="2dp"/>
-                <TextView android:id="@+id/tvAdminTransTotal" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Rp 50000" android:textColor="#DD3827" android:textStyle="bold" android:textSize="16sp" android:layout_marginTop="8dp"/>
+                <TextView android:id="@+id/tvAdminTransNama" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Nama Pemesan: -" android:textColor="#2D3142" android:textStyle="bold" android:textSize="15sp"/>
+
+                <TextView
+                    android:id="@+id/tvAdminTransProduk"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Produk: -"
+                    android:textColor="#2D3142"
+                    android:textSize="13sp"
+                    android:textStyle="bold"
+                    android:layout_marginTop="4dp"/>
+
+                <TextView android:id="@+id/tvAdminTransWa" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="WA: -" android:textColor="#64748B" android:textSize="12sp" android:layout_marginTop="4dp"/>
+                <TextView android:id="@+id/tvAdminTransMetode" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Metode: -" android:textColor="#64748B" android:textSize="12sp" android:layout_marginTop="2dp"/>
+                <TextView android:id="@+id/tvAdminTransTanggal" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Waktu: -" android:textColor="#64748B" android:textSize="12sp" android:layout_marginTop="2dp"/>
+                <TextView android:id="@+id/tvAdminTransTotal" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Rp 0" android:textColor="#DD3827" android:textStyle="bold" android:textSize="16sp" android:layout_marginTop="8dp"/>
             </LinearLayout>
 
             <LinearLayout

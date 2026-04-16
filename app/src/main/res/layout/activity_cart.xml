@@ -51,7 +51,9 @@
 
                 <View android:layout_width="match_parent" android:layout_height="1dp" android:background="#EEEEEE" android:layout_marginBottom="16dp"/>
 
-                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="NAMA PEMESAN" android:textSize="10sp" android:textStyle="bold" android:textColor="#64748B" android:layout_marginBottom="4dp"/>
+                <TextView
+                    android:id="@+id/tvLabelNamaPemesan"
+                    android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="EMAIL PEMESAN" android:textSize="10sp" android:textStyle="bold" android:textColor="#64748B" android:layout_marginBottom="4dp"/>
                 <EditText
                     android:id="@+id/etNamaPemesan"
                     android:layout_width="match_parent"
@@ -59,7 +61,7 @@
                     android:background="#F5F6F8"
                     android:paddingStart="12dp"
                     android:paddingEnd="12dp"
-                    android:hint="Tamu"
+                    android:hint="Email"
                     android:textColor="#2D3142"
                     android:textSize="14sp"
                     android:layout_marginBottom="16dp"/>

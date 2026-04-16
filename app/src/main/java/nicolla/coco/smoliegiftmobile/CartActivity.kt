@@ -11,12 +11,16 @@ import android.view.View
 import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
 import com.example.smoliegift.database.DatabaseHelper
+import org.json.JSONArray
+import org.json.JSONObject
 
 class CartActivity : AppCompatActivity() {
 
     private lateinit var dbHelper: DatabaseHelper
     private var imageBase64UntukPesanan: String? = null
     private var eventInfoUntukPesanan: String? = null
+    private var waUser: String = "-"
+    private var currentUserEmail: String? = null
 
     private var metodeDipilih = "Tunai"
 
@@ -25,12 +29,18 @@ class CartActivity : AppCompatActivity() {
         setContentView(R.layout.activity_cart)
 
         dbHelper = DatabaseHelper(this)
+        currentUserEmail = intent.getStringExtra("USER_EMAIL")
 
         val llDaftar = findViewById<LinearLayout>(R.id.llDaftarKeranjang)
         val tvTotalAkhir = findViewById<TextView>(R.id.tvTotalBayarAkhir)
         val btnKonfirmasi = findViewById<Button>(R.id.btnKonfirmasi)
         val etNama = findViewById<EditText>(R.id.etNamaPemesan)
 
+        // Tampilkan email pada input nama pemesan dan buat tidak bisa diedit
+        etNama.setText(currentUserEmail)
+        etNama.isEnabled = false
+        etNama.setTextColor(Color.parseColor("#64748B"))
+        
         val btnMetodeTunai = findViewById<Button>(R.id.btnMetodeTunai)
         val btnMetodeQris = findViewById<Button>(R.id.btnMetodeQris)
         val llContainerQris = findViewById<LinearLayout>(R.id.llContainerQris)
@@ -57,21 +67,37 @@ class CartActivity : AppCompatActivity() {
         }
 
         btnKonfirmasi.setOnClickListener {
-            val nama = etNama.text.toString().trim()
+            val email = currentUserEmail ?: ""
 
             if (grandTotal <= 0) {
                 Toast.makeText(this, "Keranjang Anda masih kosong!", Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
 
-            if (nama.isEmpty()) {
-                Toast.makeText(this, "Harap isi Nama Pemesan!", Toast.LENGTH_SHORT).show()
+            if (email.isEmpty()) {
+                Toast.makeText(this, "Sesi tidak valid, silakan login ulang.", Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
 
-            val sukses = dbHelper.buatPesanan(nama, "-", metodeDipilih, grandTotal, imageBase64UntukPesanan, eventInfoUntukPesanan)
+            // Ambil nomor WA user dari database berdasarkan Email
+            val cursorUser = dbHelper.readableDatabase.rawQuery(
+                "SELECT ${DatabaseHelper.COLUMN_PHONE} FROM ${DatabaseHelper.TABLE_USERS} WHERE ${DatabaseHelper.COLUMN_EMAIL} = ?", 
+                arrayOf(email)
+            )
+            if (cursorUser.moveToFirst()) {
+                waUser = cursorUser.getString(0)
+            }
+            cursorUser.close()
+
+            val itemsJson = getCartItemsAsJson()
+
+            // Simpan pesanan menggunakan email sebagai identitas (disimpan di customer_name)
+            val sukses = dbHelper.buatPesanan(email, waUser, metodeDipilih, grandTotal, imageBase64UntukPesanan, eventInfoUntukPesanan, itemsJson)
 
             if (sukses) {
+                // KURANGI STOK OTOMATIS
+                kurangiStokDariKeranjang()
+                
                 dbHelper.kosongkanKeranjang()
                 Toast.makeText(this, "Pesanan Berhasil!", Toast.LENGTH_LONG).show()
                 finish()
@@ -81,10 +107,35 @@ class CartActivity : AppCompatActivity() {
         }
     }
 
+    private fun kurangiStokDariKeranjang() {
+        val cursor = dbHelper.getSemuaKeranjang()
+        while (cursor.moveToNext()) {
+            val namaProd = cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COLUMN_PRODUCT_NAME))
+            val qtyBought = cursor.getInt(cursor.getColumnIndexOrThrow(DatabaseHelper.COLUMN_QTY))
+            dbHelper.kurangiStokProduk(namaProd, qtyBought)
+        }
+        cursor.close()
+    }
+
+    private fun getCartItemsAsJson(): String {
+        val cursor = dbHelper.getSemuaKeranjang()
+        val jsonArray = JSONArray()
+        while (cursor.moveToNext()) {
+            val item = JSONObject()
+            item.put("name", cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COLUMN_PRODUCT_NAME)))
+            item.put("qty", cursor.getInt(cursor.getColumnIndexOrThrow(DatabaseHelper.COLUMN_QTY)))
+            jsonArray.put(item)
+        }
+        cursor.close()
+        return jsonArray.toString()
+    }
+
     private fun tampilkanDataDanHitungTotal(container: LinearLayout): Int {
         val cursor: Cursor = dbHelper.getSemuaKeranjang()
         val inflater = LayoutInflater.from(this)
         var totalHargaSemua = 0
+
+        container.removeAllViews()
 
         if (cursor.count == 0) {
             val tvKosong = TextView(this)
@@ -93,21 +144,14 @@ class CartActivity : AppCompatActivity() {
             container.addView(tvKosong)
         } else {
             while (cursor.moveToNext()) {
+                val cartId = cursor.getInt(cursor.getColumnIndexOrThrow(DatabaseHelper.COLUMN_CART_ID))
                 val nama = cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COLUMN_PRODUCT_NAME))
                 val qty = cursor.getInt(cursor.getColumnIndexOrThrow(DatabaseHelper.COLUMN_QTY))
                 val hargaTotalItem = cursor.getInt(cursor.getColumnIndexOrThrow(DatabaseHelper.COLUMN_TOTAL_PRICE))
-                val imgBase64 = cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COLUMN_CUSTOM_IMAGE))
+                val customImgBase64 = cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COLUMN_CUSTOM_IMAGE))
+                val prodImgBase64 = cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COLUMN_CART_PRODUCT_IMAGE))
 
                 totalHargaSemua += hargaTotalItem
-
-                // Ekstrak info event jika ada di nama produk
-                if (nama.contains("(Invited Card:", ignoreCase = true)) {
-                    val startIndex = nama.indexOf("(Invited Card:") + 15
-                    val endIndex = nama.lastIndexOf(")")
-                    if (startIndex != -1 && endIndex != -1 && endIndex > startIndex) {
-                        eventInfoUntukPesanan = nama.substring(startIndex, endIndex).trim()
-                    }
-                }
 
                 val itemView = inflater.inflate(R.layout.item_cart, container, false)
                 itemView.findViewById<TextView>(R.id.tvItemName).text = nama
@@ -115,13 +159,21 @@ class CartActivity : AppCompatActivity() {
                 itemView.findViewById<TextView>(R.id.tvItemPrice).text = "Rp $hargaTotalItem"
 
                 val ivPreview = itemView.findViewById<ImageView>(R.id.ivItemImage)
-                if (!imgBase64.isNullOrEmpty()) {
-                    val imageBytes = Base64.decode(imgBase64, Base64.DEFAULT)
+                val displayImgBase64 = if (!customImgBase64.isNullOrEmpty()) customImgBase64 else prodImgBase64
+                
+                if (!displayImgBase64.isNullOrEmpty()) {
+                    val imageBytes = Base64.decode(displayImgBase64, Base64.DEFAULT)
                     val decodedImage = BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.size)
                     ivPreview.setImageBitmap(decodedImage)
-                    imageBase64UntukPesanan = imgBase64
+                    if (!customImgBase64.isNullOrEmpty()) imageBase64UntukPesanan = customImgBase64
                 }
 
+                itemView.findViewById<Button>(R.id.btnHapusItemKeranjang).setOnClickListener {
+                    if (dbHelper.hapusItemKeranjang(cartId)) {
+                        Toast.makeText(this, "Item dihapus", Toast.LENGTH_SHORT).show()
+                        recreate()
+                    }
+                }
                 container.addView(itemView)
             }
         }

@@ -11,8 +11,14 @@
         android:layout_height="wrap_content"
         android:orientation="horizontal"
         android:layout_marginBottom="16dp">
-        <TextView android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:text="← Kembali" android:textColor="#64748B"/>
-        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Data Pesanan Masuk" android:textStyle="bold" android:textColor="#2D3142" android:textSize="18sp"/>
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Data Pesanan Masuk"
+            android:textStyle="bold"
+            android:textColor="#2D3142"
+            android:textSize="18sp"
+            android:gravity="center"/>
     </LinearLayout>
 
     <ScrollView

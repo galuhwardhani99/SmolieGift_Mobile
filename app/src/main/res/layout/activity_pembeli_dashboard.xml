@@ -103,6 +103,12 @@
             </LinearLayout>
         </ScrollView>
 
+        <FrameLayout
+            android:id="@+id/fragmentContainerPembeli"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:visibility="gone" />
+
         <ScrollView
             android:id="@+id/layoutProfilePembeli"
             android:layout_width="match_parent"
@@ -202,7 +208,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:background="#FFFFFF"
-        app:menu="@menu/admin_bottom_menu"
+        app:menu="@menu/pembeli_bottom_menu"
         app:layout_constraintBottom_toBottomOf="parent" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
