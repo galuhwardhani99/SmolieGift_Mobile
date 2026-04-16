@@ -10,7 +10,7 @@ import com.example.smoliegift.models.User
 class DatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME, null, DATABASE_VERSION) {
 
     companion object {
-        private const val DATABASE_VERSION = 8
+        private const val DATABASE_VERSION = 10
         private const val DATABASE_NAME = "SmolieGift.db"
 
         const val TABLE_USERS = "users"
@@ -49,6 +49,8 @@ class DatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME
         const val COLUMN_CUSTOMER_WA = "customer_wa"
         const val COLUMN_PAYMENT_METHOD = "payment_method"
         const val COLUMN_GRAND_TOTAL = "grand_total"
+        const val COLUMN_TRANS_DATE = "trans_date"
+        const val COLUMN_EVENT_INFO = "event_info"
 
         const val TABLE_HISTORY = "history"
     }
@@ -62,8 +64,8 @@ class DatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME
         db.execSQL("CREATE TABLE $TABLE_CATEGORIES ($COLUMN_CAT_ID INTEGER PRIMARY KEY AUTOINCREMENT, $COLUMN_CAT_NAME TEXT UNIQUE)")
 
 
-        db.execSQL("CREATE TABLE $TABLE_TRANSACTIONS ($COLUMN_TRANS_ID INTEGER PRIMARY KEY AUTOINCREMENT, $COLUMN_CUSTOMER_NAME TEXT, $COLUMN_CUSTOMER_WA TEXT, $COLUMN_PAYMENT_METHOD TEXT, $COLUMN_GRAND_TOTAL INTEGER, $COLUMN_CUSTOM_IMAGE TEXT)")
-        db.execSQL("CREATE TABLE $TABLE_HISTORY ($COLUMN_TRANS_ID INTEGER PRIMARY KEY AUTOINCREMENT, $COLUMN_CUSTOMER_NAME TEXT, $COLUMN_CUSTOMER_WA TEXT, $COLUMN_PAYMENT_METHOD TEXT, $COLUMN_GRAND_TOTAL INTEGER, $COLUMN_CUSTOM_IMAGE TEXT)")
+        db.execSQL("CREATE TABLE $TABLE_TRANSACTIONS ($COLUMN_TRANS_ID INTEGER PRIMARY KEY AUTOINCREMENT, $COLUMN_CUSTOMER_NAME TEXT, $COLUMN_CUSTOMER_WA TEXT, $COLUMN_PAYMENT_METHOD TEXT, $COLUMN_GRAND_TOTAL INTEGER, $COLUMN_CUSTOM_IMAGE TEXT, $COLUMN_TRANS_DATE DATETIME DEFAULT CURRENT_TIMESTAMP, $COLUMN_EVENT_INFO TEXT)")
+        db.execSQL("CREATE TABLE $TABLE_HISTORY ($COLUMN_TRANS_ID INTEGER PRIMARY KEY AUTOINCREMENT, $COLUMN_CUSTOMER_NAME TEXT, $COLUMN_CUSTOMER_WA TEXT, $COLUMN_PAYMENT_METHOD TEXT, $COLUMN_GRAND_TOTAL INTEGER, $COLUMN_CUSTOM_IMAGE TEXT, $COLUMN_TRANS_DATE DATETIME, $COLUMN_EVENT_INFO TEXT)")
 
         val adminValues = ContentValues().apply {
             put(COLUMN_NAME, "Admin Smolie")
@@ -182,7 +184,7 @@ class DatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME
     }
 
 
-    fun buatPesanan(nama: String, wa: String, metode: String, total: Int, imageBase64: String?, status: String): Boolean {
+    fun buatPesanan(nama: String, wa: String, metode: String, total: Int, imageBase64: String?, eventInfo: String? = null): Boolean {
         val db = this.writableDatabase
         val values = ContentValues().apply {
             put(COLUMN_CUSTOMER_NAME, nama)
@@ -190,6 +192,7 @@ class DatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME
             put(COLUMN_PAYMENT_METHOD, metode)
             put(COLUMN_GRAND_TOTAL, total)
             put(COLUMN_CUSTOM_IMAGE, imageBase64)
+            put(COLUMN_EVENT_INFO, eventInfo)
         }
 
         val success = db.insert(TABLE_TRANSACTIONS, null, values)
@@ -207,6 +210,8 @@ class DatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME
                 put(COLUMN_PAYMENT_METHOD, cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_PAYMENT_METHOD)))
                 put(COLUMN_GRAND_TOTAL, cursor.getInt(cursor.getColumnIndexOrThrow(COLUMN_GRAND_TOTAL)))
                 put(COLUMN_CUSTOM_IMAGE, cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_CUSTOM_IMAGE)))
+                put(COLUMN_TRANS_DATE, cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_TRANS_DATE)))
+                put(COLUMN_EVENT_INFO, cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_EVENT_INFO)))
             }
             db.insert(TABLE_HISTORY, null, values)
             db.delete(TABLE_TRANSACTIONS, "$COLUMN_TRANS_ID=?", arrayOf(idPesanan.toString()))

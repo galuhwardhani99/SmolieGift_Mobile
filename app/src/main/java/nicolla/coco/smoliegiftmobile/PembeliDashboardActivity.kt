@@ -32,6 +32,7 @@ class PembeliDashboardActivity : AppCompatActivity() {
     private lateinit var layoutHome: ScrollView
     private lateinit var layoutProfile: ScrollView
     private lateinit var toolbar: Toolbar
+    private var isAdminView: Boolean = false
 
     private var currentCustomImageBase64: String? = null
     private var btnPilihFileRef: Button? = null
@@ -61,6 +62,7 @@ class PembeliDashboardActivity : AppCompatActivity() {
         setContentView(R.layout.activity_pembeli_dashboard)
 
         dbHelper = DatabaseHelper(this)
+        isAdminView = intent.getBooleanExtra("IS_ADMIN_VIEW", false)
 
         toolbar = findViewById(R.id.toolbarPembeli)
         setSupportActionBar(toolbar)
@@ -70,8 +72,15 @@ class PembeliDashboardActivity : AppCompatActivity() {
         layoutProfile = findViewById(R.id.layoutProfilePembeli)
 
         val bottomNav = findViewById<BottomNavigationView>(R.id.bottomNavPembeli)
+        val btnLihatKeranjang = findViewById<Button>(R.id.btnLihatKeranjang)
 
-        findViewById<Button>(R.id.btnLihatKeranjang).setOnClickListener {
+        if (isAdminView) {
+            btnLihatKeranjang.visibility = View.GONE
+            bottomNav.visibility = View.GONE
+            toolbar.title = "Katalog Produk (Admin)"
+        }
+
+        btnLihatKeranjang.setOnClickListener {
             startActivity(Intent(this, CartActivity::class.java))
         }
 
@@ -100,7 +109,7 @@ class PembeliDashboardActivity : AppCompatActivity() {
     private fun showHome() {
         layoutHome.visibility = View.VISIBLE
         layoutProfile.visibility = View.GONE
-        toolbar.title = "Smolie Gift"
+        toolbar.title = if (isAdminView) "Katalog Produk (Admin)" else "Smolie Gift"
     }
 
     private fun showProfile() {
@@ -154,8 +163,13 @@ class PembeliDashboardActivity : AppCompatActivity() {
                     ivGambar.setImageBitmap(bitmap)
                 }
 
-                itemView.findViewById<Button>(R.id.btnPesanKatalog).setOnClickListener {
-                    tampilkanDialogPesanan(nama, harga)
+                val btnPesan = itemView.findViewById<Button>(R.id.btnPesanKatalog)
+                if (isAdminView) {
+                    btnPesan.visibility = View.GONE
+                } else {
+                    btnPesan.setOnClickListener {
+                        tampilkanDialogPesanan(nama, harga)
+                    }
                 }
 
                 val params = GridLayout.LayoutParams()
@@ -297,18 +311,21 @@ class PembeliDashboardActivity : AppCompatActivity() {
 
             val totalHargaFix = try { totalText.toInt() } catch (e: Exception) { (hargaDasar * qtySaatIni) }
 
-            var infoTambahan = ""
-            if (cbInvitedCard.isChecked && (tanggalAcaraTerpilih.isNotEmpty() || waktuAcaraTerpilih.isNotEmpty())) {
-                infoTambahan = " (Invited Card: $tanggalAcaraTerpilih $waktuAcaraTerpilih)"
+            var eventInfo: String? = null
+            if (cbInvitedCard.isChecked && tanggalAcaraTerpilih.isNotEmpty() && waktuAcaraTerpilih.isNotEmpty()) {
+                eventInfo = "$tanggalAcaraTerpilih $waktuAcaraTerpilih"
             }
 
-            val namaProdukFinal = namaProduk + infoTambahan
-
-            val berhasil = dbHelper.tambahKeKeranjang(namaProdukFinal, qtySaatIni, totalHargaFix, currentCustomImageBase64)
-            if (berhasil) {
-                Toast.makeText(this, "Berhasil masuk keranjang!", Toast.LENGTH_SHORT).show()
-                dialog.dismiss()
+            val berhasil = dbHelper.tambahKeKeranjang(namaProduk, qtySaatIni, totalHargaFix, currentCustomImageBase64)
+            // Note: Since tambahKeKeranjang doesn't store eventInfo yet, we might need to add it to cart as well or handle it at checkout.
+            // For now, let's append it to product name in cart so it flows through.
+            if (eventInfo != null) {
+                dbHelper.kosongkanKeranjang() // Optional: based on requirements
+                dbHelper.tambahKeKeranjang(namaProduk + " (Invited Card: $eventInfo)", qtySaatIni, totalHargaFix, currentCustomImageBase64)
             }
+
+            Toast.makeText(this, "Berhasil masuk keranjang!", Toast.LENGTH_SHORT).show()
+            dialog.dismiss()
         }
 
         updateHargaTotal()

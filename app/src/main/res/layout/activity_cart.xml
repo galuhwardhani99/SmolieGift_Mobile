@@ -17,7 +17,6 @@
             android:orientation="horizontal"
             android:layout_marginBottom="16dp"
             android:gravity="center_vertical">
-            <TextView android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:text="← Kembali" android:textColor="#64748B" android:textStyle="bold"/>
             <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Keranjang Saya" android:textStyle="bold" android:textColor="#2D3142" android:textSize="16sp"/>
         </LinearLayout>
 

@@ -16,6 +16,7 @@ class CartActivity : AppCompatActivity() {
 
     private lateinit var dbHelper: DatabaseHelper
     private var imageBase64UntukPesanan: String? = null
+    private var eventInfoUntukPesanan: String? = null
 
     private var metodeDipilih = "Tunai"
 
@@ -39,27 +40,19 @@ class CartActivity : AppCompatActivity() {
 
         btnMetodeTunai.setOnClickListener {
             metodeDipilih = "Tunai"
-
             btnMetodeTunai.backgroundTintList = ColorStateList.valueOf(Color.parseColor("#0D6EFD"))
             btnMetodeTunai.setTextColor(Color.parseColor("#FFFFFF"))
-
             btnMetodeQris.backgroundTintList = ColorStateList.valueOf(Color.parseColor("#F5F6F8"))
             btnMetodeQris.setTextColor(Color.parseColor("#2D3142"))
-
-
             llContainerQris.visibility = View.GONE
         }
 
         btnMetodeQris.setOnClickListener {
             metodeDipilih = "QRIS"
-
             btnMetodeQris.backgroundTintList = ColorStateList.valueOf(Color.parseColor("#0D6EFD"))
             btnMetodeQris.setTextColor(Color.parseColor("#FFFFFF"))
-
             btnMetodeTunai.backgroundTintList = ColorStateList.valueOf(Color.parseColor("#F5F6F8"))
             btnMetodeTunai.setTextColor(Color.parseColor("#2D3142"))
-
-
             llContainerQris.visibility = View.VISIBLE
         }
 
@@ -76,14 +69,11 @@ class CartActivity : AppCompatActivity() {
                 return@setOnClickListener
             }
 
-            val statusPesanan = if (metodeDipilih == "QRIS") "Lunas" else "Pending"
-
-
-            val sukses = dbHelper.buatPesanan(nama, "-", metodeDipilih, grandTotal, imageBase64UntukPesanan, statusPesanan)
+            val sukses = dbHelper.buatPesanan(nama, "-", metodeDipilih, grandTotal, imageBase64UntukPesanan, eventInfoUntukPesanan)
 
             if (sukses) {
                 dbHelper.kosongkanKeranjang()
-                Toast.makeText(this, "Pesanan Berhasil! Status: $statusPesanan", Toast.LENGTH_LONG).show()
+                Toast.makeText(this, "Pesanan Berhasil!", Toast.LENGTH_LONG).show()
                 finish()
             } else {
                 Toast.makeText(this, "Gagal menyimpan pesanan.", Toast.LENGTH_SHORT).show()
@@ -109,6 +99,15 @@ class CartActivity : AppCompatActivity() {
                 val imgBase64 = cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COLUMN_CUSTOM_IMAGE))
 
                 totalHargaSemua += hargaTotalItem
+
+                // Ekstrak info event jika ada di nama produk
+                if (nama.contains("(Invited Card:", ignoreCase = true)) {
+                    val startIndex = nama.indexOf("(Invited Card:") + 15
+                    val endIndex = nama.lastIndexOf(")")
+                    if (startIndex != -1 && endIndex != -1 && endIndex > startIndex) {
+                        eventInfoUntukPesanan = nama.substring(startIndex, endIndex).trim()
+                    }
+                }
 
                 val itemView = inflater.inflate(R.layout.item_cart, container, false)
                 itemView.findViewById<TextView>(R.id.tvItemName).text = nama

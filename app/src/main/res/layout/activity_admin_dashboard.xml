@@ -56,14 +56,14 @@
                             <TextView
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:text="Dashboard, Admin Smolie!"
+                                android:text="Hallo, Admin Smolie!"
                                 android:textColor="#FFFFFF"
                                 android:textSize="22sp"
                                 android:textStyle="bold"/>
                             <TextView
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:text="DASHBOARD ADMIN SMOLIE GIFT"
+                                android:text="Selamat Datang Di Beranda Admin"
                                 android:textColor="#FFEBEE"
                                 android:textSize="12sp"
                                 android:layout_marginTop="4dp"
@@ -84,7 +84,7 @@
                         android:id="@+id/btnModeKasir"
                         android:layout_width="match_parent"
                         android:layout_height="55dp"
-                        android:text="Mode Kasir (Buka Katalog)"
+                        android:text="Pilih Menu"
                         android:backgroundTint="#DD3827"
                         android:textColor="#FFFFFF"
                         android:textStyle="bold"
@@ -214,12 +214,19 @@
             android:gravity="center_horizontal"
             android:visibility="gone">
 
-            <ImageView
+            <androidx.cardview.widget.CardView
                 android:layout_width="120dp"
                 android:layout_height="120dp"
-                android:src="@drawable/ic_person"
-                app:tint="#DD3827"
-                android:layout_marginBottom="16dp"/>
+                app:cardCornerRadius="60dp"
+                app:cardElevation="4dp"
+                android:layout_marginBottom="16dp">
+                <ImageView
+                    android:id="@+id/ivAdminProfile"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:src="@drawable/smolie"
+                    android:scaleType="centerCrop"/>
+            </androidx.cardview.widget.CardView>
 
             <TextView
                 android:layout_width="wrap_content"

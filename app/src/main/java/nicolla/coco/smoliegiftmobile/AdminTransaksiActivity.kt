@@ -4,6 +4,7 @@ import android.app.AlertDialog
 import android.content.Intent
 import android.database.Cursor
 import android.graphics.BitmapFactory
+import android.graphics.Color
 import android.net.Uri
 import android.os.Bundle
 import android.util.Base64
@@ -16,6 +17,8 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.example.smoliegift.database.DatabaseHelper
+import java.text.SimpleDateFormat
+import java.util.Locale
 
 class AdminTransaksiActivity : AppCompatActivity() {
 
@@ -55,6 +58,8 @@ class AdminTransaksiActivity : AppCompatActivity() {
                 val metode = cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COLUMN_PAYMENT_METHOD))
                 val total = cursor.getInt(cursor.getColumnIndexOrThrow(DatabaseHelper.COLUMN_GRAND_TOTAL))
                 val customImageBase64 = cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COLUMN_CUSTOM_IMAGE))
+                val rawDate = cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COLUMN_TRANS_DATE))
+                val eventInfo = cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COLUMN_EVENT_INFO))
 
                 val itemView = inflater.inflate(R.layout.item_transaksi_admin, llDaftar, false)
 
@@ -63,6 +68,28 @@ class AdminTransaksiActivity : AppCompatActivity() {
                 itemView.findViewById<TextView>(R.id.tvAdminTransWa).text = "WA: $wa"
                 itemView.findViewById<TextView>(R.id.tvAdminTransMetode).text = "Metode: $metode"
                 itemView.findViewById<TextView>(R.id.tvAdminTransTotal).text = "Rp $total"
+
+                // Tampilkan Info Tanggal/Waktu Acara jika ada (Input Pembeli)
+                val tvTanggal = itemView.findViewById<TextView>(R.id.tvAdminTransTanggal)
+                if (!eventInfo.isNullOrEmpty()) {
+                    tvTanggal.text = "Waktu Acara: $eventInfo"
+                    tvTanggal.setTextColor(Color.parseColor("#DD3827")) // Beri warna merah agar menonjol
+                } else {
+                    // Jika reguler, tampilkan waktu transaksi sistem
+                    try {
+                        val inputFormat = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
+                        val outputFormat = SimpleDateFormat("EEEE, dd MMM yyyy HH:mm", Locale("id", "ID"))
+                        val date = inputFormat.parse(rawDate)
+                        if (date != null) {
+                            tvTanggal.text = "Waktu: ${outputFormat.format(date)}"
+                        } else {
+                            tvTanggal.text = "Waktu: $rawDate"
+                        }
+                        tvTanggal.setTextColor(Color.parseColor("#64748B"))
+                    } catch (e: Exception) {
+                        tvTanggal.text = "Waktu: $rawDate"
+                    }
+                }
 
                 val ivCustomDesign = itemView.findViewById<ImageView>(R.id.ivCustomDesignAdmin)
                 val llContainerImage = itemView.findViewById<LinearLayout>(R.id.llContainerImage)
