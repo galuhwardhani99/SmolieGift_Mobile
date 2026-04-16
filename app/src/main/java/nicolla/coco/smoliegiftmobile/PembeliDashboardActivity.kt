@@ -20,10 +20,8 @@ import android.widget.*
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.Toolbar
-import androidx.fragment.app.Fragment
 import com.example.smoliegift.database.DatabaseHelper
 import com.google.android.material.bottomnavigation.BottomNavigationView
-import org.json.JSONArray
 import java.io.InputStream
 import java.util.Calendar
 
@@ -32,12 +30,11 @@ class PembeliDashboardActivity : AppCompatActivity() {
     private lateinit var dbHelper: DatabaseHelper
     private lateinit var gridLayoutProduk: GridLayout
     private lateinit var layoutHome: ScrollView
-    private lateinit var fragmentContainer: FrameLayout
     private lateinit var layoutProfile: ScrollView
     private lateinit var toolbar: Toolbar
+    private lateinit var acSearchProduk: AutoCompleteTextView
     private var isAdminView: Boolean = false
     private var currentUserEmail: String? = null
-    private var currentUserName: String? = null
 
     private var currentCustomImageBase64: String? = null
     private var btnPilihFileRef: Button? = null
@@ -75,8 +72,8 @@ class PembeliDashboardActivity : AppCompatActivity() {
 
         gridLayoutProduk = findViewById(R.id.glDaftarProdukPembeli)
         layoutHome = findViewById(R.id.layoutHomePembeli)
-        fragmentContainer = findViewById(R.id.fragmentContainerPembeli)
         layoutProfile = findViewById(R.id.layoutProfilePembeli)
+        acSearchProduk = findViewById(R.id.acSearchProduk)
 
         val bottomNav = findViewById<BottomNavigationView>(R.id.bottomNavPembeli)
         val btnLihatKeranjang = findViewById<Button>(R.id.btnLihatKeranjang)
@@ -99,10 +96,6 @@ class PembeliDashboardActivity : AppCompatActivity() {
                     showHome()
                     true
                 }
-                R.id.navigation_history -> {
-                    showHistory()
-                    true
-                }
                 R.id.navigation_profile -> {
                     showProfile()
                     true
@@ -116,32 +109,43 @@ class PembeliDashboardActivity : AppCompatActivity() {
         }
 
         loadKatalogProduk()
+        setupSearchAutoComplete()
+    }
+
+    private fun setupSearchAutoComplete() {
+        val cursor: Cursor = dbHelper.getSemuaProduk()
+        val listNamaProduk = mutableListOf<String>()
+        val listDataProduk = mutableListOf<Triple<String, Int, String?>>()
+
+        while (cursor.moveToNext()) {
+            val nama = cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COLUMN_PROD_NAME))
+            val harga = cursor.getInt(cursor.getColumnIndexOrThrow(DatabaseHelper.COLUMN_PROD_PRICE))
+            val image = cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COLUMN_PROD_IMAGE))
+            listNamaProduk.add(nama)
+            listDataProduk.add(Triple(nama, harga, image))
+        }
+        cursor.close()
+
+        val adapter = ArrayAdapter(this, android.R.layout.simple_dropdown_item_1line, listNamaProduk)
+        acSearchProduk.setAdapter(adapter)
+
+        acSearchProduk.setOnItemClickListener { parent, view, position, id ->
+            val selectedName = parent.getItemAtPosition(position) as String
+            val selectedProduct = listDataProduk.find { it.first == selectedName }
+            if (selectedProduct != null && !isAdminView) {
+                tampilkanDialogPesanan(selectedProduct.first, selectedProduct.second, selectedProduct.third)
+            }
+        }
     }
 
     private fun showHome() {
         layoutHome.visibility = View.VISIBLE
-        fragmentContainer.visibility = View.GONE
         layoutProfile.visibility = View.GONE
         toolbar.title = if (isAdminView) "Katalog Produk (Admin)" else "Smolie Gift"
     }
 
-    private fun showHistory() {
-        layoutHome.visibility = View.GONE
-        fragmentContainer.visibility = View.VISIBLE
-        layoutProfile.visibility = View.GONE
-        toolbar.title = "Riwayat Pesanan"
-        
-        if (currentUserEmail != null) {
-            val fragment = HistoryFragment.newInstance(currentUserEmail!!)
-            supportFragmentManager.beginTransaction()
-                .replace(R.id.fragmentContainerPembeli, fragment)
-                .commit()
-        }
-    }
-
     private fun showProfile() {
         layoutHome.visibility = View.GONE
-        fragmentContainer.visibility = View.GONE
         layoutProfile.visibility = View.VISIBLE
         toolbar.title = "Profil Saya"
     }
@@ -150,7 +154,6 @@ class PembeliDashboardActivity : AppCompatActivity() {
         val cursor = dbHelper.getUserByEmail(email)
         if (cursor != null && cursor.moveToFirst()) {
             val name = cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COLUMN_NAME))
-            currentUserName = name
             findViewById<TextView>(R.id.tvProfileName).text = name
             findViewById<TextView>(R.id.tvProfileEmail).text = email
             findViewById<TextView>(R.id.tvProfileUsername).text = "Username: " + cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COLUMN_USERNAME))
@@ -345,20 +348,12 @@ class PembeliDashboardActivity : AppCompatActivity() {
                 eventInfo = "$tanggalAcaraTerpilih $waktuAcaraTerpilih"
             }
 
-            val namaProdukFinal = if (eventInfo != null) {
-                "$namaProduk (Invited Card: $eventInfo)"
-            } else {
-                namaProduk
-            }
-
-            val berhasil = dbHelper.tambahKeKeranjang(namaProdukFinal, qtySaatIni, totalHargaFix, currentCustomImageBase64, fotoProdukBase64)
-            
+            val finalProductName = if (eventInfo != null) "$namaProduk (Invited Card: $eventInfo)" else namaProduk
+            val berhasil = dbHelper.tambahKeKeranjang(finalProductName, qtySaatIni, totalHargaFix, currentCustomImageBase64, fotoProdukBase64)
             if (berhasil) {
                 Toast.makeText(this, "Berhasil masuk keranjang!", Toast.LENGTH_SHORT).show()
-            } else {
-                Toast.makeText(this, "Gagal masuk keranjang!", Toast.LENGTH_SHORT).show()
+                dialog.dismiss()
             }
-            dialog.dismiss()
         }
 
         updateHargaTotal()
