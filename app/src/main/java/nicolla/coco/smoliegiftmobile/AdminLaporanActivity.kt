@@ -61,8 +61,7 @@ class AdminLaporanActivity : AppCompatActivity() {
                 val itemView = inflater.inflate(R.layout.item_transaksi_admin, container, false)
 
                 itemView.findViewById<TextView>(R.id.tvAdminTransId).text = "#INV-0$id"
-                
-                // STATUS SELESAI WARNA HIJAU
+
                 val tvStatus = itemView.findViewById<TextView>(R.id.tvAdminTransStatusLabel)
                 tvStatus.text = "SELESAI"
                 tvStatus.setTextColor(Color.parseColor("#2E7D32"))
@@ -71,7 +70,6 @@ class AdminLaporanActivity : AppCompatActivity() {
                 itemView.findViewById<TextView>(R.id.tvAdminTransTotal).text = "Rp $total"
                 itemView.findViewById<TextView>(R.id.tvAdminTransWa).text = "WA: $wa"
 
-                // MENAMPILKAN DAFTAR PRODUK YANG DIBELI
                 val tvProduk = itemView.findViewById<TextView>(R.id.tvAdminTransProduk)
                 if (!itemsJson.isNullOrEmpty()) {
                     try {
@@ -91,7 +89,6 @@ class AdminLaporanActivity : AppCompatActivity() {
                     tvProduk.text = "Produk: Tidak ada detail"
                 }
 
-                // Menampilkan Info Tanggal/Waktu Acara jika ada (Input Pembeli)
                 val tvTanggal = itemView.findViewById<TextView>(R.id.tvAdminTransTanggal)
                 if (!eventInfo.isNullOrEmpty()) {
                     tvTanggal.text = "Pesanan Invite Card : $eventInfo"
@@ -112,7 +109,6 @@ class AdminLaporanActivity : AppCompatActivity() {
                     }
                 }
 
-                // Menampilkan Gambar Custom (Kartu Ucapan) jika ada
                 val ivCustomDesign = itemView.findViewById<ImageView>(R.id.ivCustomDesignAdmin)
                 val llContainerImage = itemView.findViewById<LinearLayout>(R.id.llContainerImage)
 
@@ -129,7 +125,6 @@ class AdminLaporanActivity : AppCompatActivity() {
                     llContainerImage.visibility = View.GONE
                 }
 
-                // Sembunyikan elemen yang tidak perlu di laporan
                 itemView.findViewById<Button>(R.id.btnSelesaiPesanan).visibility = View.GONE
 
                 container.addView(itemView)

@@ -71,9 +71,9 @@ class DatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME
             put(COLUMN_NAME, "Admin Smolie")
             put(COLUMN_EMAIL, "admin@smolie.com")
             put(COLUMN_USERNAME, "adminsmolie")
-            put(COLUMN_GENDER, "Laki-laki")
-            put(COLUMN_PHONE, "081234567890")
-            put(COLUMN_ADDRESS, "Kantor Pusat")
+            put(COLUMN_GENDER, "Perempuan")
+            put(COLUMN_PHONE, "085222637152")
+            put(COLUMN_ADDRESS, "Toko Smolie Gift Surabaya")
             put(COLUMN_PASSWORD, "1")
             put(COLUMN_USERTYPE, "admin")
         }

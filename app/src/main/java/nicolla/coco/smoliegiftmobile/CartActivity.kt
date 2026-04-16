@@ -79,7 +79,6 @@ class CartActivity : AppCompatActivity() {
                 return@setOnClickListener
             }
 
-            // Ambil nomor WA user dari database berdasarkan Email
             val cursorUser = dbHelper.readableDatabase.rawQuery(
                 "SELECT ${DatabaseHelper.COLUMN_PHONE} FROM ${DatabaseHelper.TABLE_USERS} WHERE ${DatabaseHelper.COLUMN_EMAIL} = ?", 
                 arrayOf(email)
@@ -91,11 +90,9 @@ class CartActivity : AppCompatActivity() {
 
             val itemsJson = getCartItemsAsJson()
 
-            // Simpan pesanan menggunakan email sebagai identitas (disimpan di customer_name)
             val sukses = dbHelper.buatPesanan(email, waUser, metodeDipilih, grandTotal, imageBase64UntukPesanan, eventInfoUntukPesanan, itemsJson)
 
             if (sukses) {
-                // KURANGI STOK OTOMATIS
                 kurangiStokDariKeranjang()
                 
                 dbHelper.kosongkanKeranjang()

@@ -35,8 +35,7 @@ class AdminDashboardActivity : AppCompatActivity() {
 
         layoutHome = findViewById(R.id.layoutHome)
         layoutProfile = findViewById(R.id.layoutProfile)
-        
-        // Perbaikan Inisialisasi ID yang sesuai dengan XML
+
         ivAdminProfile = findViewById(R.id.ivAdminProfile)
         registerForContextMenu(ivAdminProfile)
 

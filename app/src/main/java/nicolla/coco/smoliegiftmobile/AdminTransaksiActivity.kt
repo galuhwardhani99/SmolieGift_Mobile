@@ -71,7 +71,6 @@ class AdminTransaksiActivity : AppCompatActivity() {
                 itemView.findViewById<TextView>(R.id.tvAdminTransMetode).text = "Metode: $metode"
                 itemView.findViewById<TextView>(R.id.tvAdminTransTotal).text = "Rp $total"
 
-                // MENAMPILKAN DAFTAR PRODUK YANG DIBELI
                 val tvProduk = itemView.findViewById<TextView>(R.id.tvAdminTransProduk)
                 if (!itemsJson.isNullOrEmpty()) {
                     try {
@@ -91,7 +90,6 @@ class AdminTransaksiActivity : AppCompatActivity() {
                     tvProduk.text = "Produk: Tidak ada detail"
                 }
 
-                // Tampilkan Info Tanggal/Waktu Acara jika ada (Input Pembeli)
                 val tvTanggal = itemView.findViewById<TextView>(R.id.tvAdminTransTanggal)
                 if (!eventInfo.isNullOrEmpty()) {
                     tvTanggal.text = "Pesanan Invite Card : $eventInfo"

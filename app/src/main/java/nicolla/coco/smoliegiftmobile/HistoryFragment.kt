@@ -46,7 +46,6 @@ class HistoryFragment : Fragment() {
         val db = dbHelper.readableDatabase
         val inflater = LayoutInflater.from(context)
 
-        // 1. Load Pending Orders (DIPROSES)
         val cursorPending = db.rawQuery(
             "SELECT * FROM ${DatabaseHelper.TABLE_TRANSACTIONS} WHERE ${DatabaseHelper.COLUMN_CUSTOMER_NAME} = ? ORDER BY ${DatabaseHelper.COLUMN_TRANS_ID} DESC",
             arrayOf(currentUserName)
@@ -57,7 +56,6 @@ class HistoryFragment : Fragment() {
         }
         cursorPending.close()
 
-        // 2. Load Completed Orders (SELESAI)
         val cursorHistory = db.rawQuery(
             "SELECT * FROM ${DatabaseHelper.TABLE_HISTORY} WHERE ${DatabaseHelper.COLUMN_CUSTOMER_NAME} = ? ORDER BY ${DatabaseHelper.COLUMN_TRANS_ID} DESC",
             arrayOf(currentUserName)
