@@ -10,7 +10,7 @@ import androidx.appcompat.app.AppCompatActivity
 import com.example.smoliegift.database.DatabaseHelper
 
 class LoginActivity : AppCompatActivity() {
-
+    //ini untuk menyambungkan databaseny
     private lateinit var dbHelper: DatabaseHelper
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -24,10 +24,11 @@ class LoginActivity : AppCompatActivity() {
         val btnLogin = findViewById<Button>(R.id.btnLogin)
         val tvRegister = findViewById<TextView>(R.id.tvGoToRegister)
 
+        //ini untuk fungsi tombol login ny
         btnLogin.setOnClickListener {
             val email = etEmail.text.toString().trim()
             val pass = etPassword.text.toString().trim()
-
+            //jka email kosong mka akan muncul komen ini
             if (email.isEmpty() || pass.isEmpty()) {
                 Toast.makeText(this, "Harap isi semua kolom", Toast.LENGTH_SHORT).show()
                 return@setOnClickListener

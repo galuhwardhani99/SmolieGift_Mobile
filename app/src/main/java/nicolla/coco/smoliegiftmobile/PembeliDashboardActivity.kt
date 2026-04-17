@@ -20,10 +20,9 @@ import android.widget.*
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.Toolbar
-import androidx.fragment.app.Fragment
+import androidx.core.widget.addTextChangedListener
 import com.example.smoliegift.database.DatabaseHelper
 import com.google.android.material.bottomnavigation.BottomNavigationView
-import org.json.JSONArray
 import java.io.InputStream
 import java.util.Calendar
 
@@ -35,6 +34,7 @@ class PembeliDashboardActivity : AppCompatActivity() {
     private lateinit var fragmentContainer: FrameLayout
     private lateinit var layoutProfile: ScrollView
     private lateinit var toolbar: Toolbar
+    private lateinit var acSearchProduk: AutoCompleteTextView
     private var isAdminView: Boolean = false
     private var currentUserEmail: String? = null
     private var currentUserName: String? = null
@@ -77,6 +77,7 @@ class PembeliDashboardActivity : AppCompatActivity() {
         layoutHome = findViewById(R.id.layoutHomePembeli)
         fragmentContainer = findViewById(R.id.fragmentContainerPembeli)
         layoutProfile = findViewById(R.id.layoutProfilePembeli)
+        acSearchProduk = findViewById(R.id.acSearchProduk)
 
         val bottomNav = findViewById<BottomNavigationView>(R.id.bottomNavPembeli)
         val btnLihatKeranjang = findViewById<Button>(R.id.btnLihatKeranjang)
@@ -116,6 +117,38 @@ class PembeliDashboardActivity : AppCompatActivity() {
         }
 
         loadKatalogProduk()
+        setupSearchAutoComplete()
+    }
+
+    private fun setupSearchAutoComplete() {
+        val cursor: Cursor = dbHelper.getSemuaProduk()
+        val listNamaProduk = mutableListOf<String>()
+
+        while (cursor.moveToNext()) {
+            val nama = cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COLUMN_PROD_NAME))
+            listNamaProduk.add(nama)
+        }
+        cursor.close()
+
+        val adapter = ArrayAdapter(this, android.R.layout.simple_dropdown_item_1line, listNamaProduk)
+        acSearchProduk.setAdapter(adapter)
+        acSearchProduk.setOnItemClickListener { parent, _, position, _ ->
+            val selectedName = parent.getItemAtPosition(position) as String
+            filterKatalogProduk(selectedName)
+        }
+
+        acSearchProduk.addTextChangedListener {
+            if (it.isNullOrEmpty()) {
+                loadKatalogProduk()
+            }
+        }
+    }
+
+    private fun filterKatalogProduk(query: String) {
+        gridLayoutProduk.removeAllViews()
+        val db = dbHelper.readableDatabase
+        val cursor = db.rawQuery("SELECT * FROM ${DatabaseHelper.TABLE_PRODUCTS} WHERE ${DatabaseHelper.COLUMN_PROD_NAME} = ?", arrayOf(query))
+        tampilkanDataKatalog(cursor)
     }
 
     private fun showHome() {
@@ -164,14 +197,18 @@ class PembeliDashboardActivity : AppCompatActivity() {
     private fun loadKatalogProduk() {
         gridLayoutProduk.removeAllViews()
         val cursor: Cursor = dbHelper.getSemuaProduk()
-        val inflater = LayoutInflater.from(this)
+        tampilkanDataKatalog(cursor)
+    }
 
+    private fun tampilkanDataKatalog(cursor: Cursor) {
+        val inflater = LayoutInflater.from(this)
         val displayMetrics = resources.displayMetrics
         val itemWidth = (displayMetrics.widthPixels / 2) - 48
 
         if (cursor.count == 0) {
             val tvKosong = TextView(this)
-            tvKosong.text = "Belum ada produk."
+            tvKosong.text = "Tidak ada produk."
+            tvKosong.setPadding(32, 32, 32, 32)
             gridLayoutProduk.addView(tvKosong)
         } else {
             while (cursor.moveToNext()) {
@@ -278,8 +315,6 @@ class PembeliDashboardActivity : AppCompatActivity() {
                 llContainerTanggalAcara.visibility = View.GONE
                 btnPilihTanggal.text = "Pilih Tanggal"
                 btnPilihWaktu.text = "Pilih Waktu"
-                btnPilihTanggal.setTextColor(Color.parseColor("#64748B"))
-                btnPilihWaktu.setTextColor(Color.parseColor("#64748B"))
                 tanggalAcaraTerpilih = ""
                 waktuAcaraTerpilih = ""
             }

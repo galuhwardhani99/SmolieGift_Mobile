@@ -11,6 +11,9 @@ import android.widget.*
 import androidx.fragment.app.Fragment
 import com.example.smoliegift.database.DatabaseHelper
 import org.json.JSONArray
+import java.text.SimpleDateFormat
+import java.util.Locale
+import java.util.TimeZone
 
 class HistoryFragment : Fragment() {
 
@@ -46,11 +49,11 @@ class HistoryFragment : Fragment() {
         val db = dbHelper.readableDatabase
         val inflater = LayoutInflater.from(context)
 
+        // Muat pesanan yang sedang diproses
         val cursorPending = db.rawQuery(
             "SELECT * FROM ${DatabaseHelper.TABLE_TRANSACTIONS} WHERE ${DatabaseHelper.COLUMN_CUSTOMER_NAME} = ? ORDER BY ${DatabaseHelper.COLUMN_TRANS_ID} DESC",
             arrayOf(currentUserName)
         )
-        
         while (cursorPending.moveToNext()) {
             addOrderToLayout(cursorPending, "DIPROSES", "#F4511E", inflater)
         }
@@ -60,7 +63,6 @@ class HistoryFragment : Fragment() {
             "SELECT * FROM ${DatabaseHelper.TABLE_HISTORY} WHERE ${DatabaseHelper.COLUMN_CUSTOMER_NAME} = ? ORDER BY ${DatabaseHelper.COLUMN_TRANS_ID} DESC",
             arrayOf(currentUserName)
         )
-
         while (cursorHistory.moveToNext()) {
             addOrderToLayout(cursorHistory, "SELESAI", "#2E7D32", inflater)
         }
@@ -78,33 +80,53 @@ class HistoryFragment : Fragment() {
     private fun addOrderToLayout(cursor: android.database.Cursor, status: String, statusColor: String, inflater: LayoutInflater) {
         val id = cursor.getInt(cursor.getColumnIndexOrThrow(DatabaseHelper.COLUMN_TRANS_ID))
         val total = cursor.getInt(cursor.getColumnIndexOrThrow(DatabaseHelper.COLUMN_GRAND_TOTAL))
-        val date = cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COLUMN_TRANS_DATE))
+        val rawDate = cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COLUMN_TRANS_DATE))
+        val eventInfo = cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COLUMN_EVENT_INFO))
         val itemsJson = cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COLUMN_ITEMS_JSON))
         val customImageBase64 = cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COLUMN_CUSTOM_IMAGE))
 
         val itemView = inflater.inflate(R.layout.item_transaksi_admin, llDaftarHistory, false)
         
-        itemView.findViewById<TextView>(R.id.tvAdminTransId).text = "INV-0$id"
+        itemView.findViewById<TextView>(R.id.tvAdminTransId).text = "#INV-0$id"
         
         val tvStatus = itemView.findViewById<TextView>(R.id.tvAdminTransStatusLabel)
         tvStatus.text = status
         tvStatus.setTextColor(Color.parseColor(statusColor))
         
-        itemView.findViewById<TextView>(R.id.tvAdminTransNama).text = "Pemesan: $currentUserName"
-        itemView.findViewById<TextView>(R.id.tvAdminTransTotal).text = "Rp $total"
-        itemView.findViewById<TextView>(R.id.tvAdminTransTanggal).text = "Waktu: $date"
+        itemView.findViewById<TextView>(R.id.tvAdminTransNama).text = "Pesanan Saya"
+        itemView.findViewById<TextView>(R.id.tvAdminTransTotal).text = "Total: Rp $total"
         
         val tvProduk = itemView.findViewById<TextView>(R.id.tvAdminTransProduk)
         if (!itemsJson.isNullOrEmpty()) {
             try {
                 val jsonArray = JSONArray(itemsJson)
-                val sb = StringBuilder("Produk:\n")
+                val sb = StringBuilder("Daftar Produk:\n")
                 for (i in 0 until jsonArray.length()) {
                     val obj = jsonArray.getJSONObject(i)
                     sb.append("- ${obj.getString("name")} (${obj.getInt("qty")} pcs)\n")
                 }
                 tvProduk.text = sb.toString().trim()
             } catch (e: Exception) { tvProduk.text = "Produk: -" }
+        }
+
+        val tvTanggal = itemView.findViewById<TextView>(R.id.tvAdminTransTanggal)
+        if (!eventInfo.isNullOrEmpty()) {
+            tvTanggal.text = "Waktu Acara: $eventInfo"
+            tvTanggal.setTextColor(Color.parseColor("#DD3827"))
+        } else {
+            try {
+                // Konversi Waktu ke WIB
+                val inputFormat = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
+                inputFormat.timeZone = TimeZone.getTimeZone("UTC")
+                val outputFormat = SimpleDateFormat("EEEE, dd MMM yyyy HH:mm 'WIB'", Locale("id", "ID"))
+                outputFormat.timeZone = TimeZone.getTimeZone("Asia/Jakarta")
+                
+                val date = inputFormat.parse(rawDate)
+                tvTanggal.text = if (date != null) "Waktu: ${outputFormat.format(date)}" else "Waktu: $rawDate"
+                tvTanggal.setTextColor(Color.parseColor("#64748B"))
+            } catch (e: Exception) {
+                tvTanggal.text = "Waktu: $rawDate"
+            }
         }
 
         val ivCustomDesign = itemView.findViewById<ImageView>(R.id.ivCustomDesignAdmin)

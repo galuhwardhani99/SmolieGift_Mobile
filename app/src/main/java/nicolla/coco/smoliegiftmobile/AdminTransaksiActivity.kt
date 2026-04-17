@@ -20,6 +20,7 @@ import com.example.smoliegift.database.DatabaseHelper
 import org.json.JSONArray
 import java.text.SimpleDateFormat
 import java.util.Locale
+import java.util.TimeZone
 
 class AdminTransaksiActivity : AppCompatActivity() {
 
@@ -92,15 +93,20 @@ class AdminTransaksiActivity : AppCompatActivity() {
 
                 val tvTanggal = itemView.findViewById<TextView>(R.id.tvAdminTransTanggal)
                 if (!eventInfo.isNullOrEmpty()) {
-                    tvTanggal.text = "Pesanan Invite Card : $eventInfo"
+                    tvTanggal.text = "Info Acara: $eventInfo"
                     tvTanggal.setTextColor(Color.parseColor("#DD3827"))
                 } else {
                     try {
+                        // Konversi UTC dari DB ke WIB (Asia/Jakarta)
                         val inputFormat = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
-                        val outputFormat = SimpleDateFormat("EEEE, dd MMM yyyy HH:mm", Locale("id", "ID"))
+                        inputFormat.timeZone = TimeZone.getTimeZone("UTC")
+                        
+                        val outputFormat = SimpleDateFormat("EEEE, dd MMM yyyy HH:mm 'WIB'", Locale("id", "ID"))
+                        outputFormat.timeZone = TimeZone.getTimeZone("Asia/Jakarta")
+                        
                         val date = inputFormat.parse(rawDate)
                         if (date != null) {
-                            tvTanggal.text = "Waktu: ${outputFormat.format(date)}"
+                            tvTanggal.text = "Waktu Pesan: ${outputFormat.format(date)}"
                         } else {
                             tvTanggal.text = "Waktu: $rawDate"
                         }

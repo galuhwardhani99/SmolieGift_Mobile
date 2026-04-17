@@ -16,6 +16,7 @@ import com.example.smoliegift.database.DatabaseHelper
 import org.json.JSONArray
 import java.text.SimpleDateFormat
 import java.util.Locale
+import java.util.TimeZone
 
 class AdminLaporanActivity : AppCompatActivity() {
 
@@ -77,29 +78,30 @@ class AdminLaporanActivity : AppCompatActivity() {
                         val sb = StringBuilder("Produk:\n")
                         for (i in 0 until jsonArray.length()) {
                             val obj = jsonArray.getJSONObject(i)
-                            val pName = obj.getString("name")
-                            val pQty = obj.getInt("qty")
-                            sb.append("- $pName ($pQty pcs)\n")
+                            sb.append("- ${obj.getString("name")} (${obj.getInt("qty")} pcs)\n")
                         }
                         tvProduk.text = sb.toString().trim()
                     } catch (e: Exception) {
                         tvProduk.text = "Produk: Error memuat data"
                     }
-                } else {
-                    tvProduk.text = "Produk: Tidak ada detail"
                 }
 
                 val tvTanggal = itemView.findViewById<TextView>(R.id.tvAdminTransTanggal)
                 if (!eventInfo.isNullOrEmpty()) {
-                    tvTanggal.text = "Pesanan Invite Card : $eventInfo"
+                    tvTanggal.text = "Info Acara: $eventInfo"
                     tvTanggal.setTextColor(Color.parseColor("#DD3827"))
                 } else {
                     try {
+                        // Konversi UTC dari DB ke WIB (Asia/Jakarta)
                         val inputFormat = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
-                        val outputFormat = SimpleDateFormat("EEEE, dd MMM yyyy HH:mm", Locale("id", "ID"))
+                        inputFormat.timeZone = TimeZone.getTimeZone("UTC")
+                        
+                        val outputFormat = SimpleDateFormat("EEEE, dd MMM yyyy HH:mm 'WIB'", Locale("id", "ID"))
+                        outputFormat.timeZone = TimeZone.getTimeZone("Asia/Jakarta")
+                        
                         val date = inputFormat.parse(rawDate)
                         if (date != null) {
-                            tvTanggal.text = "Selesai: ${outputFormat.format(date)}"
+                            tvTanggal.text = "Selesai pada: ${outputFormat.format(date)}"
                         } else {
                             tvTanggal.text = "Waktu: $rawDate"
                         }
