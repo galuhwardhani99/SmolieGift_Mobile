@@ -56,7 +56,7 @@ class DatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME
 
         const val TABLE_HISTORY = "history"
     }
-
+     //bikin database ny
     override fun onCreate(db: SQLiteDatabase) {
         db.execSQL("CREATE TABLE $TABLE_USERS ($COLUMN_ID INTEGER PRIMARY KEY AUTOINCREMENT, $COLUMN_NAME TEXT, $COLUMN_EMAIL TEXT UNIQUE, $COLUMN_USERNAME TEXT, $COLUMN_GENDER TEXT, $COLUMN_PHONE TEXT, $COLUMN_ADDRESS TEXT, $COLUMN_PASSWORD TEXT, $COLUMN_USERTYPE TEXT)")
 
