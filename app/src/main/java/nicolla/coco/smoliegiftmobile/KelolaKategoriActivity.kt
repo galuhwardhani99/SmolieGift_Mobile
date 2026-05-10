@@ -1,27 +1,26 @@
 package nicolla.coco.smoliegiftmobile
 
 import android.app.AlertDialog
+import android.database.Cursor
 import android.os.Bundle
 import android.view.LayoutInflater
-import android.widget.Button
-import android.widget.EditText
-import android.widget.LinearLayout
-import android.widget.TextView
-import android.widget.Toast
+import android.view.View
+import android.view.ViewGroup
+import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
 import com.example.smoliegift.database.DatabaseHelper
 
 class KelolaKategoriActivity : AppCompatActivity() {
 
     private lateinit var dbHelper: DatabaseHelper
-    private lateinit var llDaftarKategori: LinearLayout
+    private lateinit var lvDaftarKategori: ListView
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_kelola_kategori)
 
         dbHelper = DatabaseHelper(this)
-        llDaftarKategori = findViewById(R.id.llDaftarKategori)
+        lvDaftarKategori = findViewById(R.id.lvDaftarKategori)
         val btnTambah = findViewById<Button>(R.id.btnTambahKategori)
 
         loadKategori()
@@ -32,33 +31,31 @@ class KelolaKategoriActivity : AppCompatActivity() {
     }
 
     private fun loadKategori() {
-        llDaftarKategori.removeAllViews()
-        val cursor = dbHelper.getSemuaKategori()
-        val inflater = LayoutInflater.from(this)
+        val cursor: Cursor = dbHelper.getSemuaKategori()
+        val adapter = object : CursorAdapter(this, cursor, 0) {
+            override fun newView(context: android.content.Context?, cursor: Cursor?, parent: ViewGroup?): View {
+                return LayoutInflater.from(context).inflate(R.layout.item_kategori, parent, false)
+            }
 
-        if (cursor.count == 0) {
-            val tv = TextView(this)
-            tv.text = "Belum ada kategori."
-            llDaftarKategori.addView(tv)
-        } else {
-            while (cursor.moveToNext()) {
-                val id = cursor.getInt(cursor.getColumnIndexOrThrow(DatabaseHelper.COLUMN_CAT_ID))
+            override fun bindView(view: View?, context: android.content.Context?, cursor: Cursor?) {
+                if (view == null || cursor == null) return
+
+                // Menggunakan "_id" karena di DatabaseHelper query sudah di-alias: COLUMN_CAT_ID AS _id
+                val id = cursor.getInt(cursor.getColumnIndexOrThrow("_id"))
                 val nama = cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COLUMN_CAT_NAME))
 
-                val itemView = inflater.inflate(R.layout.item_kategori, llDaftarKategori, false)
-                itemView.findViewById<TextView>(R.id.tvNamaKategori).text = nama
+                view.findViewById<TextView>(R.id.tvNamaKategori).text = nama
                 
-                itemView.findViewById<Button>(R.id.btnEditKategori).setOnClickListener {
+                view.findViewById<Button>(R.id.btnEditKategori).setOnClickListener {
                     tampilkanDialogEdit(id, nama)
                 }
                 
-                itemView.findViewById<Button>(R.id.btnHapusKategori).setOnClickListener {
+                view.findViewById<Button>(R.id.btnHapusKategori).setOnClickListener {
                     konfirmasiHapus(id, nama)
                 }
-                llDaftarKategori.addView(itemView)
             }
         }
-        cursor.close()
+        lvDaftarKategori.adapter = adapter
     }
 
     private fun tampilkanDialogTambah() {

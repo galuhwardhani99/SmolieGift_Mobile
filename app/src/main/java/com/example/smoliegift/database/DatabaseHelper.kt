@@ -126,7 +126,7 @@ class DatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME
         return result != -1L
     }
 
-    fun getSemuaKeranjang(): Cursor = this.readableDatabase.rawQuery("SELECT * FROM $TABLE_CART", null)
+    fun getSemuaKeranjang(): Cursor = this.readableDatabase.rawQuery("SELECT $COLUMN_CART_ID AS _id, * FROM $TABLE_CART", null)
     fun kosongkanKeranjang() { val db = this.writableDatabase; db.execSQL("DELETE FROM $TABLE_CART"); db.close() }
 
     fun hapusItemKeranjang(id: Int): Boolean {
@@ -157,7 +157,7 @@ class DatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME
         return result > 0
     }
 
-    fun getSemuaProduk(): Cursor = this.readableDatabase.rawQuery("SELECT * FROM $TABLE_PRODUCTS", null)
+    fun getSemuaProduk(): Cursor = this.readableDatabase.rawQuery("SELECT $COLUMN_PROD_ID AS _id, * FROM $TABLE_PRODUCTS", null)
     fun hapusProduk(idProduk: Int): Boolean {
         val db = this.writableDatabase; val result = db.delete(TABLE_PRODUCTS, "$COLUMN_PROD_ID=?", arrayOf(idProduk.toString())); db.close()
         return result > 0
@@ -177,7 +177,7 @@ class DatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME
         return affectedRows > 0
     }
 
-    fun getSemuaKategori(): Cursor = this.readableDatabase.rawQuery("SELECT * FROM $TABLE_CATEGORIES", null)
+    fun getSemuaKategori(): Cursor = this.readableDatabase.rawQuery("SELECT $COLUMN_CAT_ID AS _id, * FROM $TABLE_CATEGORIES", null)
     fun tambahKategori(nama: String): Boolean {
         val db = this.writableDatabase
         val values = ContentValues().apply { put(COLUMN_CAT_NAME, nama) }
@@ -241,5 +241,7 @@ class DatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME
         return false
     }
 
-    fun getLaporanPenjualan(): Cursor = this.readableDatabase.rawQuery("SELECT * FROM $TABLE_HISTORY ORDER BY $COLUMN_TRANS_ID DESC", null)
+    fun getLaporanPenjualan(): Cursor = this.readableDatabase.rawQuery("SELECT $COLUMN_TRANS_ID AS _id, * FROM $TABLE_HISTORY ORDER BY $COLUMN_TRANS_ID DESC", null)
+
+    fun getSemuaTransaksi(): Cursor = this.readableDatabase.rawQuery("SELECT $COLUMN_TRANS_ID AS _id, * FROM $TABLE_TRANSACTIONS", null)
 }

@@ -42,14 +42,11 @@
         <TextView android:layout_width="40dp" android:layout_height="wrap_content" android:text="Aksi" android:textStyle="bold" android:textColor="#DD3827" android:textSize="12sp" android:gravity="center"/>
     </LinearLayout>
 
-    <ScrollView
+    <ListView
+        android:id="@+id/lvDaftarProdukAdmin"
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_weight="1">
-        <LinearLayout
-            android:id="@+id/llDaftarProdukAdmin"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical"/>
-    </ScrollView>
+        android:layout_weight="1"
+        android:divider="@null"
+        android:dividerHeight="0dp"/>
 </LinearLayout>

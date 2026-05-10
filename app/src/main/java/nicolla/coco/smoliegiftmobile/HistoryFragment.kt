@@ -19,7 +19,7 @@ class HistoryFragment : Fragment() {
 
     private lateinit var dbHelper: DatabaseHelper
     private lateinit var llDaftarHistory: LinearLayout
-    private var currentUserName: String? = null
+    private var currentUserEmail: String? = null
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -29,7 +29,7 @@ class HistoryFragment : Fragment() {
         dbHelper = DatabaseHelper(requireContext())
         llDaftarHistory = view.findViewById(R.id.llDaftarHistoryPembeli)
         
-        currentUserName = arguments?.getString("USER_NAME")
+        currentUserEmail = arguments?.getString("USER_EMAIL")
         
         loadOrderHistory()
         return view
@@ -38,9 +38,9 @@ class HistoryFragment : Fragment() {
     private fun loadOrderHistory() {
         llDaftarHistory.removeAllViews()
         
-        if (currentUserName == null) {
+        if (currentUserEmail == null) {
             val tvKosong = TextView(context)
-            tvKosong.text = "Gagal memuat riwayat. User tidak dikenal."
+            tvKosong.text = "Gagal memuat riwayat. Sesi tidak valid."
             tvKosong.setPadding(16, 16, 16, 16)
             llDaftarHistory.addView(tvKosong)
             return
@@ -49,19 +49,20 @@ class HistoryFragment : Fragment() {
         val db = dbHelper.readableDatabase
         val inflater = LayoutInflater.from(context)
 
-        // Muat pesanan yang sedang diproses
+        // Load Pending Orders
         val cursorPending = db.rawQuery(
             "SELECT * FROM ${DatabaseHelper.TABLE_TRANSACTIONS} WHERE ${DatabaseHelper.COLUMN_CUSTOMER_NAME} = ? ORDER BY ${DatabaseHelper.COLUMN_TRANS_ID} DESC",
-            arrayOf(currentUserName)
+            arrayOf(currentUserEmail)
         )
         while (cursorPending.moveToNext()) {
             addOrderToLayout(cursorPending, "DIPROSES", "#F4511E", inflater)
         }
         cursorPending.close()
 
+        // Load Completed Orders
         val cursorHistory = db.rawQuery(
             "SELECT * FROM ${DatabaseHelper.TABLE_HISTORY} WHERE ${DatabaseHelper.COLUMN_CUSTOMER_NAME} = ? ORDER BY ${DatabaseHelper.COLUMN_TRANS_ID} DESC",
-            arrayOf(currentUserName)
+            arrayOf(currentUserEmail)
         )
         while (cursorHistory.moveToNext()) {
             addOrderToLayout(cursorHistory, "SELESAI", "#2E7D32", inflater)
@@ -111,11 +112,10 @@ class HistoryFragment : Fragment() {
 
         val tvTanggal = itemView.findViewById<TextView>(R.id.tvAdminTransTanggal)
         if (!eventInfo.isNullOrEmpty()) {
-            tvTanggal.text = "Waktu Acara: $eventInfo"
+            tvTanggal.text = "Info Acara: $eventInfo"
             tvTanggal.setTextColor(Color.parseColor("#DD3827"))
         } else {
             try {
-                // Konversi Waktu ke WIB
                 val inputFormat = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
                 inputFormat.timeZone = TimeZone.getTimeZone("UTC")
                 val outputFormat = SimpleDateFormat("EEEE, dd MMM yyyy HH:mm 'WIB'", Locale("id", "ID"))
@@ -153,10 +153,10 @@ class HistoryFragment : Fragment() {
     }
 
     companion object {
-        fun newInstance(userName: String): HistoryFragment {
+        fun newInstance(userEmail: String): HistoryFragment {
             val fragment = HistoryFragment()
             val args = Bundle()
-            args.putString("USER_NAME", userName)
+            args.putString("USER_EMAIL", userEmail)
             fragment.arguments = args
             return fragment
         }

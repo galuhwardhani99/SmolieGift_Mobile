@@ -9,13 +9,9 @@ import android.net.Uri
 import android.os.Bundle
 import android.util.Base64
 import android.view.LayoutInflater
-import android.widget.ArrayAdapter
-import android.widget.Button
-import android.widget.EditText
-import android.widget.LinearLayout
-import android.widget.Spinner
-import android.widget.TextView
-import android.widget.Toast
+import android.view.View
+import android.view.ViewGroup
+import android.widget.*
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import com.example.smoliegift.database.DatabaseHelper
@@ -24,7 +20,7 @@ import java.io.ByteArrayOutputStream
 class KelolaProdukActivity : AppCompatActivity() {
 
     private lateinit var dbHelper: DatabaseHelper
-    private lateinit var llDaftarProduk: LinearLayout
+    private lateinit var lvDaftarProduk: ListView
 
     private var sImage: String = ""
 
@@ -48,7 +44,7 @@ class KelolaProdukActivity : AppCompatActivity() {
         setContentView(R.layout.activity_kelola_produk)
 
         dbHelper = DatabaseHelper(this)
-        llDaftarProduk = findViewById(R.id.llDaftarProdukAdmin)
+        lvDaftarProduk = findViewById(R.id.lvDaftarProdukAdmin)
         val btnTambah = findViewById<Button>(R.id.btnTambahProdukBaru)
 
         loadDataProduk()
@@ -70,32 +66,30 @@ class KelolaProdukActivity : AppCompatActivity() {
     }
 
     private fun loadDataProduk() {
-        llDaftarProduk.removeAllViews()
         val cursor: Cursor = dbHelper.getSemuaProduk()
-        val inflater = LayoutInflater.from(this)
+        val adapter = object : CursorAdapter(this, cursor, 0) {
+            override fun newView(context: android.content.Context?, cursor: Cursor?, parent: ViewGroup?): View {
+                return LayoutInflater.from(context).inflate(R.layout.item_produk_admin, parent, false)
+            }
 
-        if (cursor.count == 0) {
-            val tvKosong = TextView(this)
-            tvKosong.text = "Belum ada produk. Silakan tambah menu."
-            llDaftarProduk.addView(tvKosong)
-        } else {
-            while (cursor.moveToNext()) {
-                val id = cursor.getInt(cursor.getColumnIndexOrThrow(DatabaseHelper.COLUMN_PROD_ID))
+            override fun bindView(view: View?, context: android.content.Context?, cursor: Cursor?) {
+                if (view == null || cursor == null) return
+
+                // Gunakan "_id" karena sudah di-alias di DatabaseHelper
+                val id = cursor.getInt(cursor.getColumnIndexOrThrow("_id"))
                 val nama = cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COLUMN_PROD_NAME))
                 val kategori = cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COLUMN_PROD_CAT))
                 val harga = cursor.getInt(cursor.getColumnIndexOrThrow(DatabaseHelper.COLUMN_PROD_PRICE))
                 val stok = cursor.getInt(cursor.getColumnIndexOrThrow(DatabaseHelper.COLUMN_PROD_STOCK))
                 val image = cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COLUMN_PROD_IMAGE))
 
-                val itemView = inflater.inflate(R.layout.item_produk_admin, llDaftarProduk, false)
+                view.findViewById<TextView>(R.id.tvAdminProdName).text = nama
+                view.findViewById<TextView>(R.id.tvAdminProdCat).text = kategori
+                view.findViewById<TextView>(R.id.tvAdminProdPrice).text = "Rp $harga"
+                view.findViewById<TextView>(R.id.tvAdminProdStock).text = "Stok: $stok"
 
-                itemView.findViewById<TextView>(R.id.tvAdminProdName).text = nama
-                itemView.findViewById<TextView>(R.id.tvAdminProdCat).text = kategori
-                itemView.findViewById<TextView>(R.id.tvAdminProdPrice).text = "Rp $harga"
-                itemView.findViewById<TextView>(R.id.tvAdminProdStock).text = "Stok: $stok"
-
-                val btnEdit = itemView.findViewById<Button>(R.id.btnAdminEditProd)
-                val btnHapus = itemView.findViewById<Button>(R.id.btnAdminHapusProd)
+                val btnEdit = view.findViewById<Button>(R.id.btnAdminEditProd)
+                val btnHapus = view.findViewById<Button>(R.id.btnAdminHapusProd)
 
                 btnEdit.setOnClickListener {
                     tampilkanFormEdit(id, nama, kategori, harga, stok, image)
@@ -104,11 +98,9 @@ class KelolaProdukActivity : AppCompatActivity() {
                 btnHapus.setOnClickListener {
                     konfirmasiHapus(id, nama)
                 }
-
-                llDaftarProduk.addView(itemView)
             }
         }
-        cursor.close()
+        lvDaftarProduk.adapter = adapter
     }
 
     private fun getKategoriList(): List<String> {
