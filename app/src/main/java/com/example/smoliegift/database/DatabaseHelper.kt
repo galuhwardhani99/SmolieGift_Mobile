@@ -10,7 +10,7 @@ import com.example.smoliegift.models.User
 class DatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME, null, DATABASE_VERSION) {
 
     companion object {
-        private const val DATABASE_VERSION = 12
+        private const val DATABASE_VERSION = 14
         private const val DATABASE_NAME = "SmolieGift.db"
 
         const val TABLE_USERS = "users"
