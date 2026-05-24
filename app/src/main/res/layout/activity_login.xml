@@ -1,68 +1,115 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:src="@drawable/smolie"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
     android:padding="32dp"
     android:gravity="center"
-    android:background="#FFFFFF">
+    android:background="#F8F9FA">
+
+    <!-- Logo Lingkaran Mewah dengan Shadow & Border -->
+    <com.google.android.material.card.MaterialCardView
+        android:layout_width="160dp"
+        android:layout_height="160dp"
+        app:cardCornerRadius="80dp"
+        app:cardElevation="12dp"
+        android:layout_marginBottom="32dp"
+        app:strokeColor="#DD3827"
+        app:strokeWidth="3dp"
+        app:cardBackgroundColor="#FFFFFF"
+        app:cardPreventCornerOverlap="false">
+        <ImageView
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:src="@drawable/smolie"
+            android:scaleType="centerCrop"
+            android:contentDescription="Logo Smolie"/>
+    </com.google.android.material.card.MaterialCardView>
 
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Login Akun Smolie"
-        android:textSize="24sp"
+        android:text="Smolie Gift"
+        android:textSize="36sp"
         android:textStyle="bold"
-        android:textColor="#2D3142"
-        android:layout_marginBottom="32dp"/>
+        android:textColor="#DD3827"
+        android:fontFamily="sans-serif-black"
+        android:letterSpacing="0.05"/>
 
-    <EditText
-        android:id="@+id/etLoginEmail"
-        android:layout_width="match_parent"
-        android:layout_height="50dp"
-        android:hint="Email"
-        android:inputType="textEmailAddress"
-        android:background="#F5F6F8"
-        android:paddingStart="16dp"
-        android:paddingEnd="16dp"
-        android:textColor="#2D3142"
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="40dp"
+        android:text="Silahkan Login Akun"
+        android:textColor="#64748B"
         android:textSize="14sp"
-        android:layout_marginBottom="16dp"/>
+        android:textStyle="italic" />
 
-    <EditText
-        android:id="@+id/etLoginPassword"
+    <com.google.android.material.card.MaterialCardView
         android:layout_width="match_parent"
-        android:layout_height="50dp"
-        android:hint="Password"
-        android:inputType="textPassword"
-        android:background="#F5F6F8"
-        android:paddingStart="16dp"
-        android:paddingEnd="16dp"
-        android:textColor="#2D3142"
-        android:textSize="14sp"
-        android:layout_marginBottom="24dp"/>
+        android:layout_height="wrap_content"
+        app:cardCornerRadius="16dp"
+        app:cardElevation="2dp"
+        app:strokeWidth="0dp"
+        android:layout_marginBottom="16dp"
+        app:cardBackgroundColor="#FFFFFF">
+        <EditText
+            android:id="@+id/etLoginEmail"
+            android:layout_width="match_parent"
+            android:layout_height="55dp"
+            android:hint="Email Address"
+            android:inputType="textEmailAddress"
+            android:background="@android:color/transparent"
+            android:paddingStart="20dp"
+            android:paddingEnd="20dp"
+            android:textColor="#2D3142"
+            android:textSize="14sp"/>
+    </com.google.android.material.card.MaterialCardView>
+
+    <com.google.android.material.card.MaterialCardView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:cardCornerRadius="16dp"
+        app:cardElevation="2dp"
+        android:layout_marginBottom="32dp"
+        app:strokeWidth="0dp"
+        app:cardBackgroundColor="#FFFFFF">
+        <EditText
+            android:id="@+id/etLoginPassword"
+            android:layout_width="match_parent"
+            android:layout_height="55dp"
+            android:hint="Password"
+            android:inputType="textPassword"
+            android:background="@android:color/transparent"
+            android:paddingStart="20dp"
+            android:paddingEnd="20dp"
+            android:textColor="#2D3142"
+            android:textSize="14sp"/>
+    </com.google.android.material.card.MaterialCardView>
 
     <Button
         android:id="@+id/btnLogin"
         android:layout_width="match_parent"
-        android:layout_height="55dp"
-        android:text="Masuk Sekarang"
+        android:layout_height="60dp"
         android:backgroundTint="#DD3827"
+        android:elevation="6dp"
+        android:letterSpacing="0.05"
+        android:text="MASUK"
         android:textColor="#FFFFFF"
-        android:textSize="14sp"
+        android:textSize="16sp"
         android:textStyle="bold"
-        app:cornerRadius="8dp"/>
+        app:cornerRadius="16dp" />
 
     <TextView
         android:id="@+id/tvGoToRegister"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Belum punya akun? Daftar disini"
-        android:layout_marginTop="24dp"
+        android:layout_marginTop="32dp"
         android:textColor="#DD3827"
         android:textSize="14sp"
-        android:textStyle="bold"/>
+        android:textStyle="bold"
+        android:padding="8dp"/>
 
 </LinearLayout>

@@ -10,6 +10,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.widget.Toolbar
 import com.example.smoliegift.database.DatabaseHelper
 import org.json.JSONArray
 import org.json.JSONObject
@@ -21,6 +22,7 @@ class CartActivity : AppCompatActivity() {
     private var eventInfoUntukPesanan: String? = null
     private var waUser: String = "-"
     private var currentUserEmail: String? = null
+    private var isKasirMode: Boolean = false
 
     private var metodeDipilih = "Tunai"
 
@@ -28,18 +30,33 @@ class CartActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_cart)
 
+        val toolbar = findViewById<Toolbar>(R.id.toolbarCart)
+        setSupportActionBar(toolbar)
+        supportActionBar?.setDisplayHomeAsUpEnabled(true)
+        toolbar.setNavigationOnClickListener { finish() }
+
         dbHelper = DatabaseHelper(this)
         currentUserEmail = intent.getStringExtra("USER_EMAIL")
+        isKasirMode = intent.getBooleanExtra("IS_KASIR_MODE", false)
 
         val llDaftar = findViewById<LinearLayout>(R.id.llDaftarKeranjang)
         val tvTotalAkhir = findViewById<TextView>(R.id.tvTotalBayarAkhir)
         val btnKonfirmasi = findViewById<Button>(R.id.btnKonfirmasi)
         val etNama = findViewById<EditText>(R.id.etNamaPemesan)
+        val tvLabelNama = findViewById<TextView>(R.id.tvLabelNamaPemesan)
 
-        // Tampilkan email pada input nama pemesan dan buat tidak bisa diedit
-        etNama.setText(currentUserEmail)
-        etNama.isEnabled = false
-        etNama.setTextColor(Color.parseColor("#64748B"))
+        if (isKasirMode) {
+            toolbar.title = "Input Penjualan Toko"
+            tvLabelNama.text = "NAMA PEMBELI (MANUAL)"
+            etNama.hint = "Masukkan Nama Pembeli"
+            etNama.isEnabled = true
+            etNama.setText("") // Kosongkan agar kasir bisa input nama pembeli
+        } else {
+            // Tampilkan email pada input nama pemesan dan buat tidak bisa diedit
+            etNama.setText(currentUserEmail)
+            etNama.isEnabled = false
+            etNama.setTextColor(Color.parseColor("#64748B"))
+        }
         
         val btnMetodeTunai = findViewById<Button>(R.id.btnMetodeTunai)
         val btnMetodeQris = findViewById<Button>(R.id.btnMetodeQris)
@@ -67,39 +84,44 @@ class CartActivity : AppCompatActivity() {
         }
 
         btnKonfirmasi.setOnClickListener {
-            val email = currentUserEmail ?: ""
+            val namaPembeli = etNama.text.toString().trim()
 
             if (grandTotal <= 0) {
-                Toast.makeText(this, "Keranjang Anda masih kosong!", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, "Keranjang masih kosong!", Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
 
-            if (email.isEmpty()) {
-                Toast.makeText(this, "Sesi tidak valid, silakan login ulang.", Toast.LENGTH_SHORT).show()
+            if (namaPembeli.isEmpty()) {
+                Toast.makeText(this, "Nama pembeli tidak boleh kosong!", Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
 
-            val cursorUser = dbHelper.readableDatabase.rawQuery(
-                "SELECT ${DatabaseHelper.COLUMN_PHONE} FROM ${DatabaseHelper.TABLE_USERS} WHERE ${DatabaseHelper.COLUMN_EMAIL} = ?", 
-                arrayOf(email)
-            )
-            if (cursorUser.moveToFirst()) {
-                waUser = cursorUser.getString(0)
+            if (!isKasirMode) {
+                val cursorUser = dbHelper.readableDatabase.rawQuery(
+                    "SELECT ${DatabaseHelper.COLUMN_PHONE} FROM ${DatabaseHelper.TABLE_USERS} WHERE ${DatabaseHelper.COLUMN_EMAIL} = ?", 
+                    arrayOf(namaPembeli)
+                )
+                if (cursorUser.moveToFirst()) {
+                    waUser = cursorUser.getString(0)
+                }
+                cursorUser.close()
+            } else {
+                waUser = "Beli di Toko" // Info tambahan untuk kasir
             }
-            cursorUser.close()
 
             val itemsJson = getCartItemsAsJson()
 
-            val sukses = dbHelper.buatPesanan(email, waUser, metodeDipilih, grandTotal, imageBase64UntukPesanan, eventInfoUntukPesanan, itemsJson)
+            val sukses = dbHelper.buatPesanan(namaPembeli, waUser, metodeDipilih, grandTotal, imageBase64UntukPesanan, eventInfoUntukPesanan, itemsJson)
 
             if (sukses) {
                 kurangiStokDariKeranjang()
-                
                 dbHelper.kosongkanKeranjang()
-                Toast.makeText(this, "Pesanan Berhasil!", Toast.LENGTH_LONG).show()
+                
+                val msg = if(isKasirMode) "Penjualan Toko Berhasil!" else "Pesanan Berhasil!"
+                Toast.makeText(this, msg, Toast.LENGTH_LONG).show()
                 finish()
             } else {
-                Toast.makeText(this, "Gagal menyimpan pesanan.", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, "Gagal menyimpan transaksi.", Toast.LENGTH_SHORT).show()
             }
         }
     }
@@ -136,7 +158,7 @@ class CartActivity : AppCompatActivity() {
 
         if (cursor.count == 0) {
             val tvKosong = TextView(this)
-            tvKosong.text = "Keranjang Anda masih kosong."
+            tvKosong.text = "Keranjang kosong."
             tvKosong.setPadding(32, 32, 32, 32)
             container.addView(tvKosong)
         } else {
@@ -167,7 +189,6 @@ class CartActivity : AppCompatActivity() {
 
                 itemView.findViewById<Button>(R.id.btnHapusItemKeranjang).setOnClickListener {
                     if (dbHelper.hapusItemKeranjang(cartId)) {
-                        Toast.makeText(this, "Item dihapus", Toast.LENGTH_SHORT).show()
                         recreate()
                     }
                 }

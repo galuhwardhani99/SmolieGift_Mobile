@@ -8,6 +8,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.widget.Toolbar
 import com.example.smoliegift.database.DatabaseHelper
 
 class KelolaKategoriActivity : AppCompatActivity() {
@@ -18,6 +19,11 @@ class KelolaKategoriActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_kelola_kategori)
+
+        val toolbar = findViewById<Toolbar>(R.id.toolbarKategori)
+        setSupportActionBar(toolbar)
+        supportActionBar?.setDisplayHomeAsUpEnabled(true)
+        toolbar.setNavigationOnClickListener { finish() }
 
         dbHelper = DatabaseHelper(this)
         lvDaftarKategori = findViewById(R.id.lvDaftarKategori)
@@ -40,7 +46,6 @@ class KelolaKategoriActivity : AppCompatActivity() {
             override fun bindView(view: View?, context: android.content.Context?, cursor: Cursor?) {
                 if (view == null || cursor == null) return
 
-                // Menggunakan "_id" karena di DatabaseHelper query sudah di-alias: COLUMN_CAT_ID AS _id
                 val id = cursor.getInt(cursor.getColumnIndexOrThrow("_id"))
                 val nama = cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COLUMN_CAT_NAME))
 

@@ -1,4 +1,4 @@
-package com.example.smoliegift.models
+package nicolla.coco.smoliegiftmobile
 
 data class User(
     val id: Int = -1,

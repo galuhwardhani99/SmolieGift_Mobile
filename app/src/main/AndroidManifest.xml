@@ -27,6 +27,7 @@
         <activity android:name=".RegisterActivity" />
         <activity android:name=".PembeliDashboardActivity" />
         <activity android:name=".AdminDashboardActivity" />
+        <activity android:name=".KasirDashboardActivity" />
         <activity android:name=".CartActivity" />
         <activity android:name=".KelolaProdukActivity" />
         <activity android:name=".KelolaKategoriActivity" />

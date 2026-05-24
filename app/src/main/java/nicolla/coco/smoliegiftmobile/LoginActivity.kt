@@ -10,7 +10,6 @@ import androidx.appcompat.app.AppCompatActivity
 import com.example.smoliegift.database.DatabaseHelper
 
 class LoginActivity : AppCompatActivity() {
-    //ini untuk menyambungkan databaseny
     private lateinit var dbHelper: DatabaseHelper
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -24,11 +23,9 @@ class LoginActivity : AppCompatActivity() {
         val btnLogin = findViewById<Button>(R.id.btnLogin)
         val tvRegister = findViewById<TextView>(R.id.tvGoToRegister)
 
-        //ini untuk fungsi tombol login ny
         btnLogin.setOnClickListener {
             val email = etEmail.text.toString().trim()
             val pass = etPassword.text.toString().trim()
-            //jka email kosong mka akan muncul komen ini
             if (email.isEmpty() || pass.isEmpty()) {
                 Toast.makeText(this, "Harap isi semua kolom", Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
@@ -39,17 +36,15 @@ class LoginActivity : AppCompatActivity() {
             if (user != null) {
                 Toast.makeText(this, "Selamat datang, ${user.name}!", Toast.LENGTH_SHORT).show()
 
-                val intent = if (user.usertype == "admin") {
-                    Intent(this, AdminDashboardActivity::class.java)
-                } else {
-                    Intent(this, PembeliDashboardActivity::class.java)
+                val intent = when (user.usertype) {
+                    "admin" -> Intent(this, AdminDashboardActivity::class.java)
+                    "kasir" -> Intent(this, KasirDashboardActivity::class.java)
+                    else -> Intent(this, PembeliDashboardActivity::class.java)
                 }
 
                 intent.putExtra("USER_EMAIL", user.email)
-
                 startActivity(intent)
                 finish()
-
             } else {
                 Toast.makeText(this, "Email atau password salah", Toast.LENGTH_SHORT).show()
             }

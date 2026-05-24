@@ -8,6 +8,7 @@ import android.widget.Spinner
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.widget.Toolbar
 import com.example.smoliegift.database.DatabaseHelper
 
 class RegisterActivity : AppCompatActivity() {
@@ -17,6 +18,12 @@ class RegisterActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_register)
+
+        // Setup Toolbar as back button
+        val toolbar = findViewById<Toolbar>(R.id.toolbarRegister)
+        setSupportActionBar(toolbar)
+        supportActionBar?.setDisplayHomeAsUpEnabled(true)
+        toolbar.setNavigationOnClickListener { finish() }
 
         dbHelper = DatabaseHelper(this)
 
@@ -45,18 +52,15 @@ class RegisterActivity : AppCompatActivity() {
             val pass = etPassword.text.toString()
             val confirmPass = etConfirmPass.text.toString()
 
-
             if (nama.isEmpty() || email.isEmpty() || pass.isEmpty() || gender == "Pilih...") {
                 Toast.makeText(this, "Harap lengkapi semua data wajib!", Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
 
-
             if (pass != confirmPass) {
                 Toast.makeText(this, "Konfirmasi password tidak cocok!", Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
-
 
             val isSuccess = dbHelper.registerUser(nama, email, username, gender, phone, address, pass)
             if (isSuccess) {
@@ -66,7 +70,6 @@ class RegisterActivity : AppCompatActivity() {
                 Toast.makeText(this, "Gagal. Email mungkin sudah terdaftar.", Toast.LENGTH_SHORT).show()
             }
         }
-
 
         tvLogin.setOnClickListener {
             finish()

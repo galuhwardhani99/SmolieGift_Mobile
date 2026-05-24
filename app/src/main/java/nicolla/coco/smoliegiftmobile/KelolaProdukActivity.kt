@@ -14,6 +14,7 @@ import android.view.ViewGroup
 import android.widget.*
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.widget.Toolbar
 import com.example.smoliegift.database.DatabaseHelper
 import java.io.ByteArrayOutputStream
 
@@ -42,6 +43,12 @@ class KelolaProdukActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_kelola_produk)
+
+        // Setup Toolbar sebagai tombol kembali
+        val toolbar = findViewById<Toolbar>(R.id.toolbarProduk)
+        setSupportActionBar(toolbar)
+        supportActionBar?.setDisplayHomeAsUpEnabled(true)
+        toolbar.setNavigationOnClickListener { finish() }
 
         dbHelper = DatabaseHelper(this)
         lvDaftarProduk = findViewById(R.id.lvDaftarProdukAdmin)
@@ -75,27 +82,23 @@ class KelolaProdukActivity : AppCompatActivity() {
             override fun bindView(view: View?, context: android.content.Context?, cursor: Cursor?) {
                 if (view == null || cursor == null) return
 
-                // Gunakan "_id" karena sudah di-alias di DatabaseHelper
                 val id = cursor.getInt(cursor.getColumnIndexOrThrow("_id"))
-                val nama = cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COLUMN_PROD_NAME))
-                val kategori = cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COLUMN_PROD_CAT))
+                val nama = cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COLUMN_PROD_NAME)) ?: ""
+                val kategori = cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COLUMN_PROD_CAT)) ?: "Umum"
                 val harga = cursor.getInt(cursor.getColumnIndexOrThrow(DatabaseHelper.COLUMN_PROD_PRICE))
                 val stok = cursor.getInt(cursor.getColumnIndexOrThrow(DatabaseHelper.COLUMN_PROD_STOCK))
-                val image = cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COLUMN_PROD_IMAGE))
+                val image = cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COLUMN_PROD_IMAGE)) ?: ""
 
                 view.findViewById<TextView>(R.id.tvAdminProdName).text = nama
                 view.findViewById<TextView>(R.id.tvAdminProdCat).text = kategori
                 view.findViewById<TextView>(R.id.tvAdminProdPrice).text = "Rp $harga"
                 view.findViewById<TextView>(R.id.tvAdminProdStock).text = "Stok: $stok"
 
-                val btnEdit = view.findViewById<Button>(R.id.btnAdminEditProd)
-                val btnHapus = view.findViewById<Button>(R.id.btnAdminHapusProd)
-
-                btnEdit.setOnClickListener {
+                view.findViewById<Button>(R.id.btnAdminEditProd).setOnClickListener {
                     tampilkanFormEdit(id, nama, kategori, harga, stok, image)
                 }
 
-                btnHapus.setOnClickListener {
+                view.findViewById<Button>(R.id.btnAdminHapusProd).setOnClickListener {
                     konfirmasiHapus(id, nama)
                 }
             }
@@ -118,9 +121,10 @@ class KelolaProdukActivity : AppCompatActivity() {
         val builder = AlertDialog.Builder(this)
         builder.setTitle("Tambah Produk Baru")
 
-        val layout = LinearLayout(this)
-        layout.orientation = LinearLayout.VERTICAL
-        layout.setPadding(40, 20, 40, 20)
+        val layout = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(40, 20, 40, 20)
+        }
 
         val inputNama = EditText(this).apply { hint = "Nama Produk" }
         val spinnerKategori = Spinner(this)
@@ -128,44 +132,29 @@ class KelolaProdukActivity : AppCompatActivity() {
         kategoriAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
         spinnerKategori.adapter = kategoriAdapter
 
-        val inputHarga = EditText(this).apply { hint = "Harga (Angka saja)"; inputType = android.text.InputType.TYPE_CLASS_NUMBER }
+        val inputHarga = EditText(this).apply { hint = "Harga"; inputType = android.text.InputType.TYPE_CLASS_NUMBER }
         val inputStok = EditText(this).apply { hint = "Stok"; inputType = android.text.InputType.TYPE_CLASS_NUMBER }
+        val btnPilihFoto = Button(this).apply { text = "Pilih Foto Produk" }
 
-        val btnPilihFoto = Button(this).apply {
-            text = "Pilih Foto Produk"
-            setBackgroundColor(Color.LTGRAY)
-            setTextColor(Color.BLACK)
-        }
-
-        btnPilihFoto.setOnClickListener {
-            imagePickerLauncher.launch("image/*")
-        }
+        btnPilihFoto.setOnClickListener { imagePickerLauncher.launch("image/*") }
 
         layout.addView(inputNama)
-        layout.addView(TextView(this).apply { text = "Pilih Kategori:"; setPadding(0, 10, 0, 0) })
+        layout.addView(TextView(this).apply { text = "Kategori:" })
         layout.addView(spinnerKategori)
         layout.addView(inputHarga)
         layout.addView(inputStok)
         layout.addView(btnPilihFoto)
 
         builder.setView(layout)
-
-        builder.setPositiveButton("Simpan") { dialog, _ ->
-            val nama = inputNama.text.toString()
-            val kat = spinnerKategori.selectedItem.toString()
+        builder.setPositiveButton("Simpan") { _, _ ->
             val hrg = inputHarga.text.toString().toIntOrNull() ?: 0
             val stk = inputStok.text.toString().toIntOrNull() ?: 0
-
-            if (nama.isNotEmpty() && hrg > 0 && sImage.isNotEmpty()) {
-                dbHelper.tambahProduk(nama, kat, hrg, stk, sImage)
-                Toast.makeText(this, "Produk Disimpan!", Toast.LENGTH_SHORT).show()
+            if (inputNama.text.isNotEmpty() && hrg > 0) {
+                dbHelper.tambahProduk(inputNama.text.toString(), spinnerKategori.selectedItem.toString(), hrg, stk, sImage)
                 loadDataProduk()
-            } else {
-                Toast.makeText(this, "Gagal! Lengkapi data dan pilih foto.", Toast.LENGTH_SHORT).show()
             }
-            dialog.dismiss()
         }
-        builder.setNegativeButton("Batal") { dialog, _ -> dialog.cancel() }
+        builder.setNegativeButton("Batal", null)
         builder.show()
     }
 
@@ -173,83 +162,44 @@ class KelolaProdukActivity : AppCompatActivity() {
         val builder = AlertDialog.Builder(this)
         builder.setTitle("Edit Produk")
 
-        val layout = LinearLayout(this)
-        layout.orientation = LinearLayout.VERTICAL
-        layout.setPadding(40, 20, 40, 20)
-
-        val inputNama = EditText(this).apply { 
-            hint = "Nama Produk"
-            setText(nama)
+        val layout = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(40, 20, 40, 20)
         }
 
+        val inputNama = EditText(this).apply { setText(nama) }
         val spinnerKategori = Spinner(this)
-        val listKategori = getKategoriList()
-        val kategoriAdapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, listKategori)
-        kategoriAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
-        spinnerKategori.adapter = kategoriAdapter
+        val listKat = getKategoriList()
+        spinnerKategori.adapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, listKat)
+        spinnerKategori.setSelection(listKat.indexOf(kategoriLama))
 
-        val pos = listKategori.indexOf(kategoriLama)
-        if (pos >= 0) spinnerKategori.setSelection(pos)
-
-        val inputHarga = EditText(this).apply { 
-            hint = "Harga"
-            inputType = android.text.InputType.TYPE_CLASS_NUMBER
-            setText(harga.toString())
-        }
-        val inputStok = EditText(this).apply { 
-            hint = "Stok"
-            inputType = android.text.InputType.TYPE_CLASS_NUMBER
-            setText(stok.toString())
-        }
-
+        val inputHarga = EditText(this).apply { setText(harga.toString()); inputType = android.text.InputType.TYPE_CLASS_NUMBER }
+        val inputStok = EditText(this).apply { setText(stok.toString()); inputType = android.text.InputType.TYPE_CLASS_NUMBER }
         sImage = image
 
-        val btnPilihFoto = Button(this).apply {
-            text = "Ubah Foto (Opsional)"
-            setBackgroundColor(Color.LTGRAY)
-            setTextColor(Color.BLACK)
-        }
-
-        btnPilihFoto.setOnClickListener {
-            imagePickerLauncher.launch("image/*")
-        }
+        val btnPilihFoto = Button(this).apply { text = "Ubah Foto (Opsional)" }
+        btnPilihFoto.setOnClickListener { imagePickerLauncher.launch("image/*") }
 
         layout.addView(inputNama)
-        layout.addView(TextView(this).apply { text = "Pilih Kategori:"; setPadding(0, 10, 0, 0) })
         layout.addView(spinnerKategori)
         layout.addView(inputHarga)
         layout.addView(inputStok)
         layout.addView(btnPilihFoto)
 
         builder.setView(layout)
-
-        builder.setPositiveButton("Update") { dialog, _ ->
-            val newNama = inputNama.text.toString()
-            val newKat = spinnerKategori.selectedItem.toString()
-            val newHrg = inputHarga.text.toString().toIntOrNull() ?: 0
-            val newStk = inputStok.text.toString().toIntOrNull() ?: 0
-
-            if (newNama.isNotEmpty() && newHrg > 0) {
-                dbHelper.updateProduk(id, newNama, newKat, newHrg, newStk, sImage)
-                Toast.makeText(this, "Produk Berhasil Diperbarui!", Toast.LENGTH_SHORT).show()
-                loadDataProduk()
-            } else {
-                Toast.makeText(this, "Gagal! Nama dan Harga tidak boleh kosong.", Toast.LENGTH_SHORT).show()
-            }
-            dialog.dismiss()
+        builder.setPositiveButton("Update") { _, _ ->
+            dbHelper.updateProduk(id, inputNama.text.toString(), spinnerKategori.selectedItem.toString(), inputHarga.text.toString().toIntOrNull() ?: 0, inputStok.text.toString().toIntOrNull() ?: 0, sImage)
+            loadDataProduk()
         }
-        builder.setNegativeButton("Batal") { dialog, _ -> dialog.cancel() }
+        builder.setNegativeButton("Batal", null)
         builder.show()
     }
 
     private fun konfirmasiHapus(id: Int, nama: String) {
         AlertDialog.Builder(this)
-            .setTitle("Hapus Produk")
-            .setMessage("Yakin ingin menghapus $nama?")
-            .setPositiveButton("Ya") { _, _ ->
-                dbHelper.hapusProduk(id)
-                loadDataProduk()
-            }
+            .setTitle("Hapus")
+            .setMessage("Hapus $nama?")
+            .setPositiveButton("Ya") { _, _ -> dbHelper.hapusProduk(id); loadDataProduk() }
             .setNegativeButton("Batal", null)
             .show()
     }

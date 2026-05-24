@@ -1,68 +1,103 @@
 <?xml version="1.0" encoding="utf-8"?>
-<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#FFFFFF">
+    android:orientation="vertical"
+    android:background="#F8F9FA">
 
-    <LinearLayout
+    <androidx.appcompat.widget.Toolbar
+        android:id="@+id/toolbarRegister"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:padding="24dp">
+        android:layout_height="?attr/actionBarSize"
+        android:background="#FFFFFF"
+        android:elevation="4dp"
+        app:title="Registrasi Akun"
+        app:titleTextColor="#DD3827"
+        app:navigationIcon="?attr/homeAsUpIndicator" />
 
-        <TextView
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Buat Akun Baru"
-            android:textSize="24sp"
-            android:textStyle="bold"
-            android:textColor="#2D3142"
-            android:gravity="center"
-            android:layout_marginTop="16dp"
-            android:layout_marginBottom="32dp"/>
+            android:orientation="vertical"
+            android:padding="24dp"
+            android:gravity="center_horizontal">
 
-        <EditText android:id="@+id/etRegNama" android:layout_width="match_parent" android:layout_height="50dp" android:hint="Nama Lengkap" android:background="#F5F6F8" android:paddingStart="16dp" android:paddingEnd="16dp" android:textColor="#2D3142" android:textSize="14sp" android:layout_marginBottom="16dp"/>
+            <!-- Logo Lingkaran -->
+            <androidx.cardview.widget.CardView
+                android:layout_width="120dp"
+                android:layout_height="120dp"
+                app:cardCornerRadius="60dp"
+                app:cardElevation="8dp"
+                android:layout_marginTop="8dp"
+                android:layout_marginBottom="16dp"
+                app:cardBackgroundColor="#FFFFFF"
+                app:cardPreventCornerOverlap="false">
+                <ImageView
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:src="@drawable/smolie"
+                    android:scaleType="centerCrop"
+                    android:contentDescription="Logo Smolie"/>
+            </androidx.cardview.widget.CardView>
 
-        <EditText android:id="@+id/etRegEmail" android:layout_width="match_parent" android:layout_height="50dp" android:hint="Email" android:inputType="textEmailAddress" android:background="#F5F6F8" android:paddingStart="16dp" android:paddingEnd="16dp" android:textColor="#2D3142" android:textSize="14sp" android:layout_marginBottom="16dp"/>
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Buat Akun Baru"
+                android:textSize="22sp"
+                android:textStyle="bold"
+                android:textColor="#2D3142"
+                android:gravity="center"
+                android:layout_marginBottom="24dp"/>
 
-        <EditText android:id="@+id/etRegUsername" android:layout_width="match_parent" android:layout_height="50dp" android:hint="Username" android:background="#F5F6F8" android:paddingStart="16dp" android:paddingEnd="16dp" android:textColor="#2D3142" android:textSize="14sp" android:layout_marginBottom="16dp"/>
+            <!-- Input Fields dengan Style Mewah -->
+            <EditText android:id="@+id/etRegNama" android:layout_width="match_parent" android:layout_height="55dp" android:hint="Nama Lengkap" android:background="@drawable/bg_spinner" android:paddingStart="16dp" android:paddingEnd="16dp" android:textColor="#2D3142" android:textSize="14sp" android:layout_marginBottom="12dp" android:elevation="1dp"/>
 
-        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:layout_marginBottom="16dp">
-            <Spinner android:id="@+id/spRegGender" android:layout_width="0dp" android:layout_weight="1" android:layout_height="50dp" android:layout_marginEnd="8dp" android:background="#F5F6F8" android:paddingStart="12dp"/>
+            <EditText android:id="@+id/etRegEmail" android:layout_width="match_parent" android:layout_height="55dp" android:hint="Email" android:inputType="textEmailAddress" android:background="@drawable/bg_spinner" android:paddingStart="16dp" android:paddingEnd="16dp" android:textColor="#2D3142" android:textSize="14sp" android:layout_marginBottom="12dp" android:elevation="1dp"/>
 
-            <EditText android:id="@+id/etRegPhone" android:layout_width="0dp" android:layout_weight="1" android:layout_height="50dp" android:hint="No HP" android:inputType="phone" android:layout_marginStart="8dp" android:background="#F5F6F8" android:paddingStart="16dp" android:paddingEnd="16dp" android:textColor="#2D3142" android:textSize="14sp"/>
+            <EditText android:id="@+id/etRegUsername" android:layout_width="match_parent" android:layout_height="55dp" android:hint="Username" android:background="@drawable/bg_spinner" android:paddingStart="16dp" android:paddingEnd="16dp" android:textColor="#2D3142" android:textSize="14sp" android:layout_marginBottom="12dp" android:elevation="1dp"/>
+
+            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:layout_marginBottom="12dp">
+                <Spinner android:id="@+id/spRegGender" android:layout_width="0dp" android:layout_weight="1" android:layout_height="55dp" android:layout_marginEnd="6dp" android:background="@drawable/bg_spinner" android:elevation="1dp"/>
+                <EditText android:id="@+id/etRegPhone" android:layout_width="0dp" android:layout_weight="1" android:layout_height="55dp" android:hint="No HP" android:inputType="phone" android:layout_marginStart="6dp" android:background="@drawable/bg_spinner" android:paddingStart="16dp" android:paddingEnd="16dp" android:textColor="#2D3142" android:textSize="14sp" android:elevation="1dp"/>
+            </LinearLayout>
+
+            <EditText android:id="@+id/etRegAddress" android:layout_width="match_parent" android:layout_height="55dp" android:hint="Alamat Lengkap" android:background="@drawable/bg_spinner" android:paddingStart="16dp" android:paddingEnd="16dp" android:textColor="#2D3142" android:textSize="14sp" android:layout_marginBottom="12dp" android:elevation="1dp"/>
+
+            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:layout_marginBottom="24dp">
+                <EditText android:id="@+id/etRegPassword" android:layout_width="0dp" android:layout_weight="1" android:layout_height="55dp" android:hint="Password" android:inputType="textPassword" android:layout_marginEnd="6dp" android:background="@drawable/bg_spinner" android:paddingStart="16dp" android:paddingEnd="16dp" android:textColor="#2D3142" android:textSize="14sp" android:elevation="1dp"/>
+                <EditText android:id="@+id/etRegConfirmPass" android:layout_width="0dp" android:layout_weight="1" android:layout_height="55dp" android:hint="Konfirmasi" android:inputType="textPassword" android:layout_marginStart="6dp" android:background="@drawable/bg_spinner" android:paddingStart="16dp" android:paddingEnd="16dp" android:textColor="#2D3142" android:textSize="14sp" android:elevation="1dp"/>
+            </LinearLayout>
+
+            <Button
+                android:id="@+id/btnRegister"
+                android:layout_width="match_parent"
+                android:layout_height="55dp"
+                android:text="DAFTAR SEKARANG"
+                android:backgroundTint="#DD3827"
+                android:textColor="#FFFFFF"
+                android:textSize="15sp"
+                android:textStyle="bold"
+                app:cornerRadius="12dp"
+                android:elevation="4dp"
+                android:layout_marginBottom="24dp"/>
+
+            <TextView
+                android:id="@+id/tvGoToLogin"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Sudah memiliki akun? Masuk di sini"
+                android:gravity="center"
+                android:textColor="#DD3827"
+                android:textStyle="bold"
+                android:textSize="14sp"
+                android:paddingBottom="32dp"/>
+
         </LinearLayout>
-
-        <EditText android:id="@+id/etRegAddress" android:layout_width="match_parent" android:layout_height="50dp" android:hint="Alamat Lengkap" android:background="#F5F6F8" android:paddingStart="16dp" android:paddingEnd="16dp" android:textColor="#2D3142" android:textSize="14sp" android:layout_marginBottom="16dp"/>
-
-        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:layout_marginBottom="32dp">
-            <EditText android:id="@+id/etRegPassword" android:layout_width="0dp" android:layout_weight="1" android:layout_height="50dp" android:hint="Password" android:inputType="textPassword" android:layout_marginEnd="8dp" android:background="#F5F6F8" android:paddingStart="16dp" android:paddingEnd="16dp" android:textColor="#2D3142" android:textSize="14sp"/>
-
-            <EditText android:id="@+id/etRegConfirmPass" android:layout_width="0dp" android:layout_weight="1" android:layout_height="50dp" android:hint="Konfirmasi" android:inputType="textPassword" android:layout_marginStart="8dp" android:background="#F5F6F8" android:paddingStart="16dp" android:paddingEnd="16dp" android:textColor="#2D3142" android:textSize="14sp"/>
-        </LinearLayout>
-
-        <Button
-            android:id="@+id/btnRegister"
-            android:layout_width="match_parent"
-            android:layout_height="55dp"
-            android:text="Daftar Sekarang"
-            android:backgroundTint="#DD3827"
-            android:textColor="#FFFFFF"
-            android:textSize="14sp"
-            android:textStyle="bold"
-            app:cornerRadius="8dp"
-            android:layout_marginBottom="24dp"/>
-
-        <TextView
-            android:id="@+id/tvGoToLogin"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Sudah memiliki akun? Masuk di sini"
-            android:gravity="center"
-            android:textColor="#DD3827"
-            android:textStyle="bold"
-            android:textSize="14sp"/>
-
-    </LinearLayout>
-</ScrollView>
+    </ScrollView>
+</LinearLayout>

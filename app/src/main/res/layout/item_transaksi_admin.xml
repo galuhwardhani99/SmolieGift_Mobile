@@ -1,12 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
+<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:layout_marginBottom="12dp"
-    app:cardCornerRadius="12dp"
-    app:cardElevation="3dp"
-    android:backgroundTint="#FFFFFF">
+    app:cardCornerRadius="16dp"
+    app:cardElevation="4dp"
+    app:strokeWidth="0dp"
+    app:cardBackgroundColor="#FFFFFF">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -22,27 +23,28 @@
             android:layout_marginBottom="12dp">
 
             <ImageView
-                android:layout_width="18dp"
-                android:layout_height="18dp"
+                android:layout_width="20dp"
+                android:layout_height="20dp"
                 android:src="@drawable/bags_shopping"
-                app:tint="#000000"
+                app:tint="#DD3827"
                 android:layout_marginEnd="8dp"/>
 
             <TextView
                 android:id="@+id/tvAdminTransStatusLabel"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Pesanan Baru"
-                android:textColor="#F4511E"
+                android:text="PESANAN"
+                android:textColor="#DD3827"
                 android:textStyle="bold"
-                android:textSize="13sp" />
+                android:textSize="12sp"
+                android:letterSpacing="0.1"/>
 
             <View android:layout_width="0dp" android:layout_height="0dp" android:layout_weight="1"/>
 
             <TextView android:id="@+id/tvAdminTransId" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="#INV-01" android:textColor="#64748B" android:textSize="11sp" android:textStyle="bold"/>
         </LinearLayout>
 
-        <View android:layout_width="match_parent" android:layout_height="1dp" android:background="#EEEEEE" android:layout_marginBottom="12dp"/>
+        <View android:layout_width="match_parent" android:layout_height="1dp" android:background="#F1F5F9" android:layout_marginBottom="12dp"/>
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -56,74 +58,72 @@
                 android:layout_height="wrap_content"
                 android:orientation="vertical">
 
-                <TextView android:id="@+id/tvAdminTransNama" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Nama Pemesan: -" android:textColor="#2D3142" android:textStyle="bold" android:textSize="15sp"/>
+                <TextView android:id="@+id/tvAdminTransNama" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Nama Pemesan" android:textColor="#2D3142" android:textStyle="bold" android:textSize="16sp"/>
 
                 <TextView
                     android:id="@+id/tvAdminTransProduk"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Produk: -"
-                    android:textColor="#2D3142"
+                    android:text="Produk"
+                    android:textColor="#475569"
                     android:textSize="13sp"
-                    android:textStyle="bold"
-                    android:layout_marginTop="4dp"/>
+                    android:layout_marginTop="6dp"/>
 
-                <TextView android:id="@+id/tvAdminTransWa" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="WA: -" android:textColor="#64748B" android:textSize="12sp" android:layout_marginTop="4dp"/>
-                <TextView android:id="@+id/tvAdminTransMetode" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Metode: -" android:textColor="#64748B" android:textSize="12sp" android:layout_marginTop="2dp"/>
-                <TextView android:id="@+id/tvAdminTransTanggal" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Waktu: -" android:textColor="#64748B" android:textSize="12sp" android:layout_marginTop="2dp"/>
-                <TextView android:id="@+id/tvAdminTransTotal" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Rp 0" android:textColor="#DD3827" android:textStyle="bold" android:textSize="16sp" android:layout_marginTop="8dp"/>
+                <TextView android:id="@+id/tvAdminTransWa" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="WA" android:textColor="#64748B" android:textSize="12sp" android:layout_marginTop="6dp"/>
+                <TextView android:id="@+id/tvAdminTransMetode" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Metode" android:textColor="#64748B" android:textSize="12sp" android:layout_marginTop="2dp"/>
+
+                <!-- ID tvAdminTransTanggal ditambahkan kembali untuk memperbaiki build error -->
+                <TextView android:id="@+id/tvAdminTransTanggal" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Waktu" android:textColor="#64748B" android:textSize="12sp" android:layout_marginTop="2dp"/>
+
+                <TextView android:id="@+id/tvAdminTransTotal" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Rp 0" android:textColor="#DD3827" android:textStyle="bold" android:textSize="18sp" android:layout_marginTop="12dp"/>
             </LinearLayout>
 
             <LinearLayout
                 android:id="@+id/llContainerImage"
-                android:layout_width="80dp"
+                android:layout_width="85dp"
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
                 android:gravity="center"
                 android:layout_marginStart="12dp"
                 android:visibility="gone">
 
-                <TextView
-                    android:id="@+id/tvLabelCustom"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Desain User"
-                    android:textSize="9sp"
-                    android:textStyle="bold"
-                    android:textColor="#64748B"
-                    android:layout_marginBottom="4dp"/>
-
-                <androidx.cardview.widget.CardView
-                    android:layout_width="70dp"
-                    android:layout_height="70dp"
-                    app:cardCornerRadius="8dp"
+                <com.google.android.material.card.MaterialCardView
+                    android:layout_width="75dp"
+                    android:layout_height="75dp"
+                    app:cardCornerRadius="12dp"
                     app:cardElevation="0dp"
-                    app:cardBackgroundColor="#F5F6F8">
-
+                    app:strokeWidth="1dp"
+                    app:strokeColor="#E2E8F0"
+                    app:cardBackgroundColor="#F8F9FA">
                     <ImageView
                         android:id="@+id/ivCustomDesignAdmin"
                         android:layout_width="match_parent"
                         android:layout_height="match_parent"
                         android:scaleType="centerInside"
-                        android:padding="6dp"/>
-                </androidx.cardview.widget.CardView>
+                        android:padding="8dp"/>
+                </com.google.android.material.card.MaterialCardView>
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Custom"
+                    android:textSize="9sp"
+                    android:textColor="#64748B"
+                    android:layout_marginTop="4dp"/>
             </LinearLayout>
-
         </LinearLayout>
 
         <Button
             android:id="@+id/btnSelesaiPesanan"
             android:layout_width="match_parent"
-            android:layout_height="40dp"
-            android:text="Selesaikan Pesanan"
-            android:backgroundTint="#2D3142"
+            android:layout_height="50dp"
+            android:text="SELESAIKAN"
+            android:backgroundTint="#DD3827"
             android:textColor="#FFFFFF"
-            android:textSize="12sp"
+            android:textSize="13sp"
+            android:textStyle="bold"
             android:layout_marginTop="16dp"
-            app:cornerRadius="8dp"
-            android:textAllCaps="false"
-            android:insetTop="0dp"
-            android:insetBottom="0dp"/>
+            app:cornerRadius="12dp"
+            android:elevation="2dp"/>
 
     </LinearLayout>
-</androidx.cardview.widget.CardView>
+</com.google.android.material.card.MaterialCardView>

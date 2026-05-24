@@ -15,6 +15,7 @@ import android.view.LayoutInflater
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
+import android.view.ViewGroup
 import android.view.Window
 import android.widget.*
 import androidx.activity.result.contract.ActivityResultContracts
@@ -36,8 +37,8 @@ class PembeliDashboardActivity : AppCompatActivity() {
     private lateinit var toolbar: Toolbar
     private lateinit var acSearchProduk: AutoCompleteTextView
     private var isAdminView: Boolean = false
+    private var isKasirMode: Boolean = false
     private var currentUserEmail: String? = null
-    private var currentUserName: String? = null
 
     private var currentCustomImageBase64: String? = null
     private var btnPilihFileRef: Button? = null
@@ -48,16 +49,12 @@ class PembeliDashboardActivity : AppCompatActivity() {
                 val fileName = getFileName(it)
                 val inputStream: InputStream? = contentResolver.openInputStream(it)
                 val bytes = inputStream?.readBytes()
-
                 if (bytes != null) {
                     currentCustomImageBase64 = Base64.encodeToString(bytes, Base64.DEFAULT)
                     btnPilihFileRef?.text = "✅ $fileName"
-                    Toast.makeText(this, "Gambar kustom berhasil dimuat!", Toast.LENGTH_SHORT).show()
-                } else {
-                    Toast.makeText(this, "Gagal membaca file gambar", Toast.LENGTH_SHORT).show()
                 }
             } catch (e: Exception) {
-                Toast.makeText(this, "Terjadi kesalahan saat memproses gambar", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, "Gagal memproses gambar", Toast.LENGTH_SHORT).show()
             }
         }
     }
@@ -68,10 +65,16 @@ class PembeliDashboardActivity : AppCompatActivity() {
 
         dbHelper = DatabaseHelper(this)
         isAdminView = intent.getBooleanExtra("IS_ADMIN_VIEW", false)
+        isKasirMode = intent.getBooleanExtra("IS_KASIR_MODE", false)
         currentUserEmail = intent.getStringExtra("USER_EMAIL")
 
         toolbar = findViewById(R.id.toolbarPembeli)
         setSupportActionBar(toolbar)
+
+        if (isAdminView || isKasirMode) {
+            supportActionBar?.setDisplayHomeAsUpEnabled(true)
+            toolbar.setNavigationOnClickListener { finish() }
+        }
 
         gridLayoutProduk = findViewById(R.id.glDaftarProdukPembeli)
         layoutHome = findViewById(R.id.layoutHomePembeli)
@@ -85,37 +88,32 @@ class PembeliDashboardActivity : AppCompatActivity() {
         if (isAdminView) {
             btnLihatKeranjang.visibility = View.GONE
             bottomNav.visibility = View.GONE
-            toolbar.title = "Katalog Produk (Admin)"
+        }
+        
+        if (isKasirMode) {
+            bottomNav.visibility = View.GONE
+            btnLihatKeranjang.text = "Keranjang Penjualan Toko"
+            btnLihatKeranjang.setBackgroundColor(Color.parseColor("#DD3827"))
+            btnLihatKeranjang.setTextColor(Color.WHITE)
         }
 
         btnLihatKeranjang.setOnClickListener {
             val intent = Intent(this, CartActivity::class.java)
             intent.putExtra("USER_EMAIL", currentUserEmail)
+            intent.putExtra("IS_KASIR_MODE", isKasirMode)
             startActivity(intent)
         }
 
         bottomNav.setOnItemSelectedListener { item ->
             when (item.itemId) {
-                R.id.navigation_home -> {
-                    showHome()
-                    true
-                }
-                R.id.navigation_history -> {
-                    showHistory()
-                    true
-                }
-                R.id.navigation_profile -> {
-                    showProfile()
-                    true
-                }
+                R.id.navigation_home -> { showHome(); true }
+                R.id.navigation_history -> { showHistory(); true }
+                R.id.navigation_profile -> { showProfile(); true }
                 else -> false
             }
         }
 
-        if (currentUserEmail != null) {
-            loadUserProfile(currentUserEmail!!)
-        }
-
+        if (currentUserEmail != null) loadUserProfile(currentUserEmail!!)
         loadKatalogProduk()
         setupSearchAutoComplete()
     }
@@ -123,25 +121,16 @@ class PembeliDashboardActivity : AppCompatActivity() {
     private fun setupSearchAutoComplete() {
         val cursor: Cursor = dbHelper.getSemuaProduk()
         val listNamaProduk = mutableListOf<String>()
-
         while (cursor.moveToNext()) {
-            val nama = cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COLUMN_PROD_NAME))
-            listNamaProduk.add(nama)
+            listNamaProduk.add(cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COLUMN_PROD_NAME)))
         }
         cursor.close()
-
         val adapter = ArrayAdapter(this, android.R.layout.simple_dropdown_item_1line, listNamaProduk)
         acSearchProduk.setAdapter(adapter)
         acSearchProduk.setOnItemClickListener { parent, _, position, _ ->
-            val selectedName = parent.getItemAtPosition(position) as String
-            filterKatalogProduk(selectedName)
+            filterKatalogProduk(parent.getItemAtPosition(position) as String)
         }
-
-        acSearchProduk.addTextChangedListener {
-            if (it.isNullOrEmpty()) {
-                loadKatalogProduk()
-            }
-        }
+        acSearchProduk.addTextChangedListener { if (it.isNullOrEmpty()) loadKatalogProduk() }
     }
 
     private fun filterKatalogProduk(query: String) {
@@ -155,7 +144,7 @@ class PembeliDashboardActivity : AppCompatActivity() {
         layoutHome.visibility = View.VISIBLE
         fragmentContainer.visibility = View.GONE
         layoutProfile.visibility = View.GONE
-        toolbar.title = if (isAdminView) "Katalog Produk (Admin)" else "Smolie Gift"
+        toolbar.title = if (isAdminView) "Katalog Produk (Admin)" else if (isKasirMode) "Input Manual Toko" else "Smolie Gift"
     }
 
     private fun showHistory() {
@@ -163,12 +152,8 @@ class PembeliDashboardActivity : AppCompatActivity() {
         fragmentContainer.visibility = View.VISIBLE
         layoutProfile.visibility = View.GONE
         toolbar.title = "Riwayat Pesanan"
-
         if (currentUserEmail != null) {
-            val fragment = HistoryFragment.newInstance(currentUserEmail!!)
-            supportFragmentManager.beginTransaction()
-                .replace(R.id.fragmentContainerPembeli, fragment)
-                .commit()
+            supportFragmentManager.beginTransaction().replace(R.id.fragmentContainerPembeli, HistoryFragment.newInstance(currentUserEmail!!)).commit()
         }
     }
 
@@ -183,33 +168,26 @@ class PembeliDashboardActivity : AppCompatActivity() {
         val cursor = dbHelper.getUserByEmail(email)
         if (cursor != null && cursor.moveToFirst()) {
             val name = cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COLUMN_NAME))
-            currentUserName = name
             findViewById<TextView>(R.id.tvProfileName).text = name
             findViewById<TextView>(R.id.tvProfileEmail).text = email
             findViewById<TextView>(R.id.tvProfileUsername).text = "Username: " + cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COLUMN_USERNAME))
             findViewById<TextView>(R.id.tvProfilePhone).text = "Telepon: " + cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COLUMN_PHONE))
-            findViewById<TextView>(R.id.tvProfileAddress).text = "Alamat: " + cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COLUMN_ADDRESS))
-            findViewById<TextView>(R.id.tvProfileGender).text = "Gender: " + cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COLUMN_GENDER))
             cursor.close()
         }
     }
 
     private fun loadKatalogProduk() {
         gridLayoutProduk.removeAllViews()
-        val cursor: Cursor = dbHelper.getSemuaProduk()
-        tampilkanDataKatalog(cursor)
+        tampilkanDataKatalog(dbHelper.getSemuaProduk())
     }
 
     private fun tampilkanDataKatalog(cursor: Cursor) {
         val inflater = LayoutInflater.from(this)
-        val displayMetrics = resources.displayMetrics
-        val itemWidth = (displayMetrics.widthPixels / 2) - 48
-
+        val itemWidth = (resources.displayMetrics.widthPixels / 2) - 48
         if (cursor.count == 0) {
-            val tvKosong = TextView(this)
-            tvKosong.text = "Tidak ada produk."
-            tvKosong.setPadding(32, 32, 32, 32)
-            gridLayoutProduk.addView(tvKosong)
+            val tv = TextView(this)
+            tv.text = "Tidak ada produk."; tv.setPadding(32, 32, 32, 32)
+            gridLayoutProduk.addView(tv)
         } else {
             while (cursor.moveToNext()) {
                 val nama = cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COLUMN_PROD_NAME))
@@ -222,25 +200,17 @@ class PembeliDashboardActivity : AppCompatActivity() {
                 itemView.findViewById<TextView>(R.id.tvPembeliProdCat).text = kategori
                 itemView.findViewById<TextView>(R.id.tvPembeliProdPrice).text = "Rp $harga"
 
-                val ivGambar = itemView.findViewById<ImageView>(R.id.ivPembeliProdImage)
                 if (!fotoBase64.isNullOrEmpty()) {
                     val bytes = Base64.decode(fotoBase64, Base64.DEFAULT)
-                    val bitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes.size)
-                    ivGambar.setImageBitmap(bitmap)
+                    itemView.findViewById<ImageView>(R.id.ivPembeliProdImage).setImageBitmap(BitmapFactory.decodeByteArray(bytes, 0, bytes.size))
                 }
 
                 val btnPesan = itemView.findViewById<Button>(R.id.btnPesanKatalog)
-                if (isAdminView) {
-                    btnPesan.visibility = View.GONE
-                } else {
-                    btnPesan.setOnClickListener {
-                        tampilkanDialogPesanan(nama, harga, fotoBase64)
-                    }
-                }
+                if (isAdminView) btnPesan.visibility = View.GONE
+                else btnPesan.setOnClickListener { tampilkanDialogPesanan(nama, harga, fotoBase64) }
 
                 val params = GridLayout.LayoutParams()
-                params.width = itemWidth
-                params.setMargins(12, 16, 12, 16)
+                params.width = itemWidth; params.setMargins(12, 16, 12, 16)
                 itemView.layoutParams = params
                 gridLayoutProduk.addView(itemView)
             }
@@ -250,176 +220,43 @@ class PembeliDashboardActivity : AppCompatActivity() {
 
     private fun tampilkanDialogPesanan(namaProduk: String, hargaDasar: Int, fotoProdukBase64: String?) {
         val dialog = Dialog(this)
-        dialog.requestWindowFeature(Window.FEATURE_NO_TITLE)
         dialog.setContentView(R.layout.dialog_pesan_produk)
-
-        currentCustomImageBase64 = null
-
+        dialog.window?.setLayout(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT)
         dialog.window?.setBackgroundDrawableResource(android.R.color.transparent)
-        dialog.window?.setLayout(
-            android.view.ViewGroup.LayoutParams.MATCH_PARENT,
-            android.view.ViewGroup.LayoutParams.WRAP_CONTENT
-        )
 
-        val tvJudul = dialog.findViewById<TextView>(R.id.tvDialogJudul)
         val tvQty = dialog.findViewById<TextView>(R.id.tvQty)
         val btnTambah = dialog.findViewById<Button>(R.id.btnTambahKeranjang)
-        val btnUpload = dialog.findViewById<Button>(R.id.btnPilihFile)
-        val spWarna = dialog.findViewById<Spinner>(R.id.spWarna)
-        val rgKemasan = dialog.findViewById<RadioGroup>(R.id.rgKemasan)
-        val cbSablon = dialog.findViewById<CheckBox>(R.id.cbSablon)
-        val cbThanks = dialog.findViewById<CheckBox>(R.id.cbThanksCard)
-        val btnMin = dialog.findViewById<Button>(R.id.btnMinQty)
-        val btnPlus = dialog.findViewById<Button>(R.id.btnPlusQty)
-        val etCatatan = dialog.findViewById<EditText>(R.id.etCatatan)
+        var qty = 1
 
-        val cbInvitedCard = dialog.findViewById<CheckBox>(R.id.cbInvitedCard)
-        val llContainerTanggalAcara = dialog.findViewById<LinearLayout>(R.id.llContainerTanggalAcara)
-        val btnPilihTanggal = dialog.findViewById<Button>(R.id.btnPilihTanggal)
-        val btnPilihWaktu = dialog.findViewById<Button>(R.id.btnPilihWaktu)
-
-        var tanggalAcaraTerpilih = ""
-        var waktuAcaraTerpilih = ""
-
-        btnPilihFileRef = btnUpload
-        tvJudul.text = namaProduk
-        var qtySaatIni = 1
-
-        val listWarna = arrayOf("Original", "Pastel Pink", "Sky Blue", "Lilac", "Emerald Green", "Custom (Tulis di Catatan)")
-        val adapterWarna = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, listWarna)
-        spWarna.adapter = adapterWarna
-
-        fun updateHargaTotal() {
-            var tambahanHarga = 0
-            when (rgKemasan.checkedRadioButtonId) {
-                R.id.rbTile -> tambahanHarga += 1000
-                R.id.rbBox -> tambahanHarga += 2500
-            }
-            if (cbSablon.isChecked) tambahanHarga += 500
-            if (cbThanks.isChecked) tambahanHarga += 300
-            if (cbInvitedCard.isChecked) tambahanHarga += 400
-
-            val totalPerItem = hargaDasar + tambahanHarga
-            val totalFinal = totalPerItem * qtySaatIni
-            btnTambah.text = "Tambah — Rp $totalFinal"
+        fun updateHarga() {
+            val total = hargaDasar * qty
+            btnTambah.text = "Tambah — Rp $total"
         }
 
-        rgKemasan.setOnCheckedChangeListener { _, _ -> updateHargaTotal() }
-        cbSablon.setOnCheckedChangeListener { _, _ -> updateHargaTotal() }
-        cbThanks.setOnCheckedChangeListener { _, _ -> updateHargaTotal() }
-
-        cbInvitedCard.setOnCheckedChangeListener { _, isChecked ->
-            if (isChecked) {
-                llContainerTanggalAcara.visibility = View.VISIBLE
-            } else {
-                llContainerTanggalAcara.visibility = View.GONE
-                btnPilihTanggal.text = "Pilih Tanggal"
-                btnPilihWaktu.text = "Pilih Waktu"
-                tanggalAcaraTerpilih = ""
-                waktuAcaraTerpilih = ""
-            }
-            updateHargaTotal()
-        }
-
-        btnPilihTanggal.setOnClickListener {
-            val kalender = Calendar.getInstance()
-            val tahun = kalender.get(Calendar.YEAR)
-            val bulan = kalender.get(Calendar.MONTH)
-            val hari = kalender.get(Calendar.DAY_OF_MONTH)
-
-            val datePicker = DatePickerDialog(this, { _, year, month, dayOfMonth ->
-                tanggalAcaraTerpilih = "$dayOfMonth/${month + 1}/$year"
-                btnPilihTanggal.text = tanggalAcaraTerpilih
-                btnPilihTanggal.setTextColor(Color.parseColor("#DD3827"))
-            }, tahun, bulan, hari)
-            datePicker.show()
-        }
-
-        btnPilihWaktu.setOnClickListener {
-            val kalender = Calendar.getInstance()
-            val jam = kalender.get(Calendar.HOUR_OF_DAY)
-            val menit = kalender.get(Calendar.MINUTE)
-
-            val timePicker = TimePickerDialog(this, { _, hourOfDay, minute ->
-                val jamFormat = String.format("%02d:%02d", hourOfDay, minute)
-                waktuAcaraTerpilih = jamFormat
-                btnPilihWaktu.text = jamFormat
-                btnPilihWaktu.setTextColor(Color.parseColor("#DD3827"))
-            }, jam, menit, true)
-            timePicker.show()
-        }
-
-        btnMin.setOnClickListener {
-            if (qtySaatIni > 1) {
-                qtySaatIni--
-                tvQty.text = qtySaatIni.toString()
-                updateHargaTotal()
-            }
-        }
-
-        btnPlus.setOnClickListener {
-            qtySaatIni++
-            tvQty.text = qtySaatIni.toString()
-            updateHargaTotal()
-        }
-
-        btnUpload?.setOnClickListener { pickImageLauncher.launch("image/*") }
-
-        dialog.findViewById<TextView>(R.id.btnTutupDialog).setOnClickListener { dialog.dismiss() }
+        dialog.findViewById<TextView>(R.id.tvDialogJudul).text = namaProduk
+        dialog.findViewById<Button>(R.id.btnPlusQty).setOnClickListener { qty++; tvQty.text = qty.toString(); updateHarga() }
+        dialog.findViewById<Button>(R.id.btnMinQty).setOnClickListener { if(qty>1) {qty--; tvQty.text = qty.toString(); updateHarga()} }
+        btnPilihFileRef = dialog.findViewById(R.id.btnPilihFile)
+        btnPilihFileRef?.setOnClickListener { pickImageLauncher.launch("image/*") }
 
         btnTambah.setOnClickListener {
-            val totalText = btnTambah.text.toString()
-                .replace("Tambah — Rp ", "")
-                .replace(".", "")
-                .trim()
-
-            val totalHargaFix = try { totalText.toInt() } catch (e: Exception) { (hargaDasar * qtySaatIni) }
-
-            var eventInfo: String? = null
-            if (cbInvitedCard.isChecked && tanggalAcaraTerpilih.isNotEmpty() && waktuAcaraTerpilih.isNotEmpty()) {
-                eventInfo = "$tanggalAcaraTerpilih $waktuAcaraTerpilih"
+            val totalText = btnTambah.text.toString().replace("Tambah — Rp ", "").replace(".", "").trim()
+            val total = totalText.toIntOrNull() ?: (hargaDasar * qty)
+            if (dbHelper.tambahKeKeranjang(namaProduk, qty, total, currentCustomImageBase64, fotoProdukBase64)) {
+                Toast.makeText(this, "Berhasil!", Toast.LENGTH_SHORT).show()
+                dialog.dismiss()
             }
-
-            val namaProdukFinal = if (eventInfo != null) {
-                "$namaProduk (Invited Card: $eventInfo)"
-            } else {
-                namaProduk
-            }
-
-            val berhasil = dbHelper.tambahKeKeranjang(namaProdukFinal, qtySaatIni, totalHargaFix, currentCustomImageBase64, fotoProdukBase64)
-
-            if (berhasil) {
-                Toast.makeText(this, "Berhasil masuk keranjang!", Toast.LENGTH_SHORT).show()
-            } else {
-                Toast.makeText(this, "Gagal masuk keranjang!", Toast.LENGTH_SHORT).show()
-            }
-            dialog.dismiss()
         }
-
-        updateHargaTotal()
-        dialog.show()
+        updateHarga(); dialog.show()
     }
 
     private fun getFileName(uri: Uri): String {
-        var result: String? = null
+        var res: String? = null
         if (uri.scheme == "content") {
             val cursor = contentResolver.query(uri, null, null, null, null)
-            try {
-                if (cursor != null && cursor.moveToFirst()) {
-                    result = cursor.getString(cursor.getColumnIndexOrThrow(OpenableColumns.DISPLAY_NAME))
-                }
-            } finally {
-                cursor?.close()
-            }
+            cursor?.use { if (it.moveToFirst()) res = it.getString(it.getColumnIndexOrThrow(OpenableColumns.DISPLAY_NAME)) }
         }
-        if (result == null) {
-            result = uri.path
-            val cut = result?.lastIndexOf('/')
-            if (cut != -1 && cut != null) {
-                result = result.substring(cut + 1)
-            }
-        }
-        return result ?: "file_gambar"
+        return res ?: uri.path?.substringAfterLast('/') ?: "image"
     }
 
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {
@@ -428,15 +265,10 @@ class PembeliDashboardActivity : AppCompatActivity() {
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
-        return when (item.itemId) {
-            R.id.menuLogoutPembeli -> {
-                val intent = Intent(this, LoginActivity::class.java)
-                intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-                startActivity(intent)
-                finish()
-                true
-            }
-            else -> super.onOptionsItemSelected(item)
+        if (item.itemId == R.id.menuLogoutPembeli) {
+            startActivity(Intent(this, LoginActivity::class.java).apply { flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK })
+            finish(); return true
         }
+        return super.onOptionsItemSelected(item)
     }
 }

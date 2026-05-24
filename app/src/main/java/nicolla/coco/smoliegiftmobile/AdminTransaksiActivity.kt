@@ -1,11 +1,9 @@
 package nicolla.coco.smoliegiftmobile
 
 import android.app.AlertDialog
-import android.content.Intent
 import android.database.Cursor
 import android.graphics.BitmapFactory
 import android.graphics.Color
-import android.net.Uri
 import android.os.Bundle
 import android.util.Base64
 import android.view.LayoutInflater
@@ -16,6 +14,7 @@ import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.widget.Toolbar
 import com.example.smoliegift.database.DatabaseHelper
 import org.json.JSONArray
 import java.text.SimpleDateFormat
@@ -30,6 +29,11 @@ class AdminTransaksiActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_admin_transaksi)
+
+        val toolbar = findViewById<Toolbar>(R.id.toolbarTransaksi)
+        setSupportActionBar(toolbar)
+        supportActionBar?.setDisplayHomeAsUpEnabled(true)
+        toolbar.setNavigationOnClickListener { finish() }
 
         dbHelper = DatabaseHelper(this)
         llDaftar = findViewById(R.id.llDaftarTransaksi)
@@ -97,7 +101,6 @@ class AdminTransaksiActivity : AppCompatActivity() {
                     tvTanggal.setTextColor(Color.parseColor("#DD3827"))
                 } else {
                     try {
-                        // Konversi UTC dari DB ke WIB (Asia/Jakarta)
                         val inputFormat = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
                         inputFormat.timeZone = TimeZone.getTimeZone("UTC")
                         

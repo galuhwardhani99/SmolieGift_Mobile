@@ -12,6 +12,7 @@ import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.widget.Toolbar
 import com.example.smoliegift.database.DatabaseHelper
 import org.json.JSONArray
 import java.text.SimpleDateFormat
@@ -25,6 +26,11 @@ class AdminLaporanActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_admin_laporan)
+
+        val toolbar = findViewById<Toolbar>(R.id.toolbarLaporan)
+        setSupportActionBar(toolbar)
+        supportActionBar?.setDisplayHomeAsUpEnabled(true)
+        toolbar.setNavigationOnClickListener { finish() }
 
         dbHelper = DatabaseHelper(this)
         val llDaftar = findViewById<LinearLayout>(R.id.llDaftarLaporan)

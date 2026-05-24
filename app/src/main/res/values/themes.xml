@@ -2,8 +2,13 @@
     <!-- Base application theme. -->
     <style name="Base.Theme.SmolieGiftMobile" parent="Theme.Material3.DayNight.NoActionBar">
         <!-- Customize your light theme here. -->
-        <!-- <item name="colorPrimary">@color/my_light_primary</item> -->
+        <item name="colorPrimary">#DD3827</item>
+        <item name="colorOnPrimary">#FFFFFF</item>
     </style>
 
     <style name="Theme.SmolieGiftMobile" parent="Base.Theme.SmolieGiftMobile" />
+
+    <style name="ShapeAppearance.Circle" parent="">
+        <item name="cornerSize">50%</item>
+    </style>
 </resources>
