@@ -5,12 +5,12 @@ import android.content.Context
 import android.database.Cursor
 import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteOpenHelper
-import com.example.smoliegift.models.User
+import nicolla.coco.smoliegiftmobile.User
 
 class DatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME, null, DATABASE_VERSION) {
 
     companion object {
-        private const val DATABASE_VERSION = 12
+        private const val DATABASE_VERSION = 14
         private const val DATABASE_NAME = "SmolieGift.db"
 
         const val TABLE_USERS = "users"
@@ -56,14 +56,12 @@ class DatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME
 
         const val TABLE_HISTORY = "history"
     }
-     //bikin database ny
+
     override fun onCreate(db: SQLiteDatabase) {
         db.execSQL("CREATE TABLE $TABLE_USERS ($COLUMN_ID INTEGER PRIMARY KEY AUTOINCREMENT, $COLUMN_NAME TEXT, $COLUMN_EMAIL TEXT UNIQUE, $COLUMN_USERNAME TEXT, $COLUMN_GENDER TEXT, $COLUMN_PHONE TEXT, $COLUMN_ADDRESS TEXT, $COLUMN_PASSWORD TEXT, $COLUMN_USERTYPE TEXT)")
-
         db.execSQL("CREATE TABLE $TABLE_CART ($COLUMN_CART_ID INTEGER PRIMARY KEY AUTOINCREMENT, $COLUMN_PRODUCT_NAME TEXT, $COLUMN_QTY INTEGER, $COLUMN_TOTAL_PRICE INTEGER, $COLUMN_CUSTOM_IMAGE TEXT, $COLUMN_CART_PRODUCT_IMAGE TEXT)")
         db.execSQL("CREATE TABLE $TABLE_PRODUCTS ($COLUMN_PROD_ID INTEGER PRIMARY KEY AUTOINCREMENT, $COLUMN_PROD_NAME TEXT, $COLUMN_PROD_CAT TEXT, $COLUMN_PROD_PRICE INTEGER, $COLUMN_PROD_STOCK INTEGER, $COLUMN_PROD_IMAGE TEXT)")
         db.execSQL("CREATE TABLE $TABLE_CATEGORIES ($COLUMN_CAT_ID INTEGER PRIMARY KEY AUTOINCREMENT, $COLUMN_CAT_NAME TEXT UNIQUE)")
-
         db.execSQL("CREATE TABLE $TABLE_TRANSACTIONS ($COLUMN_TRANS_ID INTEGER PRIMARY KEY AUTOINCREMENT, $COLUMN_CUSTOMER_NAME TEXT, $COLUMN_CUSTOMER_WA TEXT, $COLUMN_PAYMENT_METHOD TEXT, $COLUMN_GRAND_TOTAL INTEGER, $COLUMN_CUSTOM_IMAGE TEXT, $COLUMN_TRANS_DATE DATETIME DEFAULT CURRENT_TIMESTAMP, $COLUMN_EVENT_INFO TEXT, $COLUMN_ITEMS_JSON TEXT)")
         db.execSQL("CREATE TABLE $TABLE_HISTORY ($COLUMN_TRANS_ID INTEGER PRIMARY KEY AUTOINCREMENT, $COLUMN_CUSTOMER_NAME TEXT, $COLUMN_CUSTOMER_WA TEXT, $COLUMN_PAYMENT_METHOD TEXT, $COLUMN_GRAND_TOTAL INTEGER, $COLUMN_CUSTOM_IMAGE TEXT, $COLUMN_TRANS_DATE DATETIME, $COLUMN_EVENT_INFO TEXT, $COLUMN_ITEMS_JSON TEXT)")
 
@@ -78,6 +76,18 @@ class DatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME
             put(COLUMN_USERTYPE, "admin")
         }
         db.insert(TABLE_USERS, null, adminValues)
+
+        val kasirValues = ContentValues().apply {
+            put(COLUMN_NAME, "Kasir Smolie")
+            put(COLUMN_EMAIL, "kasir@smolie.com")
+            put(COLUMN_USERNAME, "kasirsmolie")
+            put(COLUMN_GENDER, "Laki-laki")
+            put(COLUMN_PHONE, "08123456789")
+            put(COLUMN_ADDRESS, "Toko Smolie Gift")
+            put(COLUMN_PASSWORD, "1")
+            put(COLUMN_USERTYPE, "kasir")
+        }
+        db.insert(TABLE_USERS, null, kasirValues)
     }
 
     override fun onUpgrade(db: SQLiteDatabase, oldVersion: Int, newVersion: Int) {
@@ -102,8 +112,16 @@ class DatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME
         val db = this.readableDatabase
         val cursor = db.rawQuery("SELECT * FROM $TABLE_USERS WHERE $COLUMN_EMAIL = ? AND $COLUMN_PASSWORD = ?", arrayOf(email, pass))
         var user: User? = null
-        if (cursor.moveToFirst()) { user = User(id = cursor.getInt(cursor.getColumnIndexOrThrow(COLUMN_ID)), name = cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_NAME)), email = cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_EMAIL)), usertype = cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_USERTYPE))) }
-        cursor.close(); db.close()
+        if (cursor.moveToFirst()) {
+            user = User(
+                id = cursor.getInt(cursor.getColumnIndexOrThrow(COLUMN_ID)),
+                name = cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_NAME)),
+                email = cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_EMAIL)),
+                usertype = cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_USERTYPE))
+            )
+        }
+        cursor.close()
+        db.close()
         return user
     }
 
@@ -165,9 +183,7 @@ class DatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME
 
     fun kurangiStokProduk(namaProduk: String, jumlah: Int): Boolean {
         val db = this.writableDatabase
-        // Nama produk di keranjang mungkin mengandung info kustom, kita ambil nama produk aslinya saja (sebelum tanda kurung)
         val namaAsli = if (namaProduk.contains("(")) namaProduk.substring(0, namaProduk.indexOf("(")).trim() else namaProduk.trim()
-        
         val query = "UPDATE $TABLE_PRODUCTS SET $COLUMN_PROD_STOCK = $COLUMN_PROD_STOCK - ? WHERE $COLUMN_PROD_NAME = ?"
         val statement = db.compileStatement(query)
         statement.bindLong(1, jumlah.toLong())
@@ -212,7 +228,6 @@ class DatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME
             put(COLUMN_EVENT_INFO, eventInfo)
             put(COLUMN_ITEMS_JSON, itemsJson)
         }
-
         val success = db.insert(TABLE_TRANSACTIONS, null, values)
         db.close()
         return success != -1L
@@ -226,11 +241,11 @@ class DatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME
                 put(COLUMN_CUSTOMER_NAME, cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_CUSTOMER_NAME)))
                 put(COLUMN_CUSTOMER_WA, cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_CUSTOMER_WA)))
                 put(COLUMN_PAYMENT_METHOD, cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_PAYMENT_METHOD)))
-                put(COLUMN_GRAND_TOTAL, cursor.getInt(cursor.getColumnIndexOrThrow(DatabaseHelper.COLUMN_GRAND_TOTAL)))
+                put(COLUMN_GRAND_TOTAL, cursor.getInt(cursor.getColumnIndexOrThrow(COLUMN_GRAND_TOTAL)))
                 put(COLUMN_CUSTOM_IMAGE, cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_CUSTOM_IMAGE)))
-                put(COLUMN_TRANS_DATE, cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COLUMN_TRANS_DATE)))
-                put(COLUMN_EVENT_INFO, cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COLUMN_EVENT_INFO)))
-                put(COLUMN_ITEMS_JSON, cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COLUMN_ITEMS_JSON)))
+                put(COLUMN_TRANS_DATE, cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_TRANS_DATE)))
+                put(COLUMN_EVENT_INFO, cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_EVENT_INFO)))
+                put(COLUMN_ITEMS_JSON, cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_ITEMS_JSON)))
             }
             db.insert(TABLE_HISTORY, null, values)
             db.delete(TABLE_TRANSACTIONS, "$COLUMN_TRANS_ID=?", arrayOf(idPesanan.toString()))
@@ -242,6 +257,5 @@ class DatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME
     }
 
     fun getLaporanPenjualan(): Cursor = this.readableDatabase.rawQuery("SELECT $COLUMN_TRANS_ID AS _id, * FROM $TABLE_HISTORY ORDER BY $COLUMN_TRANS_ID DESC", null)
-
     fun getSemuaTransaksi(): Cursor = this.readableDatabase.rawQuery("SELECT $COLUMN_TRANS_ID AS _id, * FROM $TABLE_TRANSACTIONS", null)
 }
