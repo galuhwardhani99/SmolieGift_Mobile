@@ -10,9 +10,9 @@ import java.io.IOException
 
 object ApiClient {
     private val client = OkHttpClient()
-    private const val BASE_URL   = "http://192.168.1.8/smoliegift/products.php"
-    private const val UPLOAD_URL = "http://192.168.1.8/smoliegift/upload_image.php"
-    const val IMAGE_BASE_URL     = "http://192.168.1.8/smoliegift/images/"
+    private const val BASE_URL   = "http://192.168.0.19/toko-smolie/public/api/produk"
+    private const val UPLOAD_URL = "http://192.168.0.19/toko-smolie/public/api/produk/upload-image"
+    const val IMAGE_BASE_URL     = "http://192.168.0.19/toko-smolie/public/img/produk/"
 
     // GET semua produk
     fun getAllProducts(callback: (String?) -> Unit) {
@@ -28,11 +28,11 @@ object ApiClient {
     // POST tambah produk
     fun addProduct(name: String, category: String, price: Int, stock: Int, image: String, callback: (Boolean) -> Unit) {
         val json = JSONObject().apply {
-            put("prod_name", name)
-            put("prod_category", category)
-            put("prod_price", price)
-            put("prod_stock", stock)
-            put("prod_image", image)
+            put("nama_produk", name)
+            put("kategori_id", category)
+            put("harga",       price)
+            put("stock",       stock)
+            put("gambar",      image)
         }
         val body = json.toString().toRequestBody("application/json".toMediaType())
         val request = Request.Builder().url(BASE_URL).post(body).build()
@@ -48,15 +48,15 @@ object ApiClient {
     // PUT update produk
     fun updateProduct(id: Int, name: String, category: String, price: Int, stock: Int, image: String, callback: (Boolean) -> Unit) {
         val json = JSONObject().apply {
-            put("prod_id", id)
-            put("prod_name", name)
-            put("prod_category", category)
-            put("prod_price", price)
-            put("prod_stock", stock)
-            put("prod_image", image)
+            put("nama_produk", name)
+            put("kategori_id", category)
+            put("harga",       price)
+            put("stock",       stock)
+            put("gambar",      image)
         }
         val body = json.toString().toRequestBody("application/json".toMediaType())
-        val request = Request.Builder().url(BASE_URL).put(body).build()
+        // ← URL pakai id di path, bukan di body
+        val request = Request.Builder().url("$BASE_URL/$id").put(body).build()
         client.newCall(request).enqueue(object : Callback {
             override fun onFailure(call: Call, e: IOException) { callback(false) }
             override fun onResponse(call: Call, response: Response) {
@@ -68,9 +68,8 @@ object ApiClient {
 
     // DELETE hapus produk
     fun deleteProduct(id: Int, callback: (Boolean) -> Unit) {
-        val json = JSONObject().apply { put("prod_id", id) }
-        val body = json.toString().toRequestBody("application/json".toMediaType())
-        val request = Request.Builder().url(BASE_URL).delete(body).build()
+        // ← URL pakai id di path, bukan di body
+        val request = Request.Builder().url("$BASE_URL/$id").delete().build()
         client.newCall(request).enqueue(object : Callback {
             override fun onFailure(call: Call, e: IOException) { callback(false) }
             override fun onResponse(call: Call, response: Response) {
@@ -80,7 +79,7 @@ object ApiClient {
         })
     }
 
-    // UPLOAD gambar ke server → kembalikan nama file (misal "produk_1234.jpg")
+    // UPLOAD gambar ke server → kembalikan nama file
     fun uploadImage(bitmap: Bitmap, callback: (String?) -> Unit) {
         val stream = ByteArrayOutputStream()
         bitmap.compress(Bitmap.CompressFormat.JPEG, 80, stream)
