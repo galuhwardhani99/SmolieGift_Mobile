@@ -10,9 +10,9 @@ import java.io.IOException
 
 object ApiClient {
     private val client = OkHttpClient()
-    private const val BASE_URL   = "http://192.168.1.8/smoliegift/products.php"
-    private const val UPLOAD_URL = "http://192.168.1.8/smoliegift/upload_image.php"
-    const val IMAGE_BASE_URL     = "http://192.168.1.8/smoliegift/images/"
+    private const val BASE_URL   = "http://192.168.0.103/smoliegift/products.php"
+    private const val UPLOAD_URL = "http://192.168.0.103/smoliegift/upload_image.php"
+    const val IMAGE_BASE_URL     = "http://192.168.0.103/smoliegift/images/"
 
     // GET semua produk
     fun getAllProducts(callback: (String?) -> Unit) {
