@@ -24,6 +24,8 @@ import androidx.appcompat.widget.Toolbar
 import androidx.core.widget.addTextChangedListener
 import com.example.smoliegift.database.DatabaseHelper
 import com.google.android.material.bottomnavigation.BottomNavigationView
+import org.json.JSONArray
+import org.json.JSONObject
 import java.io.InputStream
 import java.util.Calendar
 
@@ -42,6 +44,10 @@ class PembeliDashboardActivity : AppCompatActivity() {
 
     private var currentCustomImageBase64: String? = null
     private var btnPilihFileRef: Button? = null
+
+    // Simpan kategori dan produk dari API
+    private val listKategori = mutableListOf<Pair<Int, String>>()
+    private var listProdukApi = mutableListOf<JSONObject>()
 
     private val pickImageLauncher = registerForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
         uri?.let {
@@ -114,17 +120,42 @@ class PembeliDashboardActivity : AppCompatActivity() {
         }
 
         if (currentUserEmail != null) loadUserProfile(currentUserEmail!!)
-        loadKatalogProduk()
+        
+        // Load kategori dan produk
+        loadKategori {
+            loadKatalogProduk()
+        }
+        
         setupSearchAutoComplete()
     }
 
+    private fun loadKategori(onDone: () -> Unit) {
+        ApiClient.getKategori { list ->
+            runOnUiThread {
+                listKategori.clear()
+                listKategori.addAll(list)
+                onDone()
+            }
+        }
+    }
+
     private fun setupSearchAutoComplete() {
+        // Kita biarkan saja dulu untuk yang lokal, atau nanti diupdate ke API jika perlu
         val cursor: Cursor = dbHelper.getSemuaProduk()
         val listNamaProduk = mutableListOf<String>()
         while (cursor.moveToNext()) {
             listNamaProduk.add(cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COLUMN_PROD_NAME)))
         }
         cursor.close()
+        
+        // Tambahkan nama produk dari API ke autocomplete
+        for (produk in listProdukApi) {
+            val nama = produk.optString("nama_produk")
+            if (nama.isNotEmpty() && !listNamaProduk.contains(nama)) {
+                listNamaProduk.add(nama)
+            }
+        }
+
         val adapter = ArrayAdapter(this, android.R.layout.simple_dropdown_item_1line, listNamaProduk)
         acSearchProduk.setAdapter(adapter)
         acSearchProduk.setOnItemClickListener { parent, _, position, _ ->
@@ -135,9 +166,17 @@ class PembeliDashboardActivity : AppCompatActivity() {
 
     private fun filterKatalogProduk(query: String) {
         gridLayoutProduk.removeAllViews()
-        val db = dbHelper.readableDatabase
-        val cursor = db.rawQuery("SELECT * FROM ${DatabaseHelper.TABLE_PRODUCTS} WHERE ${DatabaseHelper.COLUMN_PROD_NAME} = ?", arrayOf(query))
-        tampilkanDataKatalog(cursor)
+        
+        // Filter dari API
+        val filteredApi = listProdukApi.filter { it.optString("nama_produk").equals(query, ignoreCase = true) }
+        if (filteredApi.isNotEmpty()) {
+            tampilkanDataKatalogApi(filteredApi)
+        } else {
+            // Jika tidak ada di API, coba di lokal
+            val db = dbHelper.readableDatabase
+            val cursor = db.rawQuery("SELECT * FROM ${DatabaseHelper.TABLE_PRODUCTS} WHERE ${DatabaseHelper.COLUMN_PROD_NAME} = ?", arrayOf(query))
+            tampilkanDataKatalogLocal(cursor)
+        }
     }
 
     private fun showHome() {
@@ -178,10 +217,81 @@ class PembeliDashboardActivity : AppCompatActivity() {
 
     private fun loadKatalogProduk() {
         gridLayoutProduk.removeAllViews()
-        tampilkanDataKatalog(dbHelper.getSemuaProduk())
+        
+        // Ambil data dari API Laravel
+        ApiClient.getAllProducts { response ->
+            runOnUiThread {
+                if (response != null) {
+                    try {
+                        val json = JSONObject(response)
+                        val data = json.getJSONArray("data")
+                        listProdukApi.clear()
+                        for (i in 0 until data.length()) {
+                            listProdukApi.add(data.getJSONObject(i))
+                        }
+                        tampilkanDataKatalogApi(listProdukApi)
+                        setupSearchAutoComplete() // Refresh search list
+                    } catch (e: Exception) {
+                        // Jika gagal API, tampilkan lokal
+                        tampilkanDataKatalogLocal(dbHelper.getSemuaProduk())
+                    }
+                } else {
+                    // Jika null (offline), tampilkan lokal
+                    tampilkanDataKatalogLocal(dbHelper.getSemuaProduk())
+                }
+            }
+        }
     }
 
-    private fun tampilkanDataKatalog(cursor: Cursor) {
+    private fun tampilkanDataKatalogApi(data: List<JSONObject>) {
+        val inflater = LayoutInflater.from(this)
+        val itemWidth = (resources.displayMetrics.widthPixels / 2) - 48
+        
+        if (data.isEmpty()) {
+            val tv = TextView(this)
+            tv.text = "Tidak ada produk di katalog."; tv.setPadding(32, 32, 32, 32)
+            gridLayoutProduk.addView(tv)
+            return
+        }
+
+        for (produk in data) {
+            val nama = produk.getString("nama_produk")
+            val kategoriId = produk.optString("kategori_id", "-")
+            val harga = produk.optInt("harga", 0)
+            val image = produk.optString("gambar", "")
+            
+            val namaKategori = listKategori.find { it.first.toString() == kategoriId }?.second ?: kategoriId
+
+            val itemView = inflater.inflate(R.layout.item_produk_pembeli, gridLayoutProduk, false)
+            itemView.findViewById<TextView>(R.id.tvPembeliProdName).text = nama
+            itemView.findViewById<TextView>(R.id.tvPembeliProdCat).text = namaKategori
+            itemView.findViewById<TextView>(R.id.tvPembeliProdPrice).text = "Rp $harga"
+
+            val ivProduk = itemView.findViewById<ImageView>(R.id.ivPembeliProdImage)
+            if (image.isNotEmpty()) {
+                Thread {
+                    try {
+                        val url = java.net.URL(ApiClient.IMAGE_BASE_URL + image)
+                        val bmp = BitmapFactory.decodeStream(url.openStream())
+                        runOnUiThread { ivProduk.setImageBitmap(bmp) }
+                    } catch (e: Exception) {
+                        runOnUiThread { ivProduk.setImageResource(android.R.drawable.ic_menu_gallery) }
+                    }
+                }.start()
+            }
+
+            val btnPesan = itemView.findViewById<Button>(R.id.btnPesanKatalog)
+            if (isAdminView) btnPesan.visibility = View.GONE
+            else btnPesan.setOnClickListener { tampilkanDialogPesanan(nama, harga, null) } // Null karena dari API (bukan base64 lokal)
+
+            val params = GridLayout.LayoutParams()
+            params.width = itemWidth; params.setMargins(12, 16, 12, 16)
+            itemView.layoutParams = params
+            gridLayoutProduk.addView(itemView)
+        }
+    }
+
+    private fun tampilkanDataKatalogLocal(cursor: Cursor) {
         val inflater = LayoutInflater.from(this)
         val itemWidth = (resources.displayMetrics.widthPixels / 2) - 48
         if (cursor.count == 0) {

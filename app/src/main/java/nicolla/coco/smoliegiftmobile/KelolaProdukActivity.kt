@@ -24,6 +24,9 @@ class KelolaProdukActivity : AppCompatActivity() {
     private var selectedBitmap: Bitmap? = null
     private val listProduk = mutableListOf<JSONObject>()
 
+    // ✅ Simpan kategori dari Laravel: Pair(id, nama)
+    private val listKategori = mutableListOf<Pair<Int, String>>()
+
     private val imagePickerLauncher = registerForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
         uri?.let {
             try {
@@ -52,7 +55,10 @@ class KelolaProdukActivity : AppCompatActivity() {
         lvDaftarProduk = findViewById(R.id.lvDaftarProdukAdmin)
         val btnTambah = findViewById<Button>(R.id.btnTambahProdukBaru)
 
-        loadDataProduk()
+        // ✅ Load kategori dulu, baru load produk
+        loadKategori {
+            loadDataProduk()
+        }
 
         btnTambah.setOnClickListener {
             selectedBitmap = null
@@ -60,7 +66,18 @@ class KelolaProdukActivity : AppCompatActivity() {
         }
     }
 
-    // LOAD DATA DARI API LARAVEL
+    // ✅ Load kategori dari Laravel API
+    private fun loadKategori(onDone: () -> Unit) {
+        ApiClient.getKategori { list ->
+            runOnUiThread {
+                listKategori.clear()
+                listKategori.addAll(list)
+                onDone()
+            }
+        }
+    }
+
+    // LOAD DATA PRODUK DARI API LARAVEL
     private fun loadDataProduk() {
         ApiClient.getAllProducts { response ->
             runOnUiThread {
@@ -87,20 +104,21 @@ class KelolaProdukActivity : AppCompatActivity() {
                                 .inflate(R.layout.item_produk_admin, parent, false)
 
                             val produk   = listProduk[pos]
-                            // ← nama kolom Laravel
-                            val id       = produk.getInt("prod_id")
-                            val nama     = produk.getString("prod_name")
-                            val kategori = produk.optString("prod_category", "-")
-                            val harga    = produk.getString("prod_price")
-                            val stok     = produk.getString("prod_stock")
-                            val image    = produk.optString("prod_image", "")
+                            val id       = produk.getInt("id")
+                            val nama     = produk.getString("nama_produk")
+                            val kategoriId = produk.optString("kategori_id", "-")
+                            val harga    = produk.getString("harga")
+                            val stok     = produk.getString("stock")
+                            val image    = produk.optString("gambar", "")
+
+                            // ✅ Tampilkan nama kategori, bukan ID
+                            val namaKategori = listKategori.find { it.first.toString() == kategoriId }?.second ?: kategoriId
 
                             view.findViewById<TextView>(R.id.tvAdminProdName).text  = nama
-                            view.findViewById<TextView>(R.id.tvAdminProdCat).text   = kategori
+                            view.findViewById<TextView>(R.id.tvAdminProdCat).text   = namaKategori
                             view.findViewById<TextView>(R.id.tvAdminProdPrice).text = "Rp $harga"
                             view.findViewById<TextView>(R.id.tvAdminProdStock).text = "Stok: $stok"
 
-                            // Tampilkan gambar dari URL Laravel
                             val ivProduk = view.findViewById<ImageView>(R.id.ivAdminProdImage)
                             if (ivProduk != null && image.isNotEmpty()) {
                                 Thread {
@@ -116,8 +134,7 @@ class KelolaProdukActivity : AppCompatActivity() {
 
                             view.findViewById<Button>(R.id.btnAdminEditProd).setOnClickListener {
                                 selectedBitmap = null
-                                // harga & stok dari Laravel bertipe String (varchar)
-                                tampilkanFormEdit(id, nama, kategori, harga.toIntOrNull() ?: 0, stok.toIntOrNull() ?: 0, image)
+                                tampilkanFormEdit(id, nama, kategoriId, harga.toIntOrNull() ?: 0, stok.toIntOrNull() ?: 0, image)
                             }
                             view.findViewById<Button>(R.id.btnAdminHapusProd).setOnClickListener {
                                 konfirmasiHapus(id, nama)
@@ -135,17 +152,6 @@ class KelolaProdukActivity : AppCompatActivity() {
         }
     }
 
-    private fun getKategoriList(): List<String> {
-        val list = mutableListOf<String>()
-        val cursor = dbHelper.getSemuaKategori()
-        while (cursor.moveToNext()) {
-            list.add(cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COLUMN_CAT_NAME)))
-        }
-        cursor.close()
-        if (list.isEmpty()) list.add("Umum")
-        return list
-    }
-
     // FORM TAMBAH
     private fun tampilkanFormTambah() {
         val builder = AlertDialog.Builder(this)
@@ -156,16 +162,18 @@ class KelolaProdukActivity : AppCompatActivity() {
             setPadding(40, 20, 40, 20)
         }
 
-        val inputNama       = EditText(this).apply { hint = "Nama Produk" }
-        val spinnerKategori = Spinner(this)
-        val kategoriAdapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, getKategoriList())
-        kategoriAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
-        spinnerKategori.adapter = kategoriAdapter
-
-        val inputHarga   = EditText(this).apply { hint = "Harga"; inputType = android.text.InputType.TYPE_CLASS_NUMBER }
-        val inputStok    = EditText(this).apply { hint = "Stok";  inputType = android.text.InputType.TYPE_CLASS_NUMBER }
+        val inputNama  = EditText(this).apply { hint = "Nama Produk" }
+        val inputHarga = EditText(this).apply { hint = "Harga"; inputType = android.text.InputType.TYPE_CLASS_NUMBER }
+        val inputStok  = EditText(this).apply { hint = "Stok";  inputType = android.text.InputType.TYPE_CLASS_NUMBER }
         val tvFotoStatus = TextView(this).apply { text = "Belum ada foto dipilih"; textSize = 12f }
         val btnPilihFoto = Button(this).apply { text = "Pilih Foto Produk" }
+
+        // ✅ Spinner kategori dari Laravel
+        val spinnerKategori = Spinner(this)
+        val namaKategoriList = listKategori.map { it.second }
+        val katAdapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, namaKategoriList)
+        katAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+        spinnerKategori.adapter = katAdapter
 
         btnPilihFoto.setOnClickListener {
             imagePickerLauncher.launch("image/*")
@@ -182,10 +190,11 @@ class KelolaProdukActivity : AppCompatActivity() {
 
         builder.setView(layout)
         builder.setPositiveButton("Simpan") { _, _ ->
-            val nama = inputNama.text.toString()
-            val kat  = spinnerKategori.selectedItem.toString()
-            val hrg  = inputHarga.text.toString().toIntOrNull() ?: 0
-            val stk  = inputStok.text.toString().toIntOrNull() ?: 0
+            val nama  = inputNama.text.toString()
+            // ✅ Ambil ID kategori dari posisi spinner
+            val katId = if (listKategori.isNotEmpty()) listKategori[spinnerKategori.selectedItemPosition].first else 1
+            val hrg   = inputHarga.text.toString().toIntOrNull() ?: 0
+            val stk   = inputStok.text.toString().toIntOrNull() ?: 0
 
             if (nama.isEmpty() || hrg <= 0) {
                 Toast.makeText(this, "Nama dan harga wajib diisi!", Toast.LENGTH_SHORT).show()
@@ -195,7 +204,7 @@ class KelolaProdukActivity : AppCompatActivity() {
             if (selectedBitmap != null) {
                 Toast.makeText(this, "Mengupload gambar...", Toast.LENGTH_SHORT).show()
                 ApiClient.uploadImage(selectedBitmap!!) { filename ->
-                    ApiClient.addProduct(nama, kat, hrg, stk, filename ?: "") { success ->
+                    ApiClient.addProduct(nama, katId.toString(), hrg, stk, filename ?: "") { success ->
                         runOnUiThread {
                             if (success) {
                                 Toast.makeText(this, "Produk berhasil ditambahkan!", Toast.LENGTH_SHORT).show()
@@ -207,7 +216,7 @@ class KelolaProdukActivity : AppCompatActivity() {
                     }
                 }
             } else {
-                ApiClient.addProduct(nama, kat, hrg, stk, "") { success ->
+                ApiClient.addProduct(nama, katId.toString(), hrg, stk, "") { success ->
                     runOnUiThread {
                         if (success) {
                             Toast.makeText(this, "Produk berhasil ditambahkan!", Toast.LENGTH_SHORT).show()
@@ -224,7 +233,7 @@ class KelolaProdukActivity : AppCompatActivity() {
     }
 
     // FORM EDIT
-    private fun tampilkanFormEdit(id: Int, nama: String, kategoriLama: String, harga: Int, stok: Int, imageLama: String) {
+    private fun tampilkanFormEdit(id: Int, nama: String, kategoriIdLama: String, harga: Int, stok: Int, imageLama: String) {
         val builder = AlertDialog.Builder(this)
         builder.setTitle("Edit Produk")
 
@@ -233,15 +242,20 @@ class KelolaProdukActivity : AppCompatActivity() {
             setPadding(40, 20, 40, 20)
         }
 
-        val inputNama       = EditText(this).apply { setText(nama) }
+        val inputNama  = EditText(this).apply { setText(nama) }
+        val inputHarga = EditText(this).apply { setText(harga.toString()); inputType = android.text.InputType.TYPE_CLASS_NUMBER }
+        val inputStok  = EditText(this).apply { setText(stok.toString());  inputType = android.text.InputType.TYPE_CLASS_NUMBER }
+
+        // ✅ Spinner kategori dari Laravel
         val spinnerKategori = Spinner(this)
-        val listKat         = getKategoriList()
-        spinnerKategori.adapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, listKat)
-        val idxKat = listKat.indexOf(kategoriLama)
+        val namaKategoriList = listKategori.map { it.second }
+        val katAdapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, namaKategoriList)
+        katAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+        spinnerKategori.adapter = katAdapter
+        // Set posisi sesuai kategori lama
+        val idxKat = listKategori.indexOfFirst { it.first.toString() == kategoriIdLama }
         if (idxKat >= 0) spinnerKategori.setSelection(idxKat)
 
-        val inputHarga   = EditText(this).apply { setText(harga.toString()); inputType = android.text.InputType.TYPE_CLASS_NUMBER }
-        val inputStok    = EditText(this).apply { setText(stok.toString());  inputType = android.text.InputType.TYPE_CLASS_NUMBER }
         val tvFotoStatus = TextView(this).apply {
             text = if (imageLama.isNotEmpty()) "Foto saat ini: $imageLama" else "Belum ada foto"
             textSize = 12f
@@ -262,14 +276,14 @@ class KelolaProdukActivity : AppCompatActivity() {
         builder.setView(layout)
         builder.setPositiveButton("Update") { _, _ ->
             val namaBaru = inputNama.text.toString()
-            val katBaru  = spinnerKategori.selectedItem.toString()
+            val katId    = if (listKategori.isNotEmpty()) listKategori[spinnerKategori.selectedItemPosition].first else 1
             val hrgBaru  = inputHarga.text.toString().toIntOrNull() ?: 0
             val stkBaru  = inputStok.text.toString().toIntOrNull() ?: 0
 
             if (selectedBitmap != null) {
                 Toast.makeText(this, "Mengupload gambar...", Toast.LENGTH_SHORT).show()
                 ApiClient.uploadImage(selectedBitmap!!) { filename ->
-                    ApiClient.updateProduct(id, namaBaru, katBaru, hrgBaru, stkBaru, filename ?: imageLama) { success ->
+                    ApiClient.updateProduct(id, namaBaru, katId.toString(), hrgBaru, stkBaru, filename ?: imageLama) { success ->
                         runOnUiThread {
                             if (success) {
                                 Toast.makeText(this, "Produk berhasil diupdate!", Toast.LENGTH_SHORT).show()
@@ -281,7 +295,7 @@ class KelolaProdukActivity : AppCompatActivity() {
                     }
                 }
             } else {
-                ApiClient.updateProduct(id, namaBaru, katBaru, hrgBaru, stkBaru, imageLama) { success ->
+                ApiClient.updateProduct(id, namaBaru, katId.toString(), hrgBaru, stkBaru, imageLama) { success ->
                     runOnUiThread {
                         if (success) {
                             Toast.makeText(this, "Produk berhasil diupdate!", Toast.LENGTH_SHORT).show()

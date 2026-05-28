@@ -12,11 +12,9 @@ import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.PopupMenu
 import android.widget.ScrollView
-import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.Toolbar
 import androidx.cardview.widget.CardView
-import com.example.smoliegift.database.DatabaseHelper
 import com.google.android.material.bottomnavigation.BottomNavigationView
 
 class AdminDashboardActivity : AppCompatActivity() {
@@ -39,7 +37,8 @@ class AdminDashboardActivity : AppCompatActivity() {
         ivAdminProfile = findViewById(R.id.ivAdminProfile)
         registerForContextMenu(ivAdminProfile)
 
-        val btnModeKasir = findViewById<Button>(R.id.btnModeKasir)
+        // Menggunakan ID baru btnPilihMenu sesuai layout XML
+        val btnPilihMenu = findViewById<Button>(R.id.btnPilihMenu)
         val cvMenuKategori = findViewById<CardView>(R.id.cvMenuKategori)
         val cvMenuProduk = findViewById<CardView>(R.id.cvMenuProduk)
         val cvMenuTransaksi = findViewById<CardView>(R.id.cvMenuTransaksi)
@@ -60,10 +59,11 @@ class AdminDashboardActivity : AppCompatActivity() {
             }
         }
 
-        btnModeKasir.setOnClickListener { view ->
+        // Logic Popup Menu untuk tombol "Pilih Menu"
+        btnPilihMenu.setOnClickListener { view ->
             val popup = PopupMenu(this, view)
             popup.menu.add(0, 1, 0, "Lihat Transaksi")
-            popup.menu.add(0, 2, 0, "Lihat Katalog")
+            popup.menu.add(0, 2, 0, "Lihat Katalog Produk")
             
             popup.setOnMenuItemClickListener { item ->
                 when (item.itemId) {
@@ -72,6 +72,7 @@ class AdminDashboardActivity : AppCompatActivity() {
                         true
                     }
                     2 -> {
+                        // Membuka katalog produk (menggunakan PembeliDashboardActivity dengan mode Admin)
                         val intent = Intent(this, PembeliDashboardActivity::class.java)
                         intent.putExtra("IS_ADMIN_VIEW", true)
                         startActivity(intent)

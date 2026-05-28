@@ -42,7 +42,7 @@
                     app:cardCornerRadius="24dp"
                     app:cardElevation="6dp"
                     app:strokeWidth="0dp"
-                    android:layout_marginBottom="32dp">
+                    android:layout_marginBottom="24dp">
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
@@ -58,12 +58,34 @@
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="Kelola bisnis souvenirmu dengan gaya ✨"
+                            android:text="Selamat Datang Di Beranda Admin"
                             android:textColor="#FFEBEE"
                             android:textSize="14sp"
                             android:layout_marginTop="8dp"/>
                     </LinearLayout>
                 </com.google.android.material.card.MaterialCardView>
+
+                <!-- Section Pilihan Menu (Sesuai Gambar) -->
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Buka Dashboard Menu Admin"
+                    android:textColor="#2D3142"
+                    android:textStyle="bold"
+                    android:textSize="18sp"
+                    android:layout_marginBottom="12dp"/>
+
+                <Button
+                    android:id="@+id/btnPilihMenu"
+                    android:layout_width="match_parent"
+                    android:layout_height="55dp"
+                    android:text="Pilih Menu"
+                    android:backgroundTint="#DD3827"
+                    android:textColor="#FFFFFF"
+                    android:textStyle="bold"
+                    app:cornerRadius="12dp"
+                    android:layout_marginBottom="24dp"
+                    android:elevation="4dp"/>
 
                 <TextView
                     android:layout_width="wrap_content"
@@ -72,8 +94,7 @@
                     android:textColor="#2D3142"
                     android:textStyle="bold"
                     android:textSize="18sp"
-                    android:layout_marginBottom="16dp"
-                    android:letterSpacing="0.02"/>
+                    android:layout_marginBottom="16dp"/>
 
                 <GridLayout
                     android:layout_width="match_parent"
@@ -82,20 +103,18 @@
                     android:alignmentMode="alignMargins"
                     android:columnOrderPreserved="false">
 
-                    <!-- Kartu-kartu menu Putih Mewah -->
                     <com.google.android.material.card.MaterialCardView
                         android:id="@+id/cvMenuKategori"
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_columnWeight="1"
-                        android:layout_margin="10dp"
-                        app:cardCornerRadius="20dp"
+                        android:layout_margin="8dp"
+                        app:cardCornerRadius="16dp"
                         app:cardElevation="4dp"
-                        app:strokeWidth="0dp"
                         app:cardBackgroundColor="#FFFFFF">
                         <LinearLayout
                             android:layout_width="match_parent"
-                            android:layout_height="140dp"
+                            android:layout_height="130dp"
                             android:orientation="vertical"
                             android:gravity="center"
                             android:padding="16dp">
@@ -104,7 +123,7 @@
                                 android:layout_height="48dp"
                                 android:src="@drawable/category_alt"
                                 app:tint="#DD3827"/>
-                            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Kategori" android:textStyle="bold" android:textColor="#2D3142" android:layout_marginTop="16dp"/>
+                            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Kategori" android:textStyle="bold" android:textColor="#2D3142" android:layout_marginTop="12dp"/>
                         </LinearLayout>
                     </com.google.android.material.card.MaterialCardView>
 
@@ -113,14 +132,13 @@
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_columnWeight="1"
-                        android:layout_margin="10dp"
-                        app:cardCornerRadius="20dp"
+                        android:layout_margin="8dp"
+                        app:cardCornerRadius="16dp"
                         app:cardElevation="4dp"
-                        app:strokeWidth="0dp"
                         app:cardBackgroundColor="#FFFFFF">
                         <LinearLayout
                             android:layout_width="match_parent"
-                            android:layout_height="140dp"
+                            android:layout_height="130dp"
                             android:orientation="vertical"
                             android:gravity="center"
                             android:padding="16dp">
@@ -129,7 +147,7 @@
                                 android:layout_height="48dp"
                                 android:src="@drawable/box_open"
                                 app:tint="#DD3827"/>
-                            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Produk" android:textStyle="bold" android:textColor="#2D3142" android:layout_marginTop="16dp"/>
+                            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Produk" android:textStyle="bold" android:textColor="#2D3142" android:layout_marginTop="12dp"/>
                         </LinearLayout>
                     </com.google.android.material.card.MaterialCardView>
 
@@ -138,14 +156,13 @@
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_columnWeight="1"
-                        android:layout_margin="10dp"
-                        app:cardCornerRadius="20dp"
+                        android:layout_margin="8dp"
+                        app:cardCornerRadius="16dp"
                         app:cardElevation="4dp"
-                        app:strokeWidth="0dp"
                         app:cardBackgroundColor="#FFFFFF">
                         <LinearLayout
                             android:layout_width="match_parent"
-                            android:layout_height="140dp"
+                            android:layout_height="130dp"
                             android:orientation="vertical"
                             android:gravity="center"
                             android:padding="16dp">
@@ -154,7 +171,7 @@
                                 android:layout_height="48dp"
                                 android:src="@drawable/cash_register"
                                 app:tint="#DD3827"/>
-                            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Transaksi" android:textStyle="bold" android:textColor="#2D3142" android:layout_marginTop="16dp"/>
+                            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Transaksi" android:textStyle="bold" android:textColor="#2D3142" android:layout_marginTop="12dp"/>
                         </LinearLayout>
                     </com.google.android.material.card.MaterialCardView>
 
@@ -163,14 +180,13 @@
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_columnWeight="1"
-                        android:layout_margin="10dp"
-                        app:cardCornerRadius="20dp"
+                        android:layout_margin="8dp"
+                        app:cardCornerRadius="16dp"
                         app:cardElevation="4dp"
-                        app:strokeWidth="0dp"
                         app:cardBackgroundColor="#FFFFFF">
                         <LinearLayout
                             android:layout_width="match_parent"
-                            android:layout_height="140dp"
+                            android:layout_height="130dp"
                             android:orientation="vertical"
                             android:gravity="center"
                             android:padding="16dp">
@@ -179,24 +195,11 @@
                                 android:layout_height="48dp"
                                 android:src="@drawable/newspaper"
                                 app:tint="#DD3827"/>
-                            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Laporan" android:textStyle="bold" android:textColor="#2D3142" android:layout_marginTop="16dp"/>
+                            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Laporan" android:textStyle="bold" android:textColor="#2D3142" android:layout_marginTop="12dp"/>
                         </LinearLayout>
                     </com.google.android.material.card.MaterialCardView>
 
                 </GridLayout>
-
-                <Button
-                    android:id="@+id/btnModeKasir"
-                    android:layout_width="match_parent"
-                    android:layout_height="60dp"
-                    android:text="BUKA KATALOG BELANJA →"
-                    android:backgroundTint="#DD3827"
-                    android:textColor="#FFFFFF"
-                    android:textStyle="bold"
-                    app:cornerRadius="16dp"
-                    android:layout_marginTop="24dp"
-                    android:elevation="4dp"
-                    android:letterSpacing="0.05"/>
 
             </LinearLayout>
         </ScrollView>
