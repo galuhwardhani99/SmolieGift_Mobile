@@ -21,9 +21,7 @@ class KelolaProdukActivity : AppCompatActivity() {
     private lateinit var dbHelper: DatabaseHelper
     private lateinit var lvDaftarProduk: ListView
 
-    // Ganti sImage (Base64) → selectedBitmap (file asli untuk diupload)
     private var selectedBitmap: Bitmap? = null
-
     private val listProduk = mutableListOf<JSONObject>()
 
     private val imagePickerLauncher = registerForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
@@ -32,7 +30,7 @@ class KelolaProdukActivity : AppCompatActivity() {
                 val inputStream = contentResolver.openInputStream(it)
                 val bitmap = BitmapFactory.decodeStream(inputStream)
                 if (bitmap != null) {
-                    selectedBitmap = bitmap // ← simpan bitmap, bukan Base64
+                    selectedBitmap = bitmap
                     Toast.makeText(this, "Foto berhasil dipilih!", Toast.LENGTH_SHORT).show()
                 }
             } catch (e: Exception) {
@@ -62,7 +60,7 @@ class KelolaProdukActivity : AppCompatActivity() {
         }
     }
 
-    // LOAD DATA DARI API
+    // LOAD DATA DARI API LARAVEL
     private fun loadDataProduk() {
         ApiClient.getAllProducts { response ->
             runOnUiThread {
@@ -89,19 +87,20 @@ class KelolaProdukActivity : AppCompatActivity() {
                                 .inflate(R.layout.item_produk_admin, parent, false)
 
                             val produk   = listProduk[pos]
-                            val id       = produk.getInt("prod_id")
-                            val nama     = produk.getString("prod_name")
-                            val kategori = produk.optString("prod_category", "Umum")
-                            val harga    = produk.getInt("prod_price")
-                            val stok     = produk.getInt("prod_stock")
-                            val image    = produk.optString("prod_image", "")
+                            // ← nama kolom Laravel
+                            val id       = produk.getInt("id")
+                            val nama     = produk.getString("nama_produk")
+                            val kategori = produk.optString("kategori_id", "-")
+                            val harga    = produk.getString("harga")
+                            val stok     = produk.getString("stock")
+                            val image    = produk.optString("gambar", "")
 
                             view.findViewById<TextView>(R.id.tvAdminProdName).text  = nama
                             view.findViewById<TextView>(R.id.tvAdminProdCat).text   = kategori
                             view.findViewById<TextView>(R.id.tvAdminProdPrice).text = "Rp $harga"
                             view.findViewById<TextView>(R.id.tvAdminProdStock).text = "Stok: $stok"
 
-                            // Tampilkan gambar dari URL server
+                            // Tampilkan gambar dari URL Laravel
                             val ivProduk = view.findViewById<ImageView>(R.id.ivAdminProdImage)
                             if (ivProduk != null && image.isNotEmpty()) {
                                 Thread {
@@ -117,7 +116,8 @@ class KelolaProdukActivity : AppCompatActivity() {
 
                             view.findViewById<Button>(R.id.btnAdminEditProd).setOnClickListener {
                                 selectedBitmap = null
-                                tampilkanFormEdit(id, nama, kategori, harga, stok, image)
+                                // harga & stok dari Laravel bertipe String (varchar)
+                                tampilkanFormEdit(id, nama, kategori, harga.toIntOrNull() ?: 0, stok.toIntOrNull() ?: 0, image)
                             }
                             view.findViewById<Button>(R.id.btnAdminHapusProd).setOnClickListener {
                                 konfirmasiHapus(id, nama)
@@ -169,7 +169,6 @@ class KelolaProdukActivity : AppCompatActivity() {
 
         btnPilihFoto.setOnClickListener {
             imagePickerLauncher.launch("image/*")
-            // Update status teks setelah dipilih (via observer di imagePickerLauncher)
             tvFotoStatus.text = "Foto dipilih ✓"
         }
 
@@ -194,7 +193,6 @@ class KelolaProdukActivity : AppCompatActivity() {
             }
 
             if (selectedBitmap != null) {
-                // Ada gambar → upload dulu, baru simpan produk
                 Toast.makeText(this, "Mengupload gambar...", Toast.LENGTH_SHORT).show()
                 ApiClient.uploadImage(selectedBitmap!!) { filename ->
                     ApiClient.addProduct(nama, kat, hrg, stk, filename ?: "") { success ->
@@ -209,7 +207,6 @@ class KelolaProdukActivity : AppCompatActivity() {
                     }
                 }
             } else {
-                // Tidak ada gambar → langsung simpan
                 ApiClient.addProduct(nama, kat, hrg, stk, "") { success ->
                     runOnUiThread {
                         if (success) {
@@ -270,7 +267,6 @@ class KelolaProdukActivity : AppCompatActivity() {
             val stkBaru  = inputStok.text.toString().toIntOrNull() ?: 0
 
             if (selectedBitmap != null) {
-                // Ada gambar baru → upload dulu
                 Toast.makeText(this, "Mengupload gambar...", Toast.LENGTH_SHORT).show()
                 ApiClient.uploadImage(selectedBitmap!!) { filename ->
                     ApiClient.updateProduct(id, namaBaru, katBaru, hrgBaru, stkBaru, filename ?: imageLama) { success ->
@@ -285,7 +281,6 @@ class KelolaProdukActivity : AppCompatActivity() {
                     }
                 }
             } else {
-                // Tidak ganti gambar → pakai nama file lama
                 ApiClient.updateProduct(id, namaBaru, katBaru, hrgBaru, stkBaru, imageLama) { success ->
                     runOnUiThread {
                         if (success) {
