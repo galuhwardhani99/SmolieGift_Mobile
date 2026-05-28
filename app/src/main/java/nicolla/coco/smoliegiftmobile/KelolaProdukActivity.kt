@@ -88,12 +88,12 @@ class KelolaProdukActivity : AppCompatActivity() {
 
                             val produk   = listProduk[pos]
                             // ← nama kolom Laravel
-                            val id       = produk.getInt("id")
-                            val nama     = produk.getString("nama_produk")
-                            val kategori = produk.optString("kategori_id", "-")
-                            val harga    = produk.getString("harga")
-                            val stok     = produk.getString("stock")
-                            val image    = produk.optString("gambar", "")
+                            val id       = produk.getInt("prod_id")
+                            val nama     = produk.getString("prod_name")
+                            val kategori = produk.optString("prod_category", "-")
+                            val harga    = produk.getString("prod_price")
+                            val stok     = produk.getString("prod_stock")
+                            val image    = produk.optString("prod_image", "")
 
                             view.findViewById<TextView>(R.id.tvAdminProdName).text  = nama
                             view.findViewById<TextView>(R.id.tvAdminProdCat).text   = kategori
