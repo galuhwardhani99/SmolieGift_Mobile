@@ -35,24 +35,21 @@ class KasirDashboardActivity : AppCompatActivity() {
         layoutHome = findViewById(R.id.layoutHomeKasir)
         layoutProfile = findViewById(R.id.layoutProfileKasir)
 
-        val cvInputManual = findViewById<MaterialCardView>(R.id.cvInputManual)
-        val cvDataTransaksi = findViewById<MaterialCardView>(R.id.cvDataTransaksi)
-        val cvLaporanSelesai = findViewById<MaterialCardView>(R.id.cvLaporanSelesai)
+        val cvMenuKatalog = findViewById<MaterialCardView>(R.id.cvMenuKatalog)
+        val cvMenuTransaksi = findViewById<MaterialCardView>(R.id.cvMenuTransaksi)
         val bottomNav = findViewById<BottomNavigationView>(R.id.bottomNavKasir)
 
-        cvInputManual.setOnClickListener {
+        // Menu Katalog langsung membuka Katalog Produk Mode Kasir (Input Manual)
+        cvMenuKatalog.setOnClickListener {
             val intent = Intent(this, PembeliDashboardActivity::class.java)
             intent.putExtra("IS_KASIR_MODE", true)
             intent.putExtra("USER_EMAIL", currentUserEmail)
             startActivity(intent)
         }
 
-        cvDataTransaksi.setOnClickListener {
+        // Menu Transaksi menampilkan riwayat seluruh transaksi
+        cvMenuTransaksi.setOnClickListener {
             startActivity(Intent(this, AdminTransaksiActivity::class.java))
-        }
-
-        cvLaporanSelesai.setOnClickListener {
-            startActivity(Intent(this, AdminLaporanActivity::class.java))
         }
 
         bottomNav.setOnItemSelectedListener { item ->

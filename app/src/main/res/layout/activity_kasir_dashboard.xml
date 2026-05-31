@@ -27,16 +27,17 @@
             android:id="@+id/layoutHomeKasir"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:visibility="visible"
-            android:scrollbars="none">
+            android:scrollbars="none"
+            android:visibility="visible">
 
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
-                android:padding="20dp">
+                android:padding="20dp"
+                android:paddingBottom="40dp">
 
-                <!-- Header Banner Kasir -->
+                <!-- Header Banner Kasir Mewah -->
                 <com.google.android.material.card.MaterialCardView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
@@ -44,7 +45,7 @@
                     app:cardCornerRadius="24dp"
                     app:cardElevation="6dp"
                     app:strokeWidth="0dp"
-                    android:layout_marginBottom="28dp">
+                    android:layout_marginBottom="32dp">
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
@@ -84,9 +85,9 @@
                     android:alignmentMode="alignMargins"
                     android:columnOrderPreserved="false">
 
-                    <!-- Menu 1: Input Manual -->
+                    <!-- Menu 1: Katalog -->
                     <com.google.android.material.card.MaterialCardView
-                        android:id="@+id/cvInputManual"
+                        android:id="@+id/cvMenuKatalog"
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_columnWeight="1"
@@ -94,7 +95,10 @@
                         app:cardCornerRadius="20dp"
                         app:cardElevation="4dp"
                         app:strokeWidth="0dp"
-                        app:cardBackgroundColor="#FFFFFF">
+                        app:cardBackgroundColor="#FFFFFF"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:foreground="?attr/selectableItemBackground">
                         <LinearLayout
                             android:layout_width="match_parent"
                             android:layout_height="140dp"
@@ -106,13 +110,19 @@
                                 android:layout_height="48dp"
                                 android:src="@drawable/bags_shopping"
                                 app:tint="#DD3827"/>
-                            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Input Manual" android:textStyle="bold" android:textColor="#2D3142" android:layout_marginTop="16dp"/>
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="Katalog"
+                                android:textStyle="bold"
+                                android:textColor="#2D3142"
+                                android:layout_marginTop="16dp"/>
                         </LinearLayout>
                     </com.google.android.material.card.MaterialCardView>
 
-                    <!-- Menu 2: Data Pesanan -->
+                    <!-- Menu 2: Transaksi -->
                     <com.google.android.material.card.MaterialCardView
-                        android:id="@+id/cvDataTransaksi"
+                        android:id="@+id/cvMenuTransaksi"
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_columnWeight="1"
@@ -120,7 +130,10 @@
                         app:cardCornerRadius="20dp"
                         app:cardElevation="4dp"
                         app:strokeWidth="0dp"
-                        app:cardBackgroundColor="#FFFFFF">
+                        app:cardBackgroundColor="#FFFFFF"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:foreground="?attr/selectableItemBackground">
                         <LinearLayout
                             android:layout_width="match_parent"
                             android:layout_height="140dp"
@@ -132,47 +145,15 @@
                                 android:layout_height="48dp"
                                 android:src="@drawable/receipt"
                                 app:tint="#DD3827"/>
-                            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Data Pesanan" android:textStyle="bold" android:textColor="#2D3142" android:layout_marginTop="16dp"/>
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="Transaksi"
+                                android:textStyle="bold"
+                                android:textColor="#2D3142"
+                                android:layout_marginTop="16dp"/>
                         </LinearLayout>
                     </com.google.android.material.card.MaterialCardView>
-
-                    <!-- Menu 3: Laporan (Kembali Jadi Kotak) -->
-                    <com.google.android.material.card.MaterialCardView
-                        android:id="@+id/cvLaporanSelesai"
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_columnWeight="1"
-                        android:layout_margin="10dp"
-                        app:cardCornerRadius="20dp"
-                        app:cardElevation="4dp"
-                        app:strokeWidth="0dp"
-                        app:cardBackgroundColor="#FFFFFF">
-                        <LinearLayout
-                            android:layout_width="match_parent"
-                            android:layout_height="140dp"
-                            android:orientation="vertical"
-                            android:gravity="center"
-                            android:padding="16dp">
-                            <ImageView
-                                android:layout_width="48dp"
-                                android:layout_height="48dp"
-                                android:src="@drawable/newspaper"
-                                app:tint="#DD3827"/>
-                            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Laporan" android:textStyle="bold" android:textColor="#2D3142" android:layout_marginTop="16dp"/>
-                        </LinearLayout>
-                    </com.google.android.material.card.MaterialCardView>
-
-                    <!-- Menu 4: Profil (Penyeimbang agar simetris) -->
-                    <com.google.android.material.card.MaterialCardView
-                        android:id="@+id/cvMenuProfilKasir"
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_columnWeight="1"
-                        android:layout_margin="10dp"
-                        app:cardCornerRadius="20dp"
-                        app:cardElevation="4dp"
-                        app:strokeWidth="0dp"
-                        app:cardBackgroundColor="#FFFFFF"/>
 
                 </GridLayout>
             </LinearLayout>
@@ -210,7 +191,7 @@
                 android:id="@+id/tvKasirProfileName"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Kasir Smolie"
+                android:text="Nama Kasir"
                 android:textSize="26sp"
                 android:textStyle="bold"
                 android:textColor="#2D3142"/>
@@ -242,7 +223,7 @@
                         android:text="Informasi Akun Kasir"
                         android:textStyle="bold"
                         android:textColor="#2D3142"
-                        android:textSize="16sp"
+                        android:textSize="18sp"
                         android:layout_marginBottom="16dp"/>
                     <TextView
                         android:id="@+id/tvKasirProfileUsername"
@@ -262,7 +243,6 @@
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
         </LinearLayout>
-
     </FrameLayout>
 
     <com.google.android.material.bottomnavigation.BottomNavigationView

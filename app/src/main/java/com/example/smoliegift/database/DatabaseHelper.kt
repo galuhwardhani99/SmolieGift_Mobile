@@ -258,4 +258,15 @@ class DatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME
 
     fun getLaporanPenjualan(): Cursor = this.readableDatabase.rawQuery("SELECT $COLUMN_TRANS_ID AS _id, * FROM $TABLE_HISTORY ORDER BY $COLUMN_TRANS_ID DESC", null)
     fun getSemuaTransaksi(): Cursor = this.readableDatabase.rawQuery("SELECT $COLUMN_TRANS_ID AS _id, * FROM $TABLE_TRANSACTIONS", null)
+
+    fun getSeluruhTransaksi(): Cursor {
+        val db = this.readableDatabase
+        val query = """
+            SELECT $COLUMN_TRANS_ID AS _id, $COLUMN_CUSTOMER_NAME, $COLUMN_CUSTOMER_WA, $COLUMN_PAYMENT_METHOD, $COLUMN_GRAND_TOTAL, $COLUMN_CUSTOM_IMAGE, $COLUMN_TRANS_DATE, $COLUMN_EVENT_INFO, $COLUMN_ITEMS_JSON, 'AKTIF' as status FROM $TABLE_TRANSACTIONS
+            UNION ALL
+            SELECT $COLUMN_TRANS_ID AS _id, $COLUMN_CUSTOMER_NAME, $COLUMN_CUSTOMER_WA, $COLUMN_PAYMENT_METHOD, $COLUMN_GRAND_TOTAL, $COLUMN_CUSTOM_IMAGE, $COLUMN_TRANS_DATE, $COLUMN_EVENT_INFO, $COLUMN_ITEMS_JSON, 'SELESAI' as status FROM $TABLE_HISTORY
+            ORDER BY status ASC, _id DESC
+        """.trimIndent()
+        return db.rawQuery(query, null)
+    }
 }

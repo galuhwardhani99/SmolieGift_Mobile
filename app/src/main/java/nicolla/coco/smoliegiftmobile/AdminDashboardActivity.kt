@@ -12,21 +12,28 @@ import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.PopupMenu
 import android.widget.ScrollView
+import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.Toolbar
 import androidx.cardview.widget.CardView
+import com.example.smoliegift.database.DatabaseHelper
 import com.google.android.material.bottomnavigation.BottomNavigationView
 
 class AdminDashboardActivity : AppCompatActivity() {
 
+    private lateinit var dbHelper: DatabaseHelper
     private lateinit var layoutHome: ScrollView
     private lateinit var layoutProfile: LinearLayout
     private lateinit var toolbar: Toolbar
     private lateinit var ivAdminProfile: ImageView
+    private var currentUserEmail: String? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_admin_dashboard)
+
+        dbHelper = DatabaseHelper(this)
+        currentUserEmail = intent.getStringExtra("USER_EMAIL") ?: "admin@smolie.com"
 
         toolbar = findViewById(R.id.toolbarAdmin)
         setSupportActionBar(toolbar)
@@ -37,7 +44,6 @@ class AdminDashboardActivity : AppCompatActivity() {
         ivAdminProfile = findViewById(R.id.ivAdminProfile)
         registerForContextMenu(ivAdminProfile)
 
-        // Menggunakan ID baru btnPilihMenu sesuai layout XML
         val btnPilihMenu = findViewById<Button>(R.id.btnPilihMenu)
         val cvMenuKategori = findViewById<CardView>(R.id.cvMenuKategori)
         val cvMenuProduk = findViewById<CardView>(R.id.cvMenuProduk)
@@ -59,7 +65,6 @@ class AdminDashboardActivity : AppCompatActivity() {
             }
         }
 
-        // Logic Popup Menu untuk tombol "Pilih Menu"
         btnPilihMenu.setOnClickListener { view ->
             val popup = PopupMenu(this, view)
             popup.menu.add(0, 1, 0, "Lihat Transaksi")
@@ -72,7 +77,6 @@ class AdminDashboardActivity : AppCompatActivity() {
                         true
                     }
                     2 -> {
-                        // Membuka katalog produk (menggunakan PembeliDashboardActivity dengan mode Admin)
                         val intent = Intent(this, PembeliDashboardActivity::class.java)
                         intent.putExtra("IS_ADMIN_VIEW", true)
                         startActivity(intent)
@@ -99,6 +103,8 @@ class AdminDashboardActivity : AppCompatActivity() {
         cvMenuLaporan.setOnClickListener {
             startActivity(Intent(this, AdminLaporanActivity::class.java))
         }
+
+        loadAdminProfile(currentUserEmail!!)
     }
 
     private fun showHome() {
@@ -111,6 +117,24 @@ class AdminDashboardActivity : AppCompatActivity() {
         layoutHome.visibility = View.GONE
         layoutProfile.visibility = View.VISIBLE
         toolbar.title = "Profil Admin"
+    }
+
+    private fun loadAdminProfile(email: String) {
+        val cursor = dbHelper.getUserByEmail(email)
+        if (cursor != null && cursor.moveToFirst()) {
+            findViewById<TextView>(R.id.tvAdminProfileName).text = 
+                cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COLUMN_NAME))
+            findViewById<TextView>(R.id.tvAdminProfileEmail).text = email
+            findViewById<TextView>(R.id.tvAdminProfileUsername).text = "Username: " + 
+                cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COLUMN_USERNAME))
+            findViewById<TextView>(R.id.tvAdminProfilePhone).text = "Telepon: " + 
+                cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COLUMN_PHONE))
+            findViewById<TextView>(R.id.tvAdminProfileGender).text = "Gender: " + 
+                cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COLUMN_GENDER))
+            findViewById<TextView>(R.id.tvAdminProfileAddress).text = "Alamat: " + 
+                cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COLUMN_ADDRESS))
+            cursor.close()
+        }
     }
 
     override fun onCreateContextMenu(menu: ContextMenu?, v: View?, menuInfo: ContextMenu.ContextMenuInfo?) {

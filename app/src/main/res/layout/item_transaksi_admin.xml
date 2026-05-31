@@ -3,9 +3,10 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_marginBottom="12dp"
-    app:cardCornerRadius="16dp"
-    app:cardElevation="4dp"
+    android:layout_marginBottom="16dp"
+    android:layout_marginHorizontal="4dp"
+    app:cardCornerRadius="24dp"
+    app:cardElevation="3dp"
     app:strokeWidth="0dp"
     app:cardBackgroundColor="#FFFFFF">
 
@@ -13,117 +14,195 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:padding="16dp">
+        android:padding="20dp">
 
+        <!-- Header: Status & ID -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
             android:gravity="center_vertical"
-            android:layout_marginBottom="12dp">
+            android:layout_marginBottom="16dp">
 
-            <ImageView
-                android:layout_width="20dp"
-                android:layout_height="20dp"
-                android:src="@drawable/bags_shopping"
-                app:tint="#DD3827"
-                android:layout_marginEnd="8dp"/>
-
-            <TextView
-                android:id="@+id/tvAdminTransStatusLabel"
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/cvStatusBadge"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="PESANAN"
-                android:textColor="#DD3827"
-                android:textStyle="bold"
-                android:textSize="12sp"
-                android:letterSpacing="0.1"/>
+                app:cardCornerRadius="10dp"
+                app:cardElevation="0dp"
+                app:cardBackgroundColor="#F1F5F9"
+                app:contentPaddingLeft="12dp"
+                app:contentPaddingRight="12dp"
+                app:contentPaddingTop="6dp"
+                app:contentPaddingBottom="6dp">
+                <TextView
+                    android:id="@+id/tvAdminTransStatusLabel"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="PESANAN AKTIF"
+                    android:textColor="#475569"
+                    android:textStyle="bold"
+                    android:textSize="10sp"
+                    android:letterSpacing="0.1"/>
+            </com.google.android.material.card.MaterialCardView>
 
             <View android:layout_width="0dp" android:layout_height="0dp" android:layout_weight="1"/>
 
-            <TextView android:id="@+id/tvAdminTransId" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="#INV-01" android:textColor="#64748B" android:textSize="11sp" android:textStyle="bold"/>
+            <TextView
+                android:id="@+id/tvAdminTransId"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="#INV-0000"
+                android:textColor="#94A3B8"
+                android:textSize="12sp"
+                android:fontFamily="sans-serif-medium"/>
         </LinearLayout>
 
-        <View android:layout_width="match_parent" android:layout_height="1dp" android:background="#F1F5F9" android:layout_marginBottom="12dp"/>
+        <!-- Customer Name & Amount -->
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="8dp">
+            <TextView
+                android:id="@+id/tvAdminTransNama"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Nama Pemesan"
+                android:textColor="#1E293B"
+                android:textStyle="bold"
+                android:textSize="18sp"
+                android:layout_alignParentStart="true"
+                android:layout_toStartOf="@+id/tvAdminTransTotal"
+                android:layout_marginEnd="8dp"/>
+            <TextView
+                android:id="@+id/tvAdminTransTotal"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Rp 0"
+                android:textColor="#DD3827"
+                android:textStyle="bold"
+                android:textSize="18sp"
+                android:layout_alignParentEnd="true"/>
+        </RelativeLayout>
 
+        <!-- Products List -->
+        <TextView
+            android:id="@+id/tvAdminTransProduk"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Daftar produk belanjaan..."
+            android:textColor="#64748B"
+            android:textSize="14sp"
+            android:lineSpacingExtra="3dp"
+            android:layout_marginBottom="12dp"/>
+
+        <!-- Note Section -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
-            android:gravity="top">
-
-            <LinearLayout
-                android:layout_width="0dp"
-                android:layout_weight="1"
+            android:background="#F8FAFC"
+            android:padding="12dp"
+            android:gravity="center_vertical"
+            android:layout_marginBottom="12dp">
+            <ImageView
+                android:layout_width="14dp"
+                android:layout_height="14dp"
+                android:src="@drawable/edit"
+                app:tint="#94A3B8"/>
+            <TextView
+                android:id="@+id/tvAdminTransCatatan"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="vertical">
-
-                <TextView android:id="@+id/tvAdminTransNama" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Nama Pemesan" android:textColor="#2D3142" android:textStyle="bold" android:textSize="16sp"/>
-
-                <TextView
-                    android:id="@+id/tvAdminTransProduk"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Produk"
-                    android:textColor="#475569"
-                    android:textSize="13sp"
-                    android:layout_marginTop="6dp"/>
-
-                <TextView android:id="@+id/tvAdminTransWa" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="WA" android:textColor="#64748B" android:textSize="12sp" android:layout_marginTop="6dp"/>
-                <TextView android:id="@+id/tvAdminTransMetode" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Metode" android:textColor="#64748B" android:textSize="12sp" android:layout_marginTop="2dp"/>
-
-                <!-- ID tvAdminTransTanggal ditambahkan kembali untuk memperbaiki build error -->
-                <TextView android:id="@+id/tvAdminTransTanggal" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Waktu" android:textColor="#64748B" android:textSize="12sp" android:layout_marginTop="2dp"/>
-
-                <TextView android:id="@+id/tvAdminTransTotal" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Rp 0" android:textColor="#DD3827" android:textStyle="bold" android:textSize="18sp" android:layout_marginTop="12dp"/>
-            </LinearLayout>
-
-            <LinearLayout
-                android:id="@+id/llContainerImage"
-                android:layout_width="85dp"
-                android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:gravity="center"
-                android:layout_marginStart="12dp"
-                android:visibility="gone">
-
-                <com.google.android.material.card.MaterialCardView
-                    android:layout_width="75dp"
-                    android:layout_height="75dp"
-                    app:cardCornerRadius="12dp"
-                    app:cardElevation="0dp"
-                    app:strokeWidth="1dp"
-                    app:strokeColor="#E2E8F0"
-                    app:cardBackgroundColor="#F8F9FA">
-                    <ImageView
-                        android:id="@+id/ivCustomDesignAdmin"
-                        android:layout_width="match_parent"
-                        android:layout_height="match_parent"
-                        android:scaleType="centerInside"
-                        android:padding="8dp"/>
-                </com.google.android.material.card.MaterialCardView>
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Custom"
-                    android:textSize="9sp"
-                    android:textColor="#64748B"
-                    android:layout_marginTop="4dp"/>
-            </LinearLayout>
+                android:text="Catatan: -"
+                android:textColor="#64748B"
+                android:textSize="12sp"
+                android:textStyle="italic"
+                android:layout_marginStart="8dp"/>
         </LinearLayout>
 
-        <Button
-            android:id="@+id/btnSelesaiPesanan"
+        <!-- Image Container (Restored for AdminLaporan & History) -->
+        <LinearLayout
+            android:id="@+id/llContainerImage"
             android:layout_width="match_parent"
-            android:layout_height="50dp"
-            android:text="SELESAIKAN"
-            android:backgroundTint="#DD3827"
-            android:textColor="#FFFFFF"
-            android:textSize="13sp"
-            android:textStyle="bold"
-            android:layout_marginTop="16dp"
-            app:cornerRadius="12dp"
-            android:elevation="2dp"/>
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:layout_marginTop="4dp"
+            android:visibility="gone">
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Lampiran Gambar:"
+                android:textSize="11sp"
+                android:textColor="#94A3B8"
+                android:layout_marginBottom="4dp"/>
+            <com.google.android.material.card.MaterialCardView
+                android:layout_width="100dp"
+                android:layout_height="100dp"
+                app:cardCornerRadius="12dp"
+                app:cardElevation="0dp"
+                app:strokeWidth="1dp"
+                app:strokeColor="#F1F5F9">
+                <ImageView
+                    android:id="@+id/ivCustomDesignAdmin"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:scaleType="centerCrop"/>
+            </com.google.android.material.card.MaterialCardView>
+        </LinearLayout>
+
+        <!-- Additional Info -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginTop="12dp"
+            android:gravity="center_vertical">
+            <TextView android:id="@+id/tvAdminTransWa" android:layout_width="wrap_content" android:text="WhatsApp" android:textColor="#94A3B8" android:textSize="11sp"/>
+            <TextView android:layout_width="wrap_content" android:text=" • " android:textColor="#CBD5E1"/>
+            <TextView android:id="@+id/tvAdminTransMetode" android:layout_width="wrap_content" android:text="Tunai" android:textColor="#94A3B8" android:textSize="11sp"/>
+            <View android:layout_width="0dp" android:layout_height="0dp" android:layout_weight="1"/>
+            <TextView android:id="@+id/tvAdminTransTanggal" android:layout_width="wrap_content" android:text="Waktu" android:textColor="#94A3B8" android:textSize="11sp"/>
+        </LinearLayout>
+
+        <View android:layout_width="match_parent" android:layout_height="1dp" android:background="#F1F5F9" android:layout_marginTop="16dp" android:layout_marginBottom="16dp"/>
+
+        <!-- Action Buttons -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnCetakStruk"
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:layout_height="54dp"
+                android:text="SIMPAN PDF"
+                android:textColor="#FFFFFF"
+                android:textSize="12sp"
+                android:textStyle="bold"
+                app:cornerRadius="16dp"
+                app:icon="@drawable/receipt"
+                app:iconGravity="textStart"
+                app:iconTint="#FFFFFF"
+                android:backgroundTint="#475569"
+                android:layout_marginEnd="8dp"
+                android:elevation="0dp"/>
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnSelesaiPesanan"
+                android:layout_width="0dp"
+                android:layout_weight="1.2"
+                android:layout_height="54dp"
+                android:text="SELESAIKAN"
+                android:backgroundTint="#DD3827"
+                android:textColor="#FFFFFF"
+                android:textSize="12sp"
+                android:textStyle="bold"
+                app:cornerRadius="16dp"
+                android:elevation="2dp"/>
+        </LinearLayout>
 
     </LinearLayout>
 </com.google.android.material.card.MaterialCardView>
