@@ -3,6 +3,7 @@ package nicolla.coco.smoliegiftmobile
 import android.app.DatePickerDialog
 import android.app.Dialog
 import android.app.TimePickerDialog
+import android.content.Context
 import android.content.Intent
 import android.database.Cursor
 import android.graphics.BitmapFactory
@@ -11,6 +12,7 @@ import android.net.Uri
 import android.os.Bundle
 import android.provider.OpenableColumns
 import android.util.Base64
+import android.util.TypedValue
 import android.view.LayoutInflater
 import android.view.Menu
 import android.view.MenuItem
@@ -139,6 +141,88 @@ class PembeliDashboardActivity : AppCompatActivity() {
 
         if (currentUserEmail != null) loadUserProfile(currentUserEmail!!)
         loadKategori { loadKatalogProduk() }
+        
+        // Memuat settingan saat pertama kali dibuka
+        applySettings()
+    }
+
+    private fun applySettings() {
+        val prefs = getSharedPreferences("SmoliePrefs", Context.MODE_PRIVATE)
+        val fontSize = prefs.getFloat("font_size", -1f)
+        val buttonText = prefs.getString("button_text", null)
+        val textViewText = prefs.getString("textview_text", null)
+        val selectedColor = prefs.getString("bg_color", "Default")
+
+        if (fontSize != -1f) {
+            findViewById<TextView>(R.id.tvHeaderTitle).setTextSize(TypedValue.COMPLEX_UNIT_SP, fontSize)
+            findViewById<Button>(R.id.btnLihatKeranjang).setTextSize(TypedValue.COMPLEX_UNIT_SP, fontSize)
+        }
+        if (!buttonText.isNullOrEmpty()) {
+            findViewById<Button>(R.id.btnLihatKeranjang).text = buttonText
+        }
+        if (!textViewText.isNullOrEmpty()) {
+            findViewById<TextView>(R.id.tvHeaderTitle).text = textViewText
+        }
+
+        val rootLayout = findViewById<View>(R.id.layoutHomePembeli)
+        when (selectedColor) {
+            "Abu-abu" -> rootLayout.setBackgroundColor(Color.LTGRAY)
+            "Merah Maroon" -> rootLayout.setBackgroundColor(Color.parseColor("#800000"))
+            "Biru" -> rootLayout.setBackgroundColor(Color.parseColor("#E3F2FD"))
+            "Hijau" -> rootLayout.setBackgroundColor(Color.parseColor("#E8F5E9"))
+            else -> rootLayout.setBackgroundColor(Color.parseColor("#F8F9FA"))
+        }
+    }
+
+    private fun tampilkanDialogSetting() {
+        val dialog = Dialog(this)
+        dialog.setContentView(R.layout.dialog_setting)
+        dialog.window?.setLayout(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT)
+        dialog.window?.setBackgroundDrawableResource(android.R.color.transparent)
+
+        val etFontSize = dialog.findViewById<EditText>(R.id.etFontSize)
+        val etButtonText = dialog.findViewById<EditText>(R.id.etButtonText)
+        val etTextViewText = dialog.findViewById<EditText>(R.id.etTextViewText)
+        val spinnerBgColor = dialog.findViewById<Spinner>(R.id.spinnerBgColor)
+        val btnSimpan = dialog.findViewById<Button>(R.id.btnSimpanSetting)
+        val btnBatal = dialog.findViewById<Button>(R.id.btnBatalSetting)
+
+        val colors = arrayOf("Default", "Abu-abu", "Merah Maroon", "Biru", "Hijau")
+        val adapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, colors)
+        spinnerBgColor.adapter = adapter
+
+        // Pre-fill dialog dengan settingan saat ini
+        val prefs = getSharedPreferences("SmoliePrefs", Context.MODE_PRIVATE)
+        val currentFontSize = prefs.getFloat("font_size", -1f)
+        if (currentFontSize != -1f) etFontSize.setText(currentFontSize.toString())
+        etButtonText.setText(prefs.getString("button_text", ""))
+        etTextViewText.setText(prefs.getString("textview_text", ""))
+        val currentBg = prefs.getString("bg_color", "Default")
+        spinnerBgColor.setSelection(colors.indexOf(currentBg))
+
+        btnBatal.setOnClickListener { dialog.dismiss() }
+
+        btnSimpan.setOnClickListener {
+            val fontSizeStr = etFontSize.text.toString()
+            val buttonText = etButtonText.text.toString()
+            val textViewText = etTextViewText.text.toString()
+            val selectedColor = spinnerBgColor.selectedItem.toString()
+
+            val editor = getSharedPreferences("SmoliePrefs", Context.MODE_PRIVATE).edit()
+            if (fontSizeStr.isNotEmpty()) {
+                editor.putFloat("font_size", fontSizeStr.toFloat())
+            }
+            editor.putString("button_text", buttonText)
+            editor.putString("textview_text", textViewText)
+            editor.putString("bg_color", selectedColor)
+            editor.apply()
+
+            applySettings()
+            Toast.makeText(this, "Pengaturan Disimpan", Toast.LENGTH_SHORT).show()
+            dialog.dismiss()
+        }
+
+        dialog.show()
     }
 
     private fun tampilkanDialogInputManual(preNama: String?, preHarga: Int?) {
@@ -384,6 +468,7 @@ class PembeliDashboardActivity : AppCompatActivity() {
         fragmentContainer.visibility = View.GONE
         layoutProfile.visibility = View.GONE
         toolbar.title = if (isAdminView) "Katalog Produk" else if (isKasirMode) "Kasir Smolie" else "Smolie Gift"
+        applySettings() // Terapkan lagi settingan saat kembali ke home
     }
 
     private fun showHistory() {
@@ -429,9 +514,15 @@ class PembeliDashboardActivity : AppCompatActivity() {
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
-        if (item.itemId == R.id.menuLogoutPembeli) {
-            startActivity(Intent(this, LoginActivity::class.java).apply { flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK })
-            finish(); return true
+        when (item.itemId) {
+            R.id.menuSetting -> {
+                tampilkanDialogSetting()
+                return true
+            }
+            R.id.menuLogoutPembeli -> {
+                startActivity(Intent(this, LoginActivity::class.java).apply { flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK })
+                finish(); return true
+            }
         }
         return super.onOptionsItemSelected(item)
     }
