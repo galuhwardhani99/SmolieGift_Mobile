@@ -10,7 +10,7 @@ import nicolla.coco.smoliegiftmobile.User
 class DatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME, null, DATABASE_VERSION) {
 
     companion object {
-        private const val DATABASE_VERSION = 14
+        private const val DATABASE_VERSION = 22
         private const val DATABASE_NAME = "SmolieGift.db"
 
         const val TABLE_USERS = "users"
@@ -62,32 +62,11 @@ class DatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME
         db.execSQL("CREATE TABLE $TABLE_CART ($COLUMN_CART_ID INTEGER PRIMARY KEY AUTOINCREMENT, $COLUMN_PRODUCT_NAME TEXT, $COLUMN_QTY INTEGER, $COLUMN_TOTAL_PRICE INTEGER, $COLUMN_CUSTOM_IMAGE TEXT, $COLUMN_CART_PRODUCT_IMAGE TEXT)")
         db.execSQL("CREATE TABLE $TABLE_PRODUCTS ($COLUMN_PROD_ID INTEGER PRIMARY KEY AUTOINCREMENT, $COLUMN_PROD_NAME TEXT, $COLUMN_PROD_CAT TEXT, $COLUMN_PROD_PRICE INTEGER, $COLUMN_PROD_STOCK INTEGER, $COLUMN_PROD_IMAGE TEXT)")
         db.execSQL("CREATE TABLE $TABLE_CATEGORIES ($COLUMN_CAT_ID INTEGER PRIMARY KEY AUTOINCREMENT, $COLUMN_CAT_NAME TEXT UNIQUE)")
-        db.execSQL("CREATE TABLE $TABLE_TRANSACTIONS ($COLUMN_TRANS_ID INTEGER PRIMARY KEY AUTOINCREMENT, $COLUMN_CUSTOMER_NAME TEXT, $COLUMN_CUSTOMER_WA TEXT, $COLUMN_PAYMENT_METHOD TEXT, $COLUMN_GRAND_TOTAL INTEGER, $COLUMN_CUSTOM_IMAGE TEXT, $COLUMN_TRANS_DATE DATETIME DEFAULT CURRENT_TIMESTAMP, $COLUMN_EVENT_INFO TEXT, $COLUMN_ITEMS_JSON TEXT)")
-        db.execSQL("CREATE TABLE $TABLE_HISTORY ($COLUMN_TRANS_ID INTEGER PRIMARY KEY AUTOINCREMENT, $COLUMN_CUSTOMER_NAME TEXT, $COLUMN_CUSTOMER_WA TEXT, $COLUMN_PAYMENT_METHOD TEXT, $COLUMN_GRAND_TOTAL INTEGER, $COLUMN_CUSTOM_IMAGE TEXT, $COLUMN_TRANS_DATE DATETIME, $COLUMN_EVENT_INFO TEXT, $COLUMN_ITEMS_JSON TEXT)")
+        db.execSQL("CREATE TABLE $TABLE_TRANSACTIONS ($COLUMN_TRANS_ID INTEGER PRIMARY KEY AUTOINCREMENT, $COLUMN_CUSTOMER_NAME TEXT, $COLUMN_CUSTOMER_WA TEXT, $COLUMN_PAYMENT_METHOD TEXT, $COLUMN_GRAND_TOTAL INTEGER, $COLUMN_CUSTOM_IMAGE TEXT, $COLUMN_TRANS_DATE DATETIME DEFAULT (datetime('now','localtime')), $COLUMN_EVENT_INFO TEXT, $COLUMN_ITEMS_JSON TEXT)")
+        db.execSQL("CREATE TABLE $TABLE_HISTORY ($COLUMN_TRANS_ID INTEGER PRIMARY KEY AUTOINCREMENT, $COLUMN_CUSTOMER_NAME TEXT, $COLUMN_CUSTOMER_WA TEXT, $COLUMN_PAYMENT_METHOD TEXT, $COLUMN_GRAND_TOTAL INTEGER, $COLUMN_CUSTOM_IMAGE TEXT, $COLUMN_TRANS_DATE DATETIME DEFAULT (datetime('now','localtime')), $COLUMN_EVENT_INFO TEXT, $COLUMN_ITEMS_JSON TEXT)")
 
-        val adminValues = ContentValues().apply {
-            put(COLUMN_NAME, "Admin Smolie")
-            put(COLUMN_EMAIL, "admin@smolie.com")
-            put(COLUMN_USERNAME, "adminsmolie")
-            put(COLUMN_GENDER, "Perempuan")
-            put(COLUMN_PHONE, "085222637152")
-            put(COLUMN_ADDRESS, "Toko Smolie Gift Surabaya")
-            put(COLUMN_PASSWORD, "1")
-            put(COLUMN_USERTYPE, "admin")
-        }
-        db.insert(TABLE_USERS, null, adminValues)
-
-        val kasirValues = ContentValues().apply {
-            put(COLUMN_NAME, "Kasir Smolie")
-            put(COLUMN_EMAIL, "kasir@smolie.com")
-            put(COLUMN_USERNAME, "kasirsmolie")
-            put(COLUMN_GENDER, "Laki-laki")
-            put(COLUMN_PHONE, "08123456789")
-            put(COLUMN_ADDRESS, "Toko Smolie Gift")
-            put(COLUMN_PASSWORD, "1")
-            put(COLUMN_USERTYPE, "kasir")
-        }
-        db.insert(TABLE_USERS, null, kasirValues)
+        db.execSQL("INSERT INTO $TABLE_USERS ($COLUMN_NAME, $COLUMN_EMAIL, $COLUMN_USERNAME, $COLUMN_PASSWORD, $COLUMN_USERTYPE) VALUES ('Admin Smolie', 'admin@smolie.com', 'admin', '1', 'admin')")
+        db.execSQL("INSERT INTO $TABLE_USERS ($COLUMN_NAME, $COLUMN_EMAIL, $COLUMN_USERNAME, $COLUMN_PASSWORD, $COLUMN_USERTYPE) VALUES ('Kasir Smolie', 'kasir@smolie.com', 'kasir', '1', 'kasir')")
     }
 
     override fun onUpgrade(db: SQLiteDatabase, oldVersion: Int, newVersion: Int) {
@@ -100,6 +79,7 @@ class DatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME
         onCreate(db)
     }
 
+    // AUTH
     fun registerUser(name: String, email: String, username: String, gender: String, phone: String, address: String, pass: String): Boolean {
         val db = this.writableDatabase
         val values = ContentValues().apply { put(COLUMN_NAME, name); put(COLUMN_EMAIL, email); put(COLUMN_USERNAME, username); put(COLUMN_GENDER, gender); put(COLUMN_PHONE, phone); put(COLUMN_ADDRESS, address); put(COLUMN_PASSWORD, pass); put(COLUMN_USERTYPE, "pembeli") }
@@ -125,74 +105,9 @@ class DatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME
         return user
     }
 
-    fun getUserByEmail(email: String): Cursor? {
-        val db = this.readableDatabase
-        return db.rawQuery("SELECT * FROM $TABLE_USERS WHERE $COLUMN_EMAIL = ?", arrayOf(email))
-    }
+    fun getUserByEmail(email: String): Cursor? = this.readableDatabase.rawQuery("SELECT * FROM $TABLE_USERS WHERE $COLUMN_EMAIL = ?", arrayOf(email))
 
-    fun tambahKeKeranjang(namaProduk: String, qty: Int, totalHarga: Int, customImage: String?, productInfoImage: String?): Boolean {
-        val db = this.writableDatabase
-        val values = ContentValues().apply {
-            put(COLUMN_PRODUCT_NAME, namaProduk)
-            put(COLUMN_QTY, qty)
-            put(COLUMN_TOTAL_PRICE, totalHarga)
-            put(COLUMN_CUSTOM_IMAGE, customImage)
-            put(COLUMN_CART_PRODUCT_IMAGE, productInfoImage)
-        }
-        val result = db.insert(TABLE_CART, null, values)
-        db.close()
-        return result != -1L
-    }
-
-    fun getSemuaKeranjang(): Cursor = this.readableDatabase.rawQuery("SELECT $COLUMN_CART_ID AS _id, * FROM $TABLE_CART", null)
-    fun kosongkanKeranjang() { val db = this.writableDatabase; db.execSQL("DELETE FROM $TABLE_CART"); db.close() }
-
-    fun hapusItemKeranjang(id: Int): Boolean {
-        val db = this.writableDatabase
-        val result = db.delete(TABLE_CART, "$COLUMN_CART_ID=?", arrayOf(id.toString()))
-        db.close()
-        return result > 0
-    }
-
-    fun tambahProduk(nama: String, kategori: String, harga: Int, stok: Int, imageBase64: String): Boolean {
-        val db = this.writableDatabase
-        val values = ContentValues().apply {
-            put(COLUMN_PROD_NAME, nama); put(COLUMN_PROD_CAT, kategori); put(COLUMN_PROD_PRICE, harga); put(COLUMN_PROD_STOCK, stok); put(COLUMN_PROD_IMAGE, imageBase64)
-        }
-        val result = db.insert(TABLE_PRODUCTS, null, values)
-        db.close()
-        return result != -1L
-    }
-
-    fun updateProduk(id: Int, nama: String, kategori: String, harga: Int, stok: Int, imageBase64: String): Boolean {
-        val db = this.writableDatabase
-        val values = ContentValues().apply {
-            put(COLUMN_PROD_NAME, nama); put(COLUMN_PROD_CAT, kategori); put(COLUMN_PROD_PRICE, harga); put(COLUMN_PROD_STOCK, stok)
-            if (imageBase64.isNotEmpty()) put(COLUMN_PROD_IMAGE, imageBase64)
-        }
-        val result = db.update(TABLE_PRODUCTS, values, "$COLUMN_PROD_ID=?", arrayOf(id.toString()))
-        db.close()
-        return result > 0
-    }
-
-    fun getSemuaProduk(): Cursor = this.readableDatabase.rawQuery("SELECT $COLUMN_PROD_ID AS _id, * FROM $TABLE_PRODUCTS", null)
-    fun hapusProduk(idProduk: Int): Boolean {
-        val db = this.writableDatabase; val result = db.delete(TABLE_PRODUCTS, "$COLUMN_PROD_ID=?", arrayOf(idProduk.toString())); db.close()
-        return result > 0
-    }
-
-    fun kurangiStokProduk(namaProduk: String, jumlah: Int): Boolean {
-        val db = this.writableDatabase
-        val namaAsli = if (namaProduk.contains("(")) namaProduk.substring(0, namaProduk.indexOf("(")).trim() else namaProduk.trim()
-        val query = "UPDATE $TABLE_PRODUCTS SET $COLUMN_PROD_STOCK = $COLUMN_PROD_STOCK - ? WHERE $COLUMN_PROD_NAME = ?"
-        val statement = db.compileStatement(query)
-        statement.bindLong(1, jumlah.toLong())
-        statement.bindString(2, namaAsli)
-        val affectedRows = statement.executeUpdateDelete()
-        db.close()
-        return affectedRows > 0
-    }
-
+    // KATEGORI
     fun getSemuaKategori(): Cursor = this.readableDatabase.rawQuery("SELECT $COLUMN_CAT_ID AS _id, * FROM $TABLE_CATEGORIES", null)
     fun tambahKategori(nama: String): Boolean {
         val db = this.writableDatabase
@@ -201,7 +116,6 @@ class DatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME
         db.close()
         return result != -1L
     }
-
     fun updateKategori(id: Int, nama: String): Boolean {
         val db = this.writableDatabase
         val values = ContentValues().apply { put(COLUMN_CAT_NAME, nama) }
@@ -209,7 +123,6 @@ class DatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME
         db.close()
         return result > 0
     }
-
     fun hapusKategori(id: Int): Boolean {
         val db = this.writableDatabase
         val result = db.delete(TABLE_CATEGORIES, "$COLUMN_CAT_ID=?", arrayOf(id.toString()))
@@ -217,56 +130,69 @@ class DatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME
         return result > 0
     }
 
-    fun buatPesanan(nama: String, wa: String, metode: String, total: Int, imageBase64: String?, eventInfo: String? = null, itemsJson: String? = null): Boolean {
+    // PRODUK
+    fun getSemuaProduk(): Cursor = this.readableDatabase.rawQuery("SELECT $COLUMN_PROD_ID AS _id, * FROM $TABLE_PRODUCTS", null)
+    fun tambahProduk(nama: String, kategori: String, harga: Int, stok: Int, imageBase64: String): Boolean {
         val db = this.writableDatabase
-        val values = ContentValues().apply {
-            put(COLUMN_CUSTOMER_NAME, nama)
-            put(COLUMN_CUSTOMER_WA, wa)
-            put(COLUMN_PAYMENT_METHOD, metode)
-            put(COLUMN_GRAND_TOTAL, total)
-            put(COLUMN_CUSTOM_IMAGE, imageBase64)
-            put(COLUMN_EVENT_INFO, eventInfo)
-            put(COLUMN_ITEMS_JSON, itemsJson)
-        }
-        val success = db.insert(TABLE_TRANSACTIONS, null, values)
+        val values = ContentValues().apply { put(COLUMN_PROD_NAME, nama); put(COLUMN_PROD_CAT, kategori); put(COLUMN_PROD_PRICE, harga); put(COLUMN_PROD_STOCK, stok); put(COLUMN_PROD_IMAGE, imageBase64) }
+        val result = db.insert(TABLE_PRODUCTS, null, values)
         db.close()
-        return success != -1L
+        return result != -1L
+    }
+    fun kurangiStokProduk(nama: String, qty: Int) { 
+        this.writableDatabase.execSQL("UPDATE $TABLE_PRODUCTS SET $COLUMN_PROD_STOCK = $COLUMN_PROD_STOCK - $qty WHERE $COLUMN_PROD_NAME = ?", arrayOf(qty, nama))
     }
 
-    fun selesaikanPesanan(idPesanan: Int): Boolean {
+    // KERANJANG
+    fun getSemuaKeranjang(): Cursor = this.readableDatabase.rawQuery("SELECT $COLUMN_CART_ID AS _id, * FROM $TABLE_CART", null)
+    fun kosongkanKeranjang() { this.writableDatabase.execSQL("DELETE FROM $TABLE_CART") }
+    fun tambahKeKeranjang(n: String, q: Int, t: Int, c: String?, p: String?): Boolean {
+        val v = ContentValues().apply { put(COLUMN_PRODUCT_NAME, n); put(COLUMN_QTY, q); put(COLUMN_TOTAL_PRICE, t); put(COLUMN_CUSTOM_IMAGE, c); put(COLUMN_CART_PRODUCT_IMAGE, p) }
+        return this.writableDatabase.insert(TABLE_CART, null, v) != -1L
+    }
+    fun hapusItemKeranjang(id: Int): Boolean = this.writableDatabase.delete(TABLE_CART, "$COLUMN_CART_ID=?", arrayOf(id.toString())) > 0
+
+    // TRANSAKSI
+    fun buatPesanan(nama: String, wa: String, metode: String, total: Int, image: String?, event: String?, items: String?): Long {
         val db = this.writableDatabase
-        val cursor = db.rawQuery("SELECT * FROM $TABLE_TRANSACTIONS WHERE $COLUMN_TRANS_ID = ?", arrayOf(idPesanan.toString()))
-        if (cursor.moveToFirst()) {
-            val values = ContentValues().apply {
-                put(COLUMN_CUSTOMER_NAME, cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_CUSTOMER_NAME)))
-                put(COLUMN_CUSTOMER_WA, cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_CUSTOMER_WA)))
-                put(COLUMN_PAYMENT_METHOD, cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_PAYMENT_METHOD)))
-                put(COLUMN_GRAND_TOTAL, cursor.getInt(cursor.getColumnIndexOrThrow(COLUMN_GRAND_TOTAL)))
-                put(COLUMN_CUSTOM_IMAGE, cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_CUSTOM_IMAGE)))
-                put(COLUMN_TRANS_DATE, cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_TRANS_DATE)))
-                put(COLUMN_EVENT_INFO, cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_EVENT_INFO)))
-                put(COLUMN_ITEMS_JSON, cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_ITEMS_JSON)))
-            }
-            db.insert(TABLE_HISTORY, null, values)
-            db.delete(TABLE_TRANSACTIONS, "$COLUMN_TRANS_ID=?", arrayOf(idPesanan.toString()))
-            cursor.close(); db.close()
-            return true
-        }
-        cursor.close(); db.close()
-        return false
+        val v = ContentValues().apply { put(COLUMN_CUSTOMER_NAME, nama); put(COLUMN_CUSTOMER_WA, wa); put(COLUMN_PAYMENT_METHOD, metode); put(COLUMN_GRAND_TOTAL, total); put(COLUMN_CUSTOM_IMAGE, image); put(COLUMN_EVENT_INFO, event); put(COLUMN_ITEMS_JSON, items) }
+        return db.insert(TABLE_TRANSACTIONS, null, v)
     }
 
-    fun getLaporanPenjualan(): Cursor = this.readableDatabase.rawQuery("SELECT $COLUMN_TRANS_ID AS _id, * FROM $TABLE_HISTORY ORDER BY $COLUMN_TRANS_ID DESC", null)
-    fun getSemuaTransaksi(): Cursor = this.readableDatabase.rawQuery("SELECT $COLUMN_TRANS_ID AS _id, * FROM $TABLE_TRANSACTIONS", null)
+    fun simpanTransaksiLangsung(nama: String, wa: String, metode: String, total: Int, image: String?, event: String?, items: String?): Long {
+        val db = this.writableDatabase
+        val v = ContentValues().apply { put(COLUMN_CUSTOMER_NAME, nama); put(COLUMN_CUSTOMER_WA, wa); put(COLUMN_PAYMENT_METHOD, metode); put(COLUMN_GRAND_TOTAL, total); put(COLUMN_CUSTOM_IMAGE, image); put(COLUMN_EVENT_INFO, event); put(COLUMN_ITEMS_JSON, items) }
+        return db.insert(TABLE_HISTORY, null, v)
+    }
+
+    fun selesaikanPesanan(id: Int): Boolean {
+        val db = this.writableDatabase
+        val c = db.rawQuery("SELECT * FROM $TABLE_TRANSACTIONS WHERE $COLUMN_TRANS_ID = ?", arrayOf(id.toString()))
+        var s = false
+        if (c.moveToFirst()) {
+            val v = ContentValues().apply {
+                put(COLUMN_CUSTOMER_NAME, c.getString(c.getColumnIndexOrThrow(COLUMN_CUSTOMER_NAME)))
+                put(COLUMN_CUSTOMER_WA, c.getString(c.getColumnIndexOrThrow(COLUMN_CUSTOMER_WA)))
+                put(COLUMN_PAYMENT_METHOD, c.getString(c.getColumnIndexOrThrow(COLUMN_PAYMENT_METHOD)))
+                put(COLUMN_GRAND_TOTAL, c.getInt(c.getColumnIndexOrThrow(COLUMN_GRAND_TOTAL)))
+                put(COLUMN_CUSTOM_IMAGE, c.getString(c.getColumnIndexOrThrow(COLUMN_CUSTOM_IMAGE)))
+                put(COLUMN_TRANS_DATE, c.getString(c.getColumnIndexOrThrow(COLUMN_TRANS_DATE)))
+                put(COLUMN_EVENT_INFO, c.getString(c.getColumnIndexOrThrow(COLUMN_EVENT_INFO)))
+                put(COLUMN_ITEMS_JSON, c.getString(c.getColumnIndexOrThrow(COLUMN_ITEMS_JSON)))
+            }
+            if (db.insert(TABLE_HISTORY, null, v) != -1L) {
+                db.delete(TABLE_TRANSACTIONS, "$COLUMN_TRANS_ID=?", arrayOf(id.toString()))
+                s = true
+            }
+        }
+        c.close(); return s
+    }
 
     fun getSeluruhTransaksi(): Cursor {
-        val db = this.readableDatabase
-        val query = """
-            SELECT $COLUMN_TRANS_ID AS _id, $COLUMN_CUSTOMER_NAME, $COLUMN_CUSTOMER_WA, $COLUMN_PAYMENT_METHOD, $COLUMN_GRAND_TOTAL, $COLUMN_CUSTOM_IMAGE, $COLUMN_TRANS_DATE, $COLUMN_EVENT_INFO, $COLUMN_ITEMS_JSON, 'AKTIF' as status FROM $TABLE_TRANSACTIONS
-            UNION ALL
-            SELECT $COLUMN_TRANS_ID AS _id, $COLUMN_CUSTOMER_NAME, $COLUMN_CUSTOMER_WA, $COLUMN_PAYMENT_METHOD, $COLUMN_GRAND_TOTAL, $COLUMN_CUSTOM_IMAGE, $COLUMN_TRANS_DATE, $COLUMN_EVENT_INFO, $COLUMN_ITEMS_JSON, 'SELESAI' as status FROM $TABLE_HISTORY
-            ORDER BY status ASC, _id DESC
-        """.trimIndent()
-        return db.rawQuery(query, null)
+        val cols = "$COLUMN_TRANS_ID AS _id, $COLUMN_CUSTOMER_NAME, $COLUMN_CUSTOMER_WA, $COLUMN_PAYMENT_METHOD, $COLUMN_GRAND_TOTAL, $COLUMN_CUSTOM_IMAGE, $COLUMN_TRANS_DATE, $COLUMN_EVENT_INFO, $COLUMN_ITEMS_JSON"
+        val q = "SELECT $cols, 'AKTIF' as status FROM $TABLE_TRANSACTIONS UNION ALL SELECT $cols, 'SELESAI' as status FROM $TABLE_HISTORY ORDER BY $COLUMN_TRANS_DATE DESC"
+        return this.readableDatabase.rawQuery(q, null)
     }
+
+    fun getLaporanPenjualan(): Cursor = this.readableDatabase.rawQuery("SELECT $COLUMN_TRANS_ID AS _id, * FROM $TABLE_HISTORY ORDER BY $COLUMN_TRANS_DATE DESC", null)
 }

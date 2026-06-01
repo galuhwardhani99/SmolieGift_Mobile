@@ -121,6 +121,9 @@ class PembeliDashboardActivity : AppCompatActivity() {
                 intent.putExtra("IS_KASIR_MODE", true)
                 startActivity(intent)
             }
+            
+            // Pastikan Home (Katalog) terlihat di awal Mode Kasir
+            showHome()
         }
 
         btnLihatKeranjang.setOnClickListener {
@@ -142,7 +145,6 @@ class PembeliDashboardActivity : AppCompatActivity() {
         if (currentUserEmail != null) loadUserProfile(currentUserEmail!!)
         loadKategori { loadKatalogProduk() }
         
-        // Memuat settingan saat pertama kali dibuka
         applySettings()
     }
 
@@ -191,7 +193,6 @@ class PembeliDashboardActivity : AppCompatActivity() {
         val adapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, colors)
         spinnerBgColor.adapter = adapter
 
-        // Pre-fill dialog dengan settingan saat ini
         val prefs = getSharedPreferences("SmoliePrefs", Context.MODE_PRIVATE)
         val currentFontSize = prefs.getFloat("font_size", -1f)
         if (currentFontSize != -1f) etFontSize.setText(currentFontSize.toString())
@@ -245,7 +246,8 @@ class PembeliDashboardActivity : AppCompatActivity() {
         actvProdukKatalog.setOnItemClickListener { parent, _, position, _ ->
             val selected = parent.getItemAtPosition(position) as String
             etNamaProduk.setText(selected)
-            val cursor = dbHelper.readableDatabase.rawQuery("SELECT ${DatabaseHelper.COLUMN_PROD_PRICE} FROM ${DatabaseHelper.TABLE_PRODUCTS} WHERE ${DatabaseHelper.COLUMN_PROD_NAME} = ?", arrayOf(selected))
+            val db = dbHelper.readableDatabase
+            val cursor = db.rawQuery("SELECT ${DatabaseHelper.COLUMN_PROD_PRICE} FROM ${DatabaseHelper.TABLE_PRODUCTS} WHERE ${DatabaseHelper.COLUMN_PROD_NAME} = ?", arrayOf(selected))
             if (cursor.moveToFirst()) {
                 etHarga.setText(cursor.getInt(0).toString())
             }
@@ -278,18 +280,18 @@ class PembeliDashboardActivity : AppCompatActivity() {
                 put("qty", qtyStr.toInt())
             })
 
-            val sukses = dbHelper.buatPesanan(
+            val newId = dbHelper.simpanTransaksiLangsung(
                 pembeli,
-                "Transaksi Tunai Kasir",
+                "Beli di Toko",
                 "Tunai",
                 total,
                 null,
-                if (catatan.isEmpty()) "Tanpa catatan" else catatan,
+                if (catatan.isEmpty()) "Penjualan Toko" else catatan,
                 itemsArray.toString()
             )
 
-            if (sukses) {
-                Toast.makeText(this, "Transaksi Manual Berhasil!", Toast.LENGTH_SHORT).show()
+            if (newId != -1L) {
+                Toast.makeText(this, "Transaksi Berhasil!", Toast.LENGTH_SHORT).show()
                 dialog.dismiss()
             } else {
                 Toast.makeText(this, "Gagal!", Toast.LENGTH_SHORT).show()
@@ -350,7 +352,6 @@ class PembeliDashboardActivity : AppCompatActivity() {
             if (isAdminView) btnPesan.visibility = View.GONE
             else {
                 btnPesan.setOnClickListener {
-                    // DIUBAH: Baik kasir maupun pembeli sekarang masuk ke Dialog Pesanan (Keranjang)
                     tampilkanDialogPesanan(nama, harga, null)
                 }
             }
@@ -385,7 +386,6 @@ class PembeliDashboardActivity : AppCompatActivity() {
             if (isAdminView) btnPesan.visibility = View.GONE
             else {
                 btnPesan.setOnClickListener {
-                    // DIUBAH: Baik kasir maupun pembeli sekarang masuk ke Dialog Pesanan (Keranjang)
                     tampilkanDialogPesanan(nama, harga, fotoBase64)
                 }
             }
@@ -422,6 +422,14 @@ class PembeliDashboardActivity : AppCompatActivity() {
                 Toast.makeText(this, "Berhasil ditambahkan ke keranjang!", Toast.LENGTH_SHORT).show()
                 currentCustomImageBase64 = null
                 dialog.dismiss()
+                
+                // Setelah tambah ke keranjang, jika Mode Kasir langsung buka Keranjang (Cart)
+                if (isKasirMode) {
+                    val intent = Intent(this, CartActivity::class.java)
+                    intent.putExtra("USER_EMAIL", currentUserEmail)
+                    intent.putExtra("IS_KASIR_MODE", true)
+                    startActivity(intent)
+                }
             }
         }
         updateHarga(); dialog.show()
@@ -468,7 +476,7 @@ class PembeliDashboardActivity : AppCompatActivity() {
         fragmentContainer.visibility = View.GONE
         layoutProfile.visibility = View.GONE
         toolbar.title = if (isAdminView) "Katalog Produk" else if (isKasirMode) "Kasir Smolie" else "Smolie Gift"
-        applySettings() // Terapkan lagi settingan saat kembali ke home
+        applySettings()
     }
 
     private fun showHistory() {

@@ -37,125 +37,137 @@
                 android:padding="20dp"
                 android:paddingBottom="40dp">
 
-                <!-- Header Banner Kasir Mewah -->
                 <com.google.android.material.card.MaterialCardView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     app:cardBackgroundColor="#DD3827"
                     app:cardCornerRadius="24dp"
                     app:cardElevation="6dp"
-                    app:strokeWidth="0dp"
-                    android:layout_marginBottom="32dp">
+                    android:layout_marginBottom="24dp">
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:orientation="vertical"
-                        android:padding="32dp">
+                        android:padding="24dp">
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:text="Halo, Kasir Smolie!"
                             android:textColor="#FFFFFF"
-                            android:textSize="26sp"
+                            android:textSize="22sp"
                             android:textStyle="bold"/>
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:text="Siap melayani transaksi hari ini ✨"
                             android:textColor="#FFEBEE"
-                            android:textSize="14sp"
-                            android:layout_marginTop="8dp"/>
+                            android:textSize="13sp"
+                            android:layout_marginTop="4dp"/>
                     </LinearLayout>
                 </com.google.android.material.card.MaterialCardView>
 
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Menu Operasional"
-                    android:textColor="#2D3142"
-                    android:textStyle="bold"
-                    android:textSize="18sp"
-                    android:layout_marginBottom="16dp"
-                    android:letterSpacing="0.02"/>
-
-                <GridLayout
+                <!-- Shortcut Menu -->
+                <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:columnCount="2"
-                    android:alignmentMode="alignMargins"
-                    android:columnOrderPreserved="false">
+                    android:orientation="horizontal"
+                    android:layout_marginBottom="24dp">
 
-                    <!-- Menu 1: Katalog -->
-                    <com.google.android.material.card.MaterialCardView
-                        android:id="@+id/cvMenuKatalog"
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_columnWeight="1"
-                        android:layout_margin="10dp"
-                        app:cardCornerRadius="20dp"
-                        app:cardElevation="4dp"
-                        app:strokeWidth="0dp"
-                        app:cardBackgroundColor="#FFFFFF"
-                        android:clickable="true"
-                        android:focusable="true"
-                        android:foreground="?attr/selectableItemBackground">
-                        <LinearLayout
-                            android:layout_width="match_parent"
-                            android:layout_height="140dp"
-                            android:orientation="vertical"
-                            android:gravity="center"
-                            android:padding="16dp">
-                            <ImageView
-                                android:layout_width="48dp"
-                                android:layout_height="48dp"
-                                android:src="@drawable/bags_shopping"
-                                app:tint="#DD3827"/>
-                            <TextView
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:text="Katalog"
-                                android:textStyle="bold"
-                                android:textColor="#2D3142"
-                                android:layout_marginTop="16dp"/>
-                        </LinearLayout>
-                    </com.google.android.material.card.MaterialCardView>
-
-                    <!-- Menu 2: Transaksi -->
                     <com.google.android.material.card.MaterialCardView
                         android:id="@+id/cvMenuTransaksi"
                         android:layout_width="0dp"
+                        android:layout_weight="1"
                         android:layout_height="wrap_content"
-                        android:layout_columnWeight="1"
-                        android:layout_margin="10dp"
-                        app:cardCornerRadius="20dp"
-                        app:cardElevation="4dp"
-                        app:strokeWidth="0dp"
-                        app:cardBackgroundColor="#FFFFFF"
-                        android:clickable="true"
-                        android:focusable="true"
-                        android:foreground="?attr/selectableItemBackground">
+                        android:layout_marginEnd="8dp"
+                        app:cardCornerRadius="16dp"
+                        app:cardElevation="2dp">
                         <LinearLayout
                             android:layout_width="match_parent"
-                            android:layout_height="140dp"
+                            android:layout_height="wrap_content"
                             android:orientation="vertical"
                             android:gravity="center"
                             android:padding="16dp">
                             <ImageView
-                                android:layout_width="48dp"
-                                android:layout_height="48dp"
+                                android:layout_width="32dp"
+                                android:layout_height="32dp"
                                 android:src="@drawable/receipt"
                                 app:tint="#DD3827"/>
                             <TextView
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:text="Transaksi"
+                                android:text="Data Transaksi"
+                                android:textSize="12sp"
                                 android:textStyle="bold"
-                                android:textColor="#2D3142"
-                                android:layout_marginTop="16dp"/>
+                                android:layout_marginTop="8dp"/>
                         </LinearLayout>
                     </com.google.android.material.card.MaterialCardView>
 
-                </GridLayout>
+                    <com.google.android.material.card.MaterialCardView
+                        android:id="@+id/cvMenuKatalog"
+                        android:layout_width="0dp"
+                        android:layout_weight="1"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="8dp"
+                        app:cardCornerRadius="16dp"
+                        app:cardElevation="2dp">
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="vertical"
+                            android:gravity="center"
+                            android:padding="16dp">
+                            <ImageView
+                                android:layout_width="32dp"
+                                android:layout_height="32dp"
+                                android:src="@drawable/bags_shopping"
+                                app:tint="#DD3827"/>
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="Input Manual"
+                                android:textSize="12sp"
+                                android:textStyle="bold"
+                                android:layout_marginTop="8dp"/>
+                        </LinearLayout>
+                    </com.google.android.material.card.MaterialCardView>
+                </LinearLayout>
+
+                <!-- Search & Catalog -->
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Pilih Produk dari Katalog"
+                    android:textColor="#2D3142"
+                    android:textStyle="bold"
+                    android:textSize="18sp"
+                    android:layout_marginBottom="12dp"/>
+
+                <androidx.cardview.widget.CardView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    app:cardCornerRadius="12dp"
+                    app:cardElevation="2dp"
+                    android:layout_marginBottom="16dp">
+                    <AutoCompleteTextView
+                        android:id="@+id/acSearchProdukKasir"
+                        android:layout_width="match_parent"
+                        android:layout_height="50dp"
+                        android:background="@android:color/transparent"
+                        android:hint="Cari produk di sini..."
+                        android:paddingStart="16dp"
+                        android:paddingEnd="16dp"
+                        android:textSize="14sp"
+                        android:completionThreshold="1"/>
+                </androidx.cardview.widget.CardView>
+
+                <GridLayout
+                    android:id="@+id/glDaftarProdukKasir"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:columnCount="2"
+                    android:alignmentMode="alignMargins"
+                    android:columnOrderPreserved="false" />
+
             </LinearLayout>
         </ScrollView>
 
@@ -168,23 +180,18 @@
             android:padding="24dp"
             android:gravity="center_horizontal"
             android:visibility="gone">
-
+            <!-- Profile UI tetap sama -->
             <com.google.android.material.card.MaterialCardView
-                android:layout_width="140dp"
-                android:layout_height="140dp"
-                app:cardCornerRadius="70dp"
-                app:cardElevation="8dp"
-                app:strokeColor="#DD3827"
-                app:strokeWidth="3dp"
-                android:layout_marginBottom="24dp"
-                app:cardPreventCornerOverlap="false">
+                android:layout_width="120dp"
+                android:layout_height="120dp"
+                app:cardCornerRadius="60dp"
+                app:cardElevation="4dp"
+                android:layout_marginBottom="24dp">
                 <ImageView
-                    android:id="@+id/ivKasirProfile"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
                     android:src="@drawable/smolie"
-                    android:scaleType="centerCrop"
-                    android:contentDescription="Profile Image"/>
+                    android:scaleType="centerCrop"/>
             </com.google.android.material.card.MaterialCardView>
 
             <TextView
@@ -192,7 +199,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Nama Kasir"
-                android:textSize="26sp"
+                android:textSize="22sp"
                 android:textStyle="bold"
                 android:textColor="#2D3142"/>
 
@@ -201,45 +208,30 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="kasir@smolie.com"
-                android:textSize="16sp"
                 android:textColor="#64748B"
-                android:layout_marginBottom="32dp"/>
+                android:layout_marginBottom="24dp"/>
 
             <com.google.android.material.card.MaterialCardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                app:cardCornerRadius="20dp"
-                app:cardElevation="3dp"
-                app:strokeWidth="0dp"
-                app:cardBackgroundColor="#FFFFFF">
+                app:cardCornerRadius="16dp"
+                app:cardElevation="2dp">
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="vertical"
-                    android:padding="24dp">
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Informasi Akun Kasir"
-                        android:textStyle="bold"
-                        android:textColor="#2D3142"
-                        android:textSize="18sp"
-                        android:layout_marginBottom="16dp"/>
+                    android:padding="20dp">
                     <TextView
                         android:id="@+id/tvKasirProfileUsername"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="Username: -"
-                        android:textColor="#64748B"
-                        android:textSize="14sp"/>
-                    <View android:layout_width="match_parent" android:layout_height="1dp" android:background="#F1F5F9" android:layout_marginTop="12dp" android:layout_marginBottom="12dp"/>
+                        android:layout_marginBottom="8dp"/>
                     <TextView
                         android:id="@+id/tvKasirProfilePhone"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Telepon: -"
-                        android:textColor="#64748B"
-                        android:textSize="14sp"/>
+                        android:text="Telepon: -"/>
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
         </LinearLayout>
