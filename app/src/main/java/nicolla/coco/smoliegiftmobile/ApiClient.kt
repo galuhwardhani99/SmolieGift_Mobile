@@ -10,9 +10,10 @@ import java.io.IOException
 
 object ApiClient {
     private val client = OkHttpClient()
-    private const val BASE_URL   = "http://192.168.43.121/toko-smolie/public/api/produk"
-    private const val UPLOAD_URL = "http://192.168.43.121/toko-smolie/public/api/produk/upload-image"
-    const val IMAGE_BASE_URL     = "http://192.168.43.121/toko-smolie/public/img/produk/"
+    private const val BASE_URL   = "http://192.168.1.8/toko-smolie/public/api/produk"
+    private const val UPLOAD_URL = "http://192.168.1.8/toko-smolie/public/api/produk/upload-image"
+    private const val KATEGORI_URL = "http://192.168.1.8/toko-smolie/public/api/kategori"
+    const val IMAGE_BASE_URL     = "http://192.168.1.8/toko-smolie/public/img/produk/"
 
     // GET semua produk
     fun getAllProducts(callback: (String?) -> Unit) {
@@ -40,7 +41,7 @@ object ApiClient {
             override fun onFailure(call: Call, e: IOException) { callback(false) }
             override fun onResponse(call: Call, response: Response) {
                 val responseStr = response.body?.string() ?: ""
-                android.util.Log.d("ApiClient", "addProduct response: $responseStr") // ← tambah ini
+                android.util.Log.d("ApiClient", "addProduct response: $responseStr")
                 val res = JSONObject(responseStr)
                 callback(res.getString("status") == "success")
             }
@@ -57,7 +58,6 @@ object ApiClient {
             put("gambar",      image)
         }
         val body = json.toString().toRequestBody("application/json".toMediaType())
-        // ← URL pakai id di path, bukan di body
         val request = Request.Builder().url("$BASE_URL/$id").put(body).build()
         client.newCall(request).enqueue(object : Callback {
             override fun onFailure(call: Call, e: IOException) { callback(false) }
@@ -70,7 +70,6 @@ object ApiClient {
 
     // DELETE hapus produk
     fun deleteProduct(id: Int, callback: (Boolean) -> Unit) {
-        // ← URL pakai id di path, bukan di body
         val request = Request.Builder().url("$BASE_URL/$id").delete().build()
         client.newCall(request).enqueue(object : Callback {
             override fun onFailure(call: Call, e: IOException) { callback(false) }
@@ -113,10 +112,12 @@ object ApiClient {
             }
         })
     }
-    // GET semua kategori dari Laravel
+
+    // ── KATEGORI ────────────────────────────────────────────────────────────
+
+    // GET semua kategori
     fun getKategori(callback: (List<Pair<Int, String>>) -> Unit) {
-        val url = "http://192.168.1.8/toko-smolie/public/api/kategori"
-        val request = Request.Builder().url(url).get().build()
+        val request = Request.Builder().url(KATEGORI_URL).get().build()
         client.newCall(request).enqueue(object : Callback {
             override fun onFailure(call: Call, e: IOException) { callback(emptyList()) }
             override fun onResponse(call: Call, response: Response) {
@@ -131,6 +132,62 @@ object ApiClient {
                     callback(list)
                 } catch (e: Exception) {
                     callback(emptyList())
+                }
+            }
+        })
+    }
+
+    // POST tambah kategori
+    fun addKategori(nama: String, callback: (Boolean) -> Unit) {
+        val json = JSONObject().apply {
+            put("nama_kategori", nama)
+        }
+        val body = json.toString().toRequestBody("application/json".toMediaType())
+        val request = Request.Builder().url(KATEGORI_URL).post(body).build()
+        client.newCall(request).enqueue(object : Callback {
+            override fun onFailure(call: Call, e: IOException) { callback(false) }
+            override fun onResponse(call: Call, response: Response) {
+                try {
+                    val res = JSONObject(response.body?.string() ?: "")
+                    callback(res.getString("status") == "success")
+                } catch (e: Exception) {
+                    callback(false)
+                }
+            }
+        })
+    }
+
+    // PUT edit kategori
+    fun editKategori(id: Int, namaBaru: String, callback: (Boolean) -> Unit) {
+        val json = JSONObject().apply {
+            put("nama_kategori", namaBaru)
+        }
+        val body = json.toString().toRequestBody("application/json".toMediaType())
+        val request = Request.Builder().url("$KATEGORI_URL/$id").put(body).build()
+        client.newCall(request).enqueue(object : Callback {
+            override fun onFailure(call: Call, e: IOException) { callback(false) }
+            override fun onResponse(call: Call, response: Response) {
+                try {
+                    val res = JSONObject(response.body?.string() ?: "")
+                    callback(res.getString("status") == "success")
+                } catch (e: Exception) {
+                    callback(false)
+                }
+            }
+        })
+    }
+
+    // DELETE hapus kategori
+    fun deleteKategori(id: Int, callback: (Boolean) -> Unit) {
+        val request = Request.Builder().url("$KATEGORI_URL/$id").delete().build()
+        client.newCall(request).enqueue(object : Callback {
+            override fun onFailure(call: Call, e: IOException) { callback(false) }
+            override fun onResponse(call: Call, response: Response) {
+                try {
+                    val res = JSONObject(response.body?.string() ?: "")
+                    callback(res.getString("status") == "success")
+                } catch (e: Exception) {
+                    callback(false)
                 }
             }
         })
