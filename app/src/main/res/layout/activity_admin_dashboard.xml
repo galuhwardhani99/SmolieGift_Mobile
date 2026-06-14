@@ -212,114 +212,133 @@
         </ScrollView>
 
         <!-- PROFILE CONTENT -->
-        <LinearLayout
+        <ScrollView
             android:id="@+id/layoutProfile"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:orientation="vertical"
-            android:padding="24dp"
-            android:gravity="center_horizontal"
             android:visibility="gone">
 
-            <com.google.android.material.card.MaterialCardView
-                android:layout_width="140dp"
-                android:layout_height="140dp"
-                app:cardCornerRadius="70dp"
-                app:cardElevation="8dp"
-                app:strokeColor="#DD3827"
-                app:strokeWidth="3dp"
-                android:layout_marginBottom="24dp"
-                app:cardPreventCornerOverlap="false">
-                <ImageView
-                    android:id="@+id/ivAdminProfile"
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:src="@drawable/smolie"
-                    android:scaleType="centerCrop"
-                    android:contentDescription="Admin Profile"/>
-            </com.google.android.material.card.MaterialCardView>
-
-            <TextView
-                android:id="@+id/tvAdminProfileName"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Administrator"
-                android:textSize="26sp"
-                android:textStyle="bold"
-                android:textColor="#2D3142"/>
-
-            <TextView
-                android:id="@+id/tvAdminProfileEmail"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="admin@smolie.com"
-                android:textSize="16sp"
-                android:textColor="#64748B"
-                android:layout_marginBottom="32dp"
-                android:fontFamily="sans-serif-medium"/>
-
-            <com.google.android.material.card.MaterialCardView
+            <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                app:cardCornerRadius="20dp"
-                app:cardElevation="3dp"
-                app:strokeWidth="0dp"
-                app:cardBackgroundColor="#FFFFFF">
-                <LinearLayout
+                android:orientation="vertical"
+                android:padding="24dp"
+                android:gravity="center_horizontal">
+
+                <com.google.android.material.card.MaterialCardView
+                    android:layout_width="140dp"
+                    android:layout_height="140dp"
+                    app:cardCornerRadius="70dp"
+                    app:cardElevation="8dp"
+                    app:strokeColor="#DD3827"
+                    app:strokeWidth="3dp"
+                    android:layout_marginBottom="24dp"
+                    app:cardPreventCornerOverlap="false">
+                    <ImageView
+                        android:id="@+id/ivAdminProfile"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:src="@drawable/smolie"
+                        android:scaleType="centerCrop"
+                        android:contentDescription="Admin Profile"/>
+                </com.google.android.material.card.MaterialCardView>
+
+                <TextView
+                    android:id="@+id/tvAdminProfileName"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Administrator"
+                    android:textSize="26sp"
+                    android:textStyle="bold"
+                    android:textColor="#2D3142"/>
+
+                <TextView
+                    android:id="@+id/tvAdminProfileEmail"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="admin@smolie.com"
+                    android:textSize="16sp"
+                    android:textColor="#64748B"
+                    android:layout_marginBottom="32dp"
+                    android:fontFamily="sans-serif-medium"/>
+
+                <com.google.android.material.card.MaterialCardView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:orientation="vertical"
-                    android:padding="24dp">
-                    <TextView
-                        android:layout_width="wrap_content"
+                    app:cardCornerRadius="20dp"
+                    app:cardElevation="3dp"
+                    app:strokeWidth="0dp"
+                    app:cardBackgroundColor="#FFFFFF"
+                    android:layout_marginBottom="24dp">
+                    <LinearLayout
+                        android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:text="Informasi Akun Admin"
-                        android:textStyle="bold"
-                        android:textColor="#2D3142"
-                        android:textSize="18sp"
-                        android:layout_marginBottom="16dp"/>
+                        android:orientation="vertical"
+                        android:padding="24dp">
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Informasi Akun Admin"
+                            android:textStyle="bold"
+                            android:textColor="#2D3142"
+                            android:textSize="18sp"
+                            android:layout_marginBottom="16dp"/>
 
-                    <TextView
-                        android:id="@+id/tvAdminProfileUsername"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Username: -"
-                        android:textColor="#64748B"
-                        android:textSize="14sp"/>
+                        <TextView
+                            android:id="@+id/tvAdminProfileUsername"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Username: -"
+                            android:textColor="#64748B"
+                            android:textSize="14sp"/>
 
-                    <View android:layout_width="match_parent" android:layout_height="1dp" android:background="#F1F5F9" android:layout_marginTop="12dp" android:layout_marginBottom="12dp"/>
+                        <View android:layout_width="match_parent" android:layout_height="1dp" android:background="#F1F5F9" android:layout_marginTop="12dp" android:layout_marginBottom="12dp"/>
 
-                    <TextView
-                        android:id="@+id/tvAdminProfilePhone"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Telepon: -"
-                        android:textColor="#64748B"
-                        android:textSize="14sp"/>
+                        <TextView
+                            android:id="@+id/tvAdminProfilePhone"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Telepon: -"
+                            android:textColor="#64748B"
+                            android:textSize="14sp"/>
 
-                    <View android:layout_width="match_parent" android:layout_height="1dp" android:background="#F1F5F9" android:layout_marginTop="12dp" android:layout_marginBottom="12dp"/>
+                        <View android:layout_width="match_parent" android:layout_height="1dp" android:background="#F1F5F9" android:layout_marginTop="12dp" android:layout_marginBottom="12dp"/>
 
-                    <TextView
-                        android:id="@+id/tvAdminProfileGender"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Gender: -"
-                        android:textColor="#64748B"
-                        android:textSize="14sp"/>
+                        <TextView
+                            android:id="@+id/tvAdminProfileGender"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Gender: -"
+                            android:textColor="#64748B"
+                            android:textSize="14sp"/>
 
-                    <View android:layout_width="match_parent" android:layout_height="1dp" android:background="#F1F5F9" android:layout_marginTop="12dp" android:layout_marginBottom="12dp"/>
+                        <View android:layout_width="match_parent" android:layout_height="1dp" android:background="#F1F5F9" android:layout_marginTop="12dp" android:layout_marginBottom="12dp"/>
 
-                    <TextView
-                        android:id="@+id/tvAdminProfileAddress"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Alamat: -"
-                        android:textColor="#64748B"
-                        android:textSize="14sp"/>
-                </LinearLayout>
-            </com.google.android.material.card.MaterialCardView>
+                        <TextView
+                            android:id="@+id/tvAdminProfileAddress"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Alamat: -"
+                            android:textColor="#64748B"
+                            android:textSize="14sp"/>
+                    </LinearLayout>
+                </com.google.android.material.card.MaterialCardView>
 
-        </LinearLayout>
+                <Button
+                    android:id="@+id/btnEditProfileAdmin"
+                    android:layout_width="match_parent"
+                    android:layout_height="55dp"
+                    android:text="Edit Profil"
+                    android:backgroundTint="#2D3142"
+                    android:textColor="#FFFFFF"
+                    android:textStyle="bold"
+                    app:cornerRadius="12dp"
+                    app:icon="@drawable/edit"
+                    app:iconGravity="textStart"
+                    app:iconPadding="8dp"/>
+
+            </LinearLayout>
+        </ScrollView>
 
     </FrameLayout>
 

@@ -51,8 +51,7 @@
 
             <ScrollView
                 android:layout_width="match_parent"
-                android:layout_height="0dp"
-                android:layout_weight="1"
+                android:layout_height="400dp"
                 android:scrollbars="none">
 
                 <LinearLayout
@@ -198,6 +197,16 @@
                                 android:layout_marginStart="4dp"
                                 app:cornerRadius="6dp"/>
                         </LinearLayout>
+
+                        <TextView
+                            android:id="@+id/tvWaktuTerpilih"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="Belum memilih waktu"
+                            android:textSize="11sp"
+                            android:textColor="#64748B"
+                            android:gravity="center"
+                            android:layout_marginTop="8dp"/>
                     </LinearLayout>
 
                     <LinearLayout

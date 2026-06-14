@@ -158,11 +158,42 @@
             android:orientation="horizontal"
             android:layout_marginTop="12dp"
             android:gravity="center_vertical">
-            <TextView android:id="@+id/tvAdminTransWa" android:layout_width="wrap_content" android:text="WhatsApp" android:textColor="#94A3B8" android:textSize="11sp"/>
-            <TextView android:layout_width="wrap_content" android:text=" • " android:textColor="#CBD5E1"/>
-            <TextView android:id="@+id/tvAdminTransMetode" android:layout_width="wrap_content" android:text="Tunai" android:textColor="#94A3B8" android:textSize="11sp"/>
-            <View android:layout_width="0dp" android:layout_height="0dp" android:layout_weight="1"/>
-            <TextView android:id="@+id/tvAdminTransTanggal" android:layout_width="wrap_content" android:text="Waktu" android:textColor="#94A3B8" android:textSize="11sp"/>
+
+            <TextView
+                android:id="@+id/tvAdminTransWa"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="WhatsApp"
+                android:textColor="#94A3B8"
+                android:textSize="11sp"/>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text=" • "
+                android:textColor="#CBD5E1"/>
+
+            <TextView
+                android:id="@+id/tvAdminTransMetode"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Tunai"
+                android:textColor="#94A3B8"
+                android:textSize="11sp"/>
+
+            <View
+                android:layout_width="0dp"
+                android:layout_height="0dp"
+                android:layout_weight="1"/>
+
+            <TextView
+                android:id="@+id/tvAdminTransTanggal"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Waktu"
+                android:textColor="#94A3B8"
+                android:textSize="11sp"/>
+
         </LinearLayout>
 
         <View android:layout_width="match_parent" android:layout_height="1dp" android:background="#F1F5F9" android:layout_marginTop="16dp" android:layout_marginBottom="16dp"/>

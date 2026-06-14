@@ -1,34 +1,39 @@
 package nicolla.coco.smoliegiftmobile
 
+import android.Manifest
 import android.app.DatePickerDialog
 import android.app.Dialog
 import android.app.TimePickerDialog
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.database.Cursor
-import android.graphics.BitmapFactory
 import android.graphics.Color
 import android.net.Uri
 import android.os.Bundle
 import android.provider.OpenableColumns
 import android.util.Base64
-import android.util.TypedValue
 import android.view.LayoutInflater
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
 import android.view.ViewGroup
-import android.view.Window
 import android.widget.*
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.Toolbar
-import androidx.core.widget.addTextChangedListener
+import androidx.core.app.ActivityCompat
 import com.example.smoliegift.database.DatabaseHelper
 import com.google.android.material.bottomnavigation.BottomNavigationView
-import org.json.JSONArray
+import com.google.android.material.floatingactionbutton.FloatingActionButton
 import org.json.JSONObject
+import org.osmdroid.config.Configuration
+import org.osmdroid.tileprovider.tilesource.TileSourceFactory
+import org.osmdroid.util.GeoPoint
+import org.osmdroid.views.MapView
+import org.osmdroid.views.overlay.Marker
+import org.osmdroid.views.overlay.mylocation.GpsMyLocationProvider
+import org.osmdroid.views.overlay.mylocation.MyLocationNewOverlay
 import java.io.InputStream
 import java.util.Calendar
 
@@ -39,8 +44,16 @@ class PembeliDashboardActivity : AppCompatActivity() {
     private lateinit var layoutHome: ScrollView
     private lateinit var fragmentContainer: FrameLayout
     private lateinit var layoutProfile: ScrollView
+    private lateinit var layoutLocation: FrameLayout
     private lateinit var toolbar: Toolbar
     private lateinit var acSearchProduk: AutoCompleteTextView
+
+    // ✅ OSMDroid MapView
+    private var mapOsm: MapView? = null
+    private var mapSudahDiset = false
+    private var locationOverlay: MyLocationNewOverlay? = null
+    private lateinit var fabMyLocation: FloatingActionButton
+
     private var isAdminView: Boolean = false
     private var isKasirMode: Boolean = false
     private var currentUserEmail: String? = null
@@ -68,8 +81,24 @@ class PembeliDashboardActivity : AppCompatActivity() {
         }
     }
 
+    private val requestPermissionLauncher = registerForActivityResult(
+        ActivityResultContracts.RequestMultiplePermissions()
+    ) { permissions ->
+        if (permissions[Manifest.permission.ACCESS_FINE_LOCATION] == true ||
+            permissions[Manifest.permission.ACCESS_COARSE_LOCATION] == true
+        ) {
+            locationOverlay?.enableMyLocation()
+        } else {
+            Toast.makeText(this, "Izin lokasi diperlukan untuk fitur ini", Toast.LENGTH_SHORT).show()
+        }
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        // ✅ Wajib untuk OSMDroid
+        Configuration.getInstance().load(this, getSharedPreferences("osm_prefs", MODE_PRIVATE))
+
         setContentView(R.layout.activity_pembeli_dashboard)
 
         dbHelper = DatabaseHelper(this)
@@ -89,83 +118,330 @@ class PembeliDashboardActivity : AppCompatActivity() {
         layoutHome = findViewById(R.id.layoutHomePembeli)
         fragmentContainer = findViewById(R.id.fragmentContainerPembeli)
         layoutProfile = findViewById(R.id.layoutProfilePembeli)
+        layoutLocation = findViewById(R.id.layoutLocationPembeli)
         acSearchProduk = findViewById(R.id.acSearchProduk)
+        mapOsm = findViewById(R.id.mapOsm)
+        fabMyLocation = findViewById(R.id.fabMyLocation)
 
         val bottomNav = findViewById<BottomNavigationView>(R.id.bottomNavPembeli)
         val btnLihatKeranjang = findViewById<Button>(R.id.btnLihatKeranjang)
-        val llKasirActions = findViewById<LinearLayout>(R.id.llKasirActions)
-        val btnInputManualBaru = findViewById<Button>(R.id.btnInputManualBaru)
-        val btnLihatKeranjangKasir = findViewById<Button>(R.id.btnLihatKeranjangKasir)
-
-        if (isAdminView) {
-            btnLihatKeranjang.visibility = View.GONE
-            bottomNav.visibility = View.GONE
-        }
-        
-        if (isKasirMode) {
-            bottomNav.visibility = View.GONE
-            btnLihatKeranjang.visibility = View.GONE
-            llKasirActions.visibility = View.VISIBLE
-            
-            findViewById<TextView>(R.id.tvHeaderTitle).text = "Kasir Smolie Gift"
-            findViewById<TextView>(R.id.tvHeaderSub).text = "Pilih produk dari katalog untuk masuk ke keranjang"
-            findViewById<TextView>(R.id.tvLabelKatalog).text = "Katalog Produk Toko"
-
-            btnInputManualBaru.setOnClickListener {
-                tampilkanDialogInputManual(null, null)
-            }
-
-            btnLihatKeranjangKasir.setOnClickListener {
-                val intent = Intent(this, CartActivity::class.java)
-                intent.putExtra("USER_EMAIL", currentUserEmail)
-                intent.putExtra("IS_KASIR_MODE", true)
-                startActivity(intent)
-            }
-            
-            // Pastikan Home (Katalog) terlihat di awal Mode Kasir
-            showHome()
-        }
-
-        btnLihatKeranjang.setOnClickListener {
-            val intent = Intent(this, CartActivity::class.java)
-            intent.putExtra("USER_EMAIL", currentUserEmail)
-            intent.putExtra("IS_KASIR_MODE", isKasirMode)
-            startActivity(intent)
-        }
 
         bottomNav.setOnItemSelectedListener { item ->
             when (item.itemId) {
                 R.id.navigation_home -> { showHome(); true }
+                R.id.navigation_location -> { showLocation(); true }
                 R.id.navigation_history -> { showHistory(); true }
                 R.id.navigation_profile -> { showProfile(); true }
                 else -> false
             }
         }
 
+        btnLihatKeranjang.setOnClickListener {
+            val intent = Intent(this, CartActivity::class.java)
+            intent.putExtra("USER_EMAIL", currentUserEmail)
+            startActivity(intent)
+        }
+
+        fabMyLocation.setOnClickListener {
+            val myLoc = locationOverlay?.myLocation
+            if (myLoc != null) {
+                mapOsm?.controller?.animateTo(myLoc)
+                mapOsm?.controller?.setZoom(18.0)
+            } else {
+                Toast.makeText(this, "Mencari lokasi...", Toast.LENGTH_SHORT).show()
+            }
+        }
+
         if (currentUserEmail != null) loadUserProfile(currentUserEmail!!)
         loadKategori { loadKatalogProduk() }
-        
         applySettings()
+    }
+
+    private fun showHome() {
+        layoutHome.visibility = View.VISIBLE
+        fragmentContainer.visibility = View.GONE
+        layoutProfile.visibility = View.GONE
+        layoutLocation.visibility = View.GONE
+        toolbar.title = "Smolie Gift"
+    }
+
+    private fun showLocation() {
+        layoutHome.visibility = View.GONE
+        fragmentContainer.visibility = View.GONE
+        layoutProfile.visibility = View.GONE
+        layoutLocation.visibility = View.VISIBLE
+        toolbar.title = "Lokasi Toko"
+
+        setupOsmMap()
+    }
+
+    private fun setupOsmMap() {
+        val map = mapOsm ?: return
+
+        // ✅ Koordinat Smolie Gift Surabaya (Pogot 9 No.60)
+        val smolieGiftLoc = GeoPoint(-7.228519, 112.768652)
+
+        if (!mapSudahDiset) {
+            map.setTileSource(TileSourceFactory.MAPNIK)
+            map.setMultiTouchControls(true)
+            map.controller.setZoom(15.0)
+            map.controller.setCenter(smolieGiftLoc)
+
+            val marker = Marker(map)
+            marker.position = smolieGiftLoc
+            marker.setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM)
+            marker.title = "Smolie Gift Surabaya"
+            marker.snippet = "Jl. Pogot 9 No.60, Tanah Kali Kedinding, Surabaya\nKetuk untuk buka di Google Maps"
+
+            marker.setOnMarkerClickListener { _, _ ->
+                val gmapsUri = Uri.parse("https://maps.app.goo.gl/vxLNPpnuToAu2NS5A")
+                val mapIntent = Intent(Intent.ACTION_VIEW, gmapsUri)
+                startActivity(mapIntent)
+                true
+            }
+            map.overlays.add(marker)
+
+            locationOverlay = MyLocationNewOverlay(GpsMyLocationProvider(this), map)
+            locationOverlay?.enableMyLocation()
+            // Kita tidak memanggil enableFollowLocation() agar di awal fokus tetap ke Toko
+            map.overlays.add(locationOverlay)
+
+            mapSudahDiset = true
+        }
+
+        checkLocationPermission()
+    }
+
+    private fun checkLocationPermission() {
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED &&
+            ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED
+        ) {
+            requestPermissionLauncher.launch(
+                arrayOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION)
+            )
+        } else {
+            locationOverlay?.enableMyLocation()
+        }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        mapOsm?.onResume()
+        locationOverlay?.enableMyLocation()
+    }
+
+    override fun onPause() {
+        super.onPause()
+        mapOsm?.onPause()
+        locationOverlay?.disableMyLocation()
+    }
+
+    private fun showHistory() {
+        layoutHome.visibility = View.GONE
+        fragmentContainer.visibility = View.VISIBLE
+        layoutProfile.visibility = View.GONE
+        layoutLocation.visibility = View.GONE
+        toolbar.title = "Riwayat Pesanan"
+        if (currentUserEmail != null) {
+            supportFragmentManager.beginTransaction().replace(R.id.fragmentContainerPembeli, HistoryFragment.newInstance(currentUserEmail!!)).commit()
+        }
+    }
+
+    private fun showProfile() {
+        layoutHome.visibility = View.GONE
+        fragmentContainer.visibility = View.GONE
+        layoutProfile.visibility = View.VISIBLE
+        layoutLocation.visibility = View.GONE
+        toolbar.title = "Profil Saya"
+    }
+
+    private fun showSettingDialog() {
+        val dialog = Dialog(this)
+        dialog.setContentView(R.layout.dialog_setting)
+        dialog.window?.setBackgroundDrawableResource(android.R.color.transparent)
+
+        val etFont = dialog.findViewById<EditText>(R.id.etFontSize)
+        val etBtn = dialog.findViewById<EditText>(R.id.etButtonText)
+        val etTv = dialog.findViewById<EditText>(R.id.etTextViewText)
+        val spinner = dialog.findViewById<Spinner>(R.id.spinnerBgColor)
+        val btnSimpan = dialog.findViewById<Button>(R.id.btnSimpanSetting)
+        val btnBatal = dialog.findViewById<Button>(R.id.btnBatalSetting)
+
+        val colors = arrayOf("Default", "Abu-abu", "Merah Maroon", "Biru", "Hijau")
+        val adapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, colors)
+        spinner.adapter = adapter
+
+        val prefs = getSharedPreferences("SmoliePrefs", Context.MODE_PRIVATE)
+        spinner.setSelection(colors.indexOf(prefs.getString("bg_color", "Default")))
+
+        btnSimpan.setOnClickListener {
+            val editor = prefs.edit()
+            editor.putString("bg_color", spinner.selectedItem.toString())
+            editor.apply()
+            applySettings()
+            dialog.dismiss()
+            Toast.makeText(this, "Pengaturan disimpan", Toast.LENGTH_SHORT).show()
+        }
+
+        btnBatal.setOnClickListener { dialog.dismiss() }
+        dialog.show()
+    }
+
+    private fun showPesanDialog(produk: JSONObject) {
+        val dialog = Dialog(this)
+        dialog.setContentView(R.layout.dialog_pesan_produk)
+        dialog.window?.setLayout(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT)
+        dialog.window?.setBackgroundDrawableResource(android.R.color.transparent)
+
+        val tvJudul    = dialog.findViewById<TextView>(R.id.tvDialogJudul)
+        val btnTutup   = dialog.findViewById<TextView>(R.id.btnTutupDialog)
+        val spWarna    = dialog.findViewById<Spinner>(R.id.spWarna)
+        val rgKemasan  = dialog.findViewById<RadioGroup>(R.id.rgKemasan)
+        val cbSablon   = dialog.findViewById<CheckBox>(R.id.cbSablon)
+        val cbThanks   = dialog.findViewById<CheckBox>(R.id.cbThanksCard)
+        val cbInvited  = dialog.findViewById<CheckBox>(R.id.cbInvitedCard)
+        val btnPilihFile = dialog.findViewById<Button>(R.id.btnPilihFile)
+        val etCatatan  = dialog.findViewById<EditText>(R.id.etCatatan)
+        val btnMin     = dialog.findViewById<Button>(R.id.btnMinQty)
+        val btnPlus    = dialog.findViewById<Button>(R.id.btnPlusQty)
+        val tvQty      = dialog.findViewById<TextView>(R.id.tvQty)
+        val btnTambah  = dialog.findViewById<Button>(R.id.btnTambahKeranjang)
+
+        // Container tanggal acara
+        val llTanggal  = dialog.findViewById<LinearLayout>(R.id.llContainerTanggalAcara)
+        val btnTanggal = dialog.findViewById<Button>(R.id.btnPilihTanggal)
+        val btnWaktu   = dialog.findViewById<Button>(R.id.btnPilihWaktu)
+        val tvWaktu    = dialog.findViewById<TextView>(R.id.tvWaktuTerpilih)
+
+        val namaProd  = produk.getString("nama_produk")
+        val hargaBase = produk.getInt("harga")
+        val prodImage = produk.optString("prod_image", null)
+
+        tvJudul.text = namaProd
+        btnPilihFileRef = btnPilihFile
+        currentCustomImageBase64 = null
+
+        // Spinner Warna
+        val listWarna = arrayOf("Random / Mix", "Merah", "Biru", "Hijau", "Kuning", "Pink", "Ungu")
+        spWarna.adapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, listWarna)
+
+        var qty = 1
+        var tglAcara = ""
+        var jamAcara = ""
+
+        fun updateHarga() {
+            var hargaTambahan = 0
+            when (rgKemasan.checkedRadioButtonId) {
+                R.id.rbTile -> hargaTambahan += 1000
+                R.id.rbBox  -> hargaTambahan += 2500
+            }
+            if (cbSablon.isChecked)  hargaTambahan += 500
+            if (cbThanks.isChecked)  hargaTambahan += 300
+            if (cbInvited.isChecked) hargaTambahan += 400
+
+            val totalBayar = (hargaBase + hargaTambahan) * qty
+            btnTambah.text = "Tambah — Rp $totalBayar"
+        }
+
+        rgKemasan.setOnCheckedChangeListener { _, _ -> updateHarga() }
+        cbSablon.setOnCheckedChangeListener  { _, _ -> updateHarga() }
+        cbThanks.setOnCheckedChangeListener  { _, _ -> updateHarga() }
+
+        // ✅ FIX: cbInvited hanya di-set SEKALI — handle visibility DAN updateHarga sekaligus
+        cbInvited.setOnCheckedChangeListener { _, isChecked ->
+            llTanggal.visibility = if (isChecked) View.VISIBLE else View.GONE
+            if (!isChecked) {
+                // Reset waktu jika unchecked
+                tglAcara = ""
+                jamAcara = ""
+                tvWaktu.text = "Belum memilih waktu"
+                btnTanggal.text = "Pilih Tanggal"
+                btnWaktu.text = "Pilih Waktu"
+            }
+            updateHarga()
+        }
+
+        // ✅ Date Picker
+        btnTanggal.setOnClickListener {
+            val c = Calendar.getInstance()
+            DatePickerDialog(
+                this,
+                { _, y, m, d ->
+                    tglAcara = String.format("%02d/%02d/%04d", d, m + 1, y)
+                    btnTanggal.text = tglAcara
+                    tvWaktu.text = "$tglAcara $jamAcara".trim()
+                },
+                c.get(Calendar.YEAR),
+                c.get(Calendar.MONTH),
+                c.get(Calendar.DAY_OF_MONTH)
+            ).show()
+        }
+
+        // ✅ Time Picker
+        btnWaktu.setOnClickListener {
+            val c = Calendar.getInstance()
+            TimePickerDialog(
+                this,
+                { _, h, m ->
+                    jamAcara = String.format("%02d:%02d", h, m)
+                    btnWaktu.text = jamAcara
+                    tvWaktu.text = "$tglAcara $jamAcara".trim()
+                },
+                c.get(Calendar.HOUR_OF_DAY),
+                c.get(Calendar.MINUTE),
+                true
+            ).show()
+        }
+
+        btnMin.setOnClickListener {
+            if (qty > 1) { qty--; tvQty.text = qty.toString(); updateHarga() }
+        }
+        btnPlus.setOnClickListener {
+            qty++; tvQty.text = qty.toString(); updateHarga()
+        }
+
+        btnPilihFile.setOnClickListener { pickImageLauncher.launch("image/*") }
+        btnTutup.setOnClickListener { dialog.dismiss() }
+
+        btnTambah.setOnClickListener {
+            val kemasan = when (rgKemasan.checkedRadioButtonId) {
+                R.id.rbTile -> "Tile"
+                R.id.rbBox  -> "Box"
+                else        -> "Plastik"
+            }
+            val catatan = etCatatan.text.toString()
+            val waktuAcara = if (cbInvited.isChecked && tglAcara.isNotEmpty()) "$tglAcara $jamAcara".trim() else ""
+            val fullEventInfo = buildString {
+                append("Warna: ${spWarna.selectedItem}, Kemasan: $kemasan")
+                val extras = mutableListOf<String>()
+                if (cbSablon.isChecked)  extras.add("Sablon")
+                if (cbThanks.isChecked)  extras.add("Thanks Card")
+                if (cbInvited.isChecked) extras.add("Invited Card${if (waktuAcara.isNotEmpty()) " ($waktuAcara)" else ""}")
+                if (extras.isNotEmpty()) append(", Extras: ${extras.joinToString(", ")}")
+                if (catatan.isNotEmpty()) append("\nCatatan: $catatan")
+            }
+
+            // Ambil harga per item dari tombol (sudah termasuk tambahan)
+            val totalText = btnTambah.text.toString()
+            val totalBayar = totalText.substringAfter("Rp ").replace(".", "").replace(",", "").trim().toIntOrNull() ?: (hargaBase * qty)
+            val itemPrice = totalBayar / qty
+
+            val success = dbHelper.tambahKeKeranjang(namaProd, qty, itemPrice, currentCustomImageBase64, prodImage)
+            if (success) {
+                Toast.makeText(this, "✓ Berhasil masuk keranjang", Toast.LENGTH_SHORT).show()
+                dialog.dismiss()
+            } else {
+                Toast.makeText(this, "Gagal menambahkan ke keranjang", Toast.LENGTH_SHORT).show()
+            }
+        }
+
+        updateHarga()
+        dialog.show()
     }
 
     private fun applySettings() {
         val prefs = getSharedPreferences("SmoliePrefs", Context.MODE_PRIVATE)
-        val fontSize = prefs.getFloat("font_size", -1f)
-        val buttonText = prefs.getString("button_text", null)
-        val textViewText = prefs.getString("textview_text", null)
         val selectedColor = prefs.getString("bg_color", "Default")
-
-        if (fontSize != -1f) {
-            findViewById<TextView>(R.id.tvHeaderTitle).setTextSize(TypedValue.COMPLEX_UNIT_SP, fontSize)
-            findViewById<Button>(R.id.btnLihatKeranjang).setTextSize(TypedValue.COMPLEX_UNIT_SP, fontSize)
-        }
-        if (!buttonText.isNullOrEmpty()) {
-            findViewById<Button>(R.id.btnLihatKeranjang).text = buttonText
-        }
-        if (!textViewText.isNullOrEmpty()) {
-            findViewById<TextView>(R.id.tvHeaderTitle).text = textViewText
-        }
-
         val rootLayout = findViewById<View>(R.id.layoutHomePembeli)
         when (selectedColor) {
             "Abu-abu" -> rootLayout.setBackgroundColor(Color.LTGRAY)
@@ -174,130 +450,6 @@ class PembeliDashboardActivity : AppCompatActivity() {
             "Hijau" -> rootLayout.setBackgroundColor(Color.parseColor("#E8F5E9"))
             else -> rootLayout.setBackgroundColor(Color.parseColor("#F8F9FA"))
         }
-    }
-
-    private fun tampilkanDialogSetting() {
-        val dialog = Dialog(this)
-        dialog.setContentView(R.layout.dialog_setting)
-        dialog.window?.setLayout(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT)
-        dialog.window?.setBackgroundDrawableResource(android.R.color.transparent)
-
-        val etFontSize = dialog.findViewById<EditText>(R.id.etFontSize)
-        val etButtonText = dialog.findViewById<EditText>(R.id.etButtonText)
-        val etTextViewText = dialog.findViewById<EditText>(R.id.etTextViewText)
-        val spinnerBgColor = dialog.findViewById<Spinner>(R.id.spinnerBgColor)
-        val btnSimpan = dialog.findViewById<Button>(R.id.btnSimpanSetting)
-        val btnBatal = dialog.findViewById<Button>(R.id.btnBatalSetting)
-
-        val colors = arrayOf("Default", "Abu-abu", "Merah Maroon", "Biru", "Hijau")
-        val adapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, colors)
-        spinnerBgColor.adapter = adapter
-
-        val prefs = getSharedPreferences("SmoliePrefs", Context.MODE_PRIVATE)
-        val currentFontSize = prefs.getFloat("font_size", -1f)
-        if (currentFontSize != -1f) etFontSize.setText(currentFontSize.toString())
-        etButtonText.setText(prefs.getString("button_text", ""))
-        etTextViewText.setText(prefs.getString("textview_text", ""))
-        val currentBg = prefs.getString("bg_color", "Default")
-        spinnerBgColor.setSelection(colors.indexOf(currentBg))
-
-        btnBatal.setOnClickListener { dialog.dismiss() }
-
-        btnSimpan.setOnClickListener {
-            val fontSizeStr = etFontSize.text.toString()
-            val buttonText = etButtonText.text.toString()
-            val textViewText = etTextViewText.text.toString()
-            val selectedColor = spinnerBgColor.selectedItem.toString()
-
-            val editor = getSharedPreferences("SmoliePrefs", Context.MODE_PRIVATE).edit()
-            if (fontSizeStr.isNotEmpty()) {
-                editor.putFloat("font_size", fontSizeStr.toFloat())
-            }
-            editor.putString("button_text", buttonText)
-            editor.putString("textview_text", textViewText)
-            editor.putString("bg_color", selectedColor)
-            editor.apply()
-
-            applySettings()
-            Toast.makeText(this, "Pengaturan Disimpan", Toast.LENGTH_SHORT).show()
-            dialog.dismiss()
-        }
-
-        dialog.show()
-    }
-
-    private fun tampilkanDialogInputManual(preNama: String?, preHarga: Int?) {
-        val dialog = Dialog(this)
-        dialog.setContentView(R.layout.dialog_input_manual)
-        dialog.window?.setLayout(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT)
-        dialog.window?.setBackgroundDrawableResource(android.R.color.transparent)
-
-        val etNamaPembeli = dialog.findViewById<EditText>(R.id.etManualNamaPembeli)
-        val actvProdukKatalog = dialog.findViewById<AutoCompleteTextView>(R.id.actvManualProduk)
-        val etNamaProduk = dialog.findViewById<EditText>(R.id.etManualNamaProduk)
-        val etHarga = dialog.findViewById<EditText>(R.id.etManualHarga)
-        val etQty = dialog.findViewById<EditText>(R.id.etManualQty)
-        val etCatatan = dialog.findViewById<EditText>(R.id.etManualCatatan)
-        val btnSimpan = dialog.findViewById<Button>(R.id.btnSimpanTransaksiManual)
-        val btnBatal = dialog.findViewById<Button>(R.id.btnManualBatal)
-
-        val adapterKatalog = ArrayAdapter(this, android.R.layout.simple_dropdown_item_1line, listNamaProdukKatalog)
-        actvProdukKatalog.setAdapter(adapterKatalog)
-        actvProdukKatalog.setOnItemClickListener { parent, _, position, _ ->
-            val selected = parent.getItemAtPosition(position) as String
-            etNamaProduk.setText(selected)
-            val db = dbHelper.readableDatabase
-            val cursor = db.rawQuery("SELECT ${DatabaseHelper.COLUMN_PROD_PRICE} FROM ${DatabaseHelper.TABLE_PRODUCTS} WHERE ${DatabaseHelper.COLUMN_PROD_NAME} = ?", arrayOf(selected))
-            if (cursor.moveToFirst()) {
-                etHarga.setText(cursor.getInt(0).toString())
-            }
-            cursor.close()
-        }
-
-        if (preNama != null) {
-            actvProdukKatalog.setText(preNama)
-            etNamaProduk.setText(preNama)
-        }
-        if (preHarga != null) etHarga.setText(preHarga.toString())
-
-        btnBatal.setOnClickListener { dialog.dismiss() }
-
-        btnSimpan.setOnClickListener {
-            val pembeli = etNamaPembeli.text.toString().trim()
-            val produk = etNamaProduk.text.toString().trim()
-            val hargaStr = etHarga.text.toString().trim()
-            val qtyStr = etQty.text.toString().trim()
-            val catatan = etCatatan.text.toString().trim()
-
-            if (pembeli.isEmpty() || produk.isEmpty() || hargaStr.isEmpty() || qtyStr.isEmpty()) {
-                Toast.makeText(this, "Lengkapi Nama, Produk, Harga, dan Qty!", Toast.LENGTH_SHORT).show()
-                return@setOnClickListener
-            }
-
-            val total = hargaStr.toInt() * qtyStr.toInt()
-            val itemsArray = JSONArray().put(JSONObject().apply {
-                put("name", produk)
-                put("qty", qtyStr.toInt())
-            })
-
-            val newId = dbHelper.simpanTransaksiLangsung(
-                pembeli,
-                "Beli di Toko",
-                "Tunai",
-                total,
-                null,
-                if (catatan.isEmpty()) "Penjualan Toko" else catatan,
-                itemsArray.toString()
-            )
-
-            if (newId != -1L) {
-                Toast.makeText(this, "Transaksi Berhasil!", Toast.LENGTH_SHORT).show()
-                dialog.dismiss()
-            } else {
-                Toast.makeText(this, "Gagal!", Toast.LENGTH_SHORT).show()
-            }
-        }
-        dialog.show()
     }
 
     private fun loadKatalogProduk() {
@@ -309,13 +461,10 @@ class PembeliDashboardActivity : AppCompatActivity() {
                         val json = JSONObject(response)
                         val data = json.getJSONArray("data")
                         listProdukApi.clear()
-                        for (i in 0 until data.length()) {
-                            listProdukApi.add(data.getJSONObject(i))
-                        }
+                        for (i in 0 until data.length()) { listProdukApi.add(data.getJSONObject(i)) }
                         tampilkanDataKatalogApi(listProdukApi)
-                        setupSearchAutoComplete()
-                    } catch (e: Exception) { tampilkanDataKatalogLocal(dbHelper.getSemuaProduk()); setupSearchAutoComplete() }
-                } else { tampilkanDataKatalogLocal(dbHelper.getSemuaProduk()); setupSearchAutoComplete() }
+                    } catch (e: Exception) { tampilkanDataKatalogLocal(dbHelper.getSemuaProduk()) }
+                } else { tampilkanDataKatalogLocal(dbHelper.getSemuaProduk()) }
             }
         }
     }
@@ -323,43 +472,17 @@ class PembeliDashboardActivity : AppCompatActivity() {
     private fun tampilkanDataKatalogApi(data: List<JSONObject>) {
         val inflater = LayoutInflater.from(this)
         val itemWidth = (resources.displayMetrics.widthPixels / 2) - 48
-        
         for (produk in data) {
-            val nama = produk.getString("nama_produk")
-            val kategoriId = produk.optString("kategori_id", "-")
-            val harga = produk.optInt("harga", 0)
-            val image = produk.optString("gambar", "")
-            
-            val namaKategori = listKategori.find { it.first.toString() == kategoriId }?.second ?: kategoriId
-
             val itemView = inflater.inflate(R.layout.item_produk_pembeli, gridLayoutProduk, false)
-            itemView.findViewById<TextView>(R.id.tvPembeliProdName).text = nama
-            itemView.findViewById<TextView>(R.id.tvPembeliProdCat).text = namaKategori
-            itemView.findViewById<TextView>(R.id.tvPembeliProdPrice).text = "Rp $harga"
+            itemView.findViewById<TextView>(R.id.tvPembeliProdName).text = produk.getString("nama_produk")
+            itemView.findViewById<TextView>(R.id.tvPembeliProdPrice).text = "Rp ${produk.getInt("harga")}"
 
-            val ivProduk = itemView.findViewById<ImageView>(R.id.ivPembeliProdImage)
-            if (image.isNotEmpty()) {
-                Thread {
-                    try {
-                        val url = java.net.URL(ApiClient.IMAGE_BASE_URL + image)
-                        val bmp = BitmapFactory.decodeStream(url.openStream())
-                        runOnUiThread { ivProduk.setImageBitmap(bmp) }
-                    } catch (e: Exception) { runOnUiThread { ivProduk.setImageResource(android.R.drawable.ic_menu_gallery) } }
-                }.start()
+            itemView.findViewById<Button>(R.id.btnPesanKatalog).setOnClickListener {
+                showPesanDialog(produk)
             }
 
-            val btnPesan = itemView.findViewById<Button>(R.id.btnPesanKatalog)
-            if (isAdminView) btnPesan.visibility = View.GONE
-            else {
-                btnPesan.setOnClickListener {
-                    tampilkanDialogPesanan(nama, harga, null)
-                }
-            }
-
-            val params = GridLayout.LayoutParams()
-            params.width = itemWidth; params.setMargins(12, 16, 12, 16)
-            itemView.layoutParams = params
-            gridLayoutProduk.addView(itemView)
+            val params = GridLayout.LayoutParams(); params.width = itemWidth; params.setMargins(12, 16, 12, 16)
+            itemView.layoutParams = params; gridLayoutProduk.addView(itemView)
         }
     }
 
@@ -367,142 +490,51 @@ class PembeliDashboardActivity : AppCompatActivity() {
         val inflater = LayoutInflater.from(this)
         val itemWidth = (resources.displayMetrics.widthPixels / 2) - 48
         while (cursor.moveToNext()) {
-            val nama = cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COLUMN_PROD_NAME))
-            val kategori = cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COLUMN_PROD_CAT))
-            val harga = cursor.getInt(cursor.getColumnIndexOrThrow(DatabaseHelper.COLUMN_PROD_PRICE))
-            val fotoBase64 = cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COLUMN_PROD_IMAGE))
+            val name = cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COLUMN_PROD_NAME))
+            val price = cursor.getInt(cursor.getColumnIndexOrThrow(DatabaseHelper.COLUMN_PROD_PRICE))
+            val category = cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COLUMN_PROD_CAT))
+            val image = cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COLUMN_PROD_IMAGE))
 
             val itemView = inflater.inflate(R.layout.item_produk_pembeli, gridLayoutProduk, false)
-            itemView.findViewById<TextView>(R.id.tvPembeliProdName).text = nama
-            itemView.findViewById<TextView>(R.id.tvPembeliProdCat).text = kategori
-            itemView.findViewById<TextView>(R.id.tvPembeliProdPrice).text = "Rp $harga"
+            itemView.findViewById<TextView>(R.id.tvPembeliProdName).text = name
+            itemView.findViewById<TextView>(R.id.tvPembeliProdPrice).text = "Rp $price"
 
-            if (!fotoBase64.isNullOrEmpty()) {
-                val bytes = Base64.decode(fotoBase64, Base64.DEFAULT)
-                itemView.findViewById<ImageView>(R.id.ivPembeliProdImage).setImageBitmap(BitmapFactory.decodeByteArray(bytes, 0, bytes.size))
+            itemView.findViewById<Button>(R.id.btnPesanKatalog).setOnClickListener {
+                val obj = JSONObject()
+                obj.put("nama_produk", name)
+                obj.put("harga", price)
+                obj.put("prod_image", image)
+                showPesanDialog(obj)
             }
 
-            val btnPesan = itemView.findViewById<Button>(R.id.btnPesanKatalog)
-            if (isAdminView) btnPesan.visibility = View.GONE
-            else {
-                btnPesan.setOnClickListener {
-                    tampilkanDialogPesanan(nama, harga, fotoBase64)
-                }
-            }
-
-            val params = GridLayout.LayoutParams()
-            params.width = itemWidth; params.setMargins(12, 16, 12, 16)
-            itemView.layoutParams = params
-            gridLayoutProduk.addView(itemView)
+            val params = GridLayout.LayoutParams(); params.width = itemWidth; params.setMargins(12, 16, 12, 16)
+            itemView.layoutParams = params; gridLayoutProduk.addView(itemView)
         }
         cursor.close()
-    }
-
-    private fun tampilkanDialogPesanan(namaProduk: String, hargaDasar: Int, fotoProdukBase64: String?) {
-        val dialog = Dialog(this)
-        dialog.setContentView(R.layout.dialog_pesan_produk)
-        dialog.window?.setLayout(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT)
-        dialog.window?.setBackgroundDrawableResource(android.R.color.transparent)
-
-        val tvQty = dialog.findViewById<TextView>(R.id.tvQty)
-        val btnTambah = dialog.findViewById<Button>(R.id.btnTambahKeranjang)
-        var qty = 1
-
-        fun updateHarga() { btnTambah.text = "Tambah — Rp ${hargaDasar * qty}" }
-
-        dialog.findViewById<TextView>(R.id.tvDialogJudul).text = namaProduk
-        dialog.findViewById<Button>(R.id.btnPlusQty).setOnClickListener { qty++; tvQty.text = qty.toString(); updateHarga() }
-        dialog.findViewById<Button>(R.id.btnMinQty).setOnClickListener { if(qty>1) {qty--; tvQty.text = qty.toString(); updateHarga()} }
-        btnPilihFileRef = dialog.findViewById(R.id.btnPilihFile)
-        btnPilihFileRef?.setOnClickListener { pickImageLauncher.launch("image/*") }
-
-        btnTambah.setOnClickListener {
-            val total = hargaDasar * qty
-            if (dbHelper.tambahKeKeranjang(namaProduk, qty, total, currentCustomImageBase64, fotoProdukBase64)) {
-                Toast.makeText(this, "Berhasil ditambahkan ke keranjang!", Toast.LENGTH_SHORT).show()
-                currentCustomImageBase64 = null
-                dialog.dismiss()
-                
-                // Setelah tambah ke keranjang, jika Mode Kasir langsung buka Keranjang (Cart)
-                if (isKasirMode) {
-                    val intent = Intent(this, CartActivity::class.java)
-                    intent.putExtra("USER_EMAIL", currentUserEmail)
-                    intent.putExtra("IS_KASIR_MODE", true)
-                    startActivity(intent)
-                }
-            }
-        }
-        updateHarga(); dialog.show()
     }
 
     private fun loadKategori(onDone: () -> Unit) {
         ApiClient.getKategori { list ->
-            runOnUiThread {
-                listKategori.clear()
-                listKategori.addAll(list)
-                onDone()
-            }
+            runOnUiThread { listKategori.clear(); listKategori.addAll(list); onDone() }
         }
-    }
-
-    private fun setupSearchAutoComplete() {
-        val cursor: Cursor = dbHelper.getSemuaProduk()
-        listNamaProdukKatalog.clear()
-        while (cursor.moveToNext()) {
-            listNamaProdukKatalog.add(cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COLUMN_PROD_NAME)))
-        }
-        cursor.close()
-        for (produk in listProdukApi) {
-            val nama = produk.optString("nama_produk")
-            if (nama.isNotEmpty() && !listNamaProdukKatalog.contains(nama)) { listNamaProdukKatalog.add(nama) }
-        }
-        val adapter = ArrayAdapter(this, android.R.layout.simple_dropdown_item_1line, listNamaProdukKatalog)
-        acSearchProduk.setAdapter(adapter)
-        acSearchProduk.setOnItemClickListener { parent, _, position, _ -> filterKatalogProduk(parent.getItemAtPosition(position) as String) }
-        acSearchProduk.addTextChangedListener { if (it.isNullOrEmpty()) loadKatalogProduk() }
-    }
-
-    private fun filterKatalogProduk(query: String) {
-        gridLayoutProduk.removeAllViews()
-        val filteredApi = listProdukApi.filter { it.optString("nama_produk").contains(query, ignoreCase = true) }
-        if (filteredApi.isNotEmpty()) tampilkanDataKatalogApi(filteredApi)
-        val db = dbHelper.readableDatabase
-        val cursor = db.rawQuery("SELECT * FROM ${DatabaseHelper.TABLE_PRODUCTS} WHERE ${DatabaseHelper.COLUMN_PROD_NAME} LIKE ?", arrayOf("%$query%"))
-        tampilkanDataKatalogLocal(cursor)
-    }
-
-    private fun showHome() {
-        layoutHome.visibility = View.VISIBLE
-        fragmentContainer.visibility = View.GONE
-        layoutProfile.visibility = View.GONE
-        toolbar.title = if (isAdminView) "Katalog Produk" else if (isKasirMode) "Kasir Smolie" else "Smolie Gift"
-        applySettings()
-    }
-
-    private fun showHistory() {
-        layoutHome.visibility = View.GONE
-        fragmentContainer.visibility = View.VISIBLE
-        layoutProfile.visibility = View.GONE
-        toolbar.title = "Riwayat Pesanan"
-        if (currentUserEmail != null) {
-            supportFragmentManager.beginTransaction().replace(R.id.fragmentContainerPembeli, HistoryFragment.newInstance(currentUserEmail!!)).commit()
-        }
-    }
-
-    private fun showProfile() {
-        layoutHome.visibility = View.GONE
-        fragmentContainer.visibility = View.GONE
-        layoutProfile.visibility = View.VISIBLE
-        toolbar.title = "Profil Saya"
     }
 
     private fun loadUserProfile(email: String) {
         val cursor = dbHelper.getUserByEmail(email)
         if (cursor != null && cursor.moveToFirst()) {
-            findViewById<TextView>(R.id.tvProfileName).text = cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COLUMN_NAME))
+            val name = cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COLUMN_NAME))
+            val username = cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COLUMN_USERNAME))
+            val gender = cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COLUMN_GENDER))
+            val phone = cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COLUMN_PHONE))
+            val address = cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COLUMN_ADDRESS))
+
+            findViewById<TextView>(R.id.tvProfileName).text = name
             findViewById<TextView>(R.id.tvProfileEmail).text = email
-            findViewById<TextView>(R.id.tvProfileUsername).text = "Username: " + cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COLUMN_USERNAME))
-            findViewById<TextView>(R.id.tvProfilePhone).text = "Telepon: " + cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COLUMN_PHONE))
+            findViewById<TextView>(R.id.tvProfileUsername).text = "Username: ${username ?: "-"}"
+            findViewById<TextView>(R.id.tvProfileGender).text = "Jenis Kelamin: ${gender ?: "-"}"
+            findViewById<TextView>(R.id.tvProfilePhone).text = "Telepon: ${phone ?: "-"}"
+            findViewById<TextView>(R.id.tvProfileAddress).text = "Alamat: ${address ?: "-"}"
+            
             cursor.close()
         }
     }
@@ -516,20 +548,16 @@ class PembeliDashboardActivity : AppCompatActivity() {
         return res ?: uri.path?.substringAfterLast('/') ?: "image"
     }
 
-    override fun onCreateOptionsMenu(menu: Menu?): Boolean {
-        menuInflater.inflate(R.menu.pembeli_menu, menu)
-        return true
-    }
-
+    override fun onCreateOptionsMenu(menu: Menu?): Boolean { menuInflater.inflate(R.menu.pembeli_menu, menu); return true }
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         when (item.itemId) {
-            R.id.menuSetting -> {
-                tampilkanDialogSetting()
+            R.id.menuLogoutPembeli -> {
+                startActivity(Intent(this, LoginActivity::class.java).apply { flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK }); finish()
                 return true
             }
-            R.id.menuLogoutPembeli -> {
-                startActivity(Intent(this, LoginActivity::class.java).apply { flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK })
-                finish(); return true
+            R.id.menuSetting -> {
+                showSettingDialog()
+                return true
             }
         }
         return super.onOptionsItemSelected(item)

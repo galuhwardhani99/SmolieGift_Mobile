@@ -5,13 +5,13 @@
     android:layout_height="wrap_content"
     app:cardCornerRadius="16dp"
     app:cardElevation="8dp"
-    android:layout_margin="24dp">
+    android:layout_margin="16dp">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:padding="24dp">
+        android:padding="20dp">
 
         <TextView
             android:layout_width="match_parent"
@@ -26,8 +26,8 @@
         <ScrollView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:maxHeight="300dp"
-            android:background="#F8F9FA"
+            android:maxHeight="350dp"
+            android:background="#F1F5F9"
             android:padding="12dp">
 
             <TextView
@@ -35,10 +35,39 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="Isi Struk..."
-                android:textColor="#2D3142"
+                android:textColor="#1E293B"
                 android:typeface="monospace"
-                android:textSize="12sp"/>
+                android:textSize="14sp"
+                android:lineSpacingExtra="2dp"/>
         </ScrollView>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginTop="16dp">
+
+            <Button
+                android:id="@+id/btnPrintStruk"
+                style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="PRINT"
+                android:layout_marginEnd="8dp"
+                app:icon="@android:drawable/ic_menu_share"
+                app:cornerRadius="8dp"/>
+
+            <Button
+                android:id="@+id/btnSimpanPdf"
+                style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="PDF"
+                app:icon="@android:drawable/ic_menu_save"
+                app:cornerRadius="8dp"/>
+        </LinearLayout>
 
         <Button
             android:id="@+id/btnTutupStruk"
@@ -47,7 +76,7 @@
             android:text="TUTUP &amp; KEMBALI"
             android:backgroundTint="#DD3827"
             android:textColor="#FFFFFF"
-            android:layout_marginTop="20dp"
+            android:layout_marginTop="12dp"
             app:cornerRadius="8dp"/>
 
     </LinearLayout>

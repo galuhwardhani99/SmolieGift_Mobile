@@ -1,8 +1,11 @@
 package nicolla.coco.smoliegiftmobile
 
+import android.app.DatePickerDialog
 import android.app.Dialog
+import android.app.TimePickerDialog
 import android.content.Intent
 import android.database.Cursor
+import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.os.Bundle
 import android.util.Base64
@@ -14,12 +17,17 @@ import android.view.ViewGroup
 import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.Toolbar
+import androidx.core.view.isVisible
 import androidx.core.widget.addTextChangedListener
 import com.example.smoliegift.database.DatabaseHelper
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.google.android.material.card.MaterialCardView
+import com.google.zxing.BarcodeFormat
+import com.journeyapps.barcodescanner.BarcodeEncoder
 import org.json.JSONArray
 import org.json.JSONObject
+import java.text.SimpleDateFormat
+import java.util.*
 
 class KasirDashboardActivity : AppCompatActivity() {
 
@@ -54,7 +62,6 @@ class KasirDashboardActivity : AppCompatActivity() {
         val bottomNav = findViewById<BottomNavigationView>(R.id.bottomNavKasir)
 
         cvMenuKatalog.setOnClickListener {
-            // Input Manual Dialog (Reuse logic from PembeliDashboard if possible or implement here)
             tampilkanDialogInputManual()
         }
 
@@ -174,24 +181,68 @@ class KasirDashboardActivity : AppCompatActivity() {
 
         val tvQty = dialog.findViewById<TextView>(R.id.tvQty)
         val btnTambah = dialog.findViewById<Button>(R.id.btnTambahKeranjang)
+        val spWarna = dialog.findViewById<Spinner>(R.id.spWarna)
+        val cbInvitedCard = dialog.findViewById<CheckBox>(R.id.cbInvitedCard)
+        val llContainerTanggal = dialog.findViewById<LinearLayout>(R.id.llContainerTanggalAcara)
+        val btnPilihTanggal = dialog.findViewById<Button>(R.id.btnPilihTanggal)
+        val btnPilihWaktu = dialog.findViewById<Button>(R.id.btnPilihWaktu)
+        val tvWaktuTerpilih = dialog.findViewById<TextView>(R.id.tvWaktuTerpilih)
+        
+        var selectedTanggal = ""
+        var selectedWaktu = ""
         var qty = 1
 
-        fun updateHarga() { btnTambah.text = "Tambah — Rp ${hargaDasar * qty}" }
+        val varianOptions = arrayOf("Pilih varian...", "Warna Pastel", "Monokrom", "Aksen Emas", "Random", "Custom Desain Sendiri")
+        val adapterVarian = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, varianOptions)
+        spWarna.adapter = adapterVarian
+
+        fun updateVisibility() {
+            val varian = spWarna.selectedItem.toString()
+            llContainerTanggal.isVisible = (varian == "Custom Desain Sendiri" || cbInvitedCard.isChecked)
+        }
+
+        spWarna.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
+            override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) { updateVisibility() }
+            override fun onNothingSelected(parent: AdapterView<*>?) {}
+        }
+
+        cbInvitedCard.setOnCheckedChangeListener { _, _ -> updateVisibility() }
+
+        btnPilihTanggal.setOnClickListener {
+            val c = Calendar.getInstance()
+            DatePickerDialog(this, { _, year, month, day ->
+                selectedTanggal = "$day/${month+1}/$year"
+                tvWaktuTerpilih.text = String.format(Locale.getDefault(), "Waktu: %s %s", selectedTanggal, selectedWaktu)
+            }, c.get(Calendar.YEAR), c.get(Calendar.MONTH), c.get(Calendar.DAY_OF_MONTH)).show()
+        }
+
+        btnPilihWaktu.setOnClickListener {
+            val c = Calendar.getInstance()
+            TimePickerDialog(this, { _, hour, minute ->
+                selectedWaktu = String.format(Locale.getDefault(), "%02d:%02d", hour, minute)
+                tvWaktuTerpilih.text = String.format(Locale.getDefault(), "Waktu: %s %s", selectedTanggal, selectedWaktu)
+            }, c.get(Calendar.HOUR_OF_DAY), c.get(Calendar.MINUTE), true).show()
+        }
+
+        fun updateHarga() { btnTambah.text = String.format(Locale.getDefault(), "Tambah — Rp %d", hargaDasar * qty) }
 
         dialog.findViewById<TextView>(R.id.tvDialogJudul).text = namaProduk
         dialog.findViewById<Button>(R.id.btnPlusQty).setOnClickListener { qty++; tvQty.text = qty.toString(); updateHarga() }
         dialog.findViewById<Button>(R.id.btnMinQty).setOnClickListener { if(qty>1) {qty--; tvQty.text = qty.toString(); updateHarga()} }
         
-        // Kasir tidak perlu upload gambar custom biasanya, tapi kita biarkan saja fiturnya
         dialog.findViewById<Button>(R.id.btnPilihFile).visibility = View.GONE
+        dialog.findViewById<TextView>(R.id.btnTutupDialog).setOnClickListener { dialog.dismiss() }
 
         btnTambah.setOnClickListener {
             val total = hargaDasar * qty
+            val catatanExtra = if(llContainerTanggal.isVisible) "\nWaktu Acara: $selectedTanggal $selectedWaktu" else ""
+            val etCatatan = dialog.findViewById<EditText>(R.id.etCatatan)
+            val finalCatatan = etCatatan.text.toString() + catatanExtra
+
             if (dbHelper.tambahKeKeranjang(namaProduk, qty, total, null, fotoProdukBase64)) {
                 Toast.makeText(this, "Ditambahkan ke keranjang kasir!", Toast.LENGTH_SHORT).show()
                 dialog.dismiss()
                 
-                // Buka CartActivity dalam mode kasir
                 val intent = Intent(this, CartActivity::class.java)
                 intent.putExtra("USER_EMAIL", currentUserEmail)
                 intent.putExtra("IS_KASIR_MODE", true)
@@ -213,6 +264,8 @@ class KasirDashboardActivity : AppCompatActivity() {
         val etHarga = dialog.findViewById<EditText>(R.id.etManualHarga)
         val etQty = dialog.findViewById<EditText>(R.id.etManualQty)
         val etCatatan = dialog.findViewById<EditText>(R.id.etManualCatatan)
+        val btnGenerateQR = dialog.findViewById<Button>(R.id.btnGenerateQR)
+        val ivQR = dialog.findViewById<ImageView>(R.id.ivManualQR)
         val btnSimpan = dialog.findViewById<Button>(R.id.btnSimpanTransaksiManual)
         val btnBatal = dialog.findViewById<Button>(R.id.btnManualBatal)
 
@@ -227,6 +280,28 @@ class KasirDashboardActivity : AppCompatActivity() {
                 etHarga.setText(cursor.getInt(0).toString())
             }
             cursor.close()
+        }
+
+        btnGenerateQR.setOnClickListener {
+            val produk = etNamaProduk.text.toString().trim()
+            val hargaStr = etHarga.text.toString().trim()
+            val qtyStr = etQty.text.toString().trim()
+
+            if (produk.isEmpty() || hargaStr.isEmpty() || qtyStr.isEmpty()) {
+                Toast.makeText(this, "Lengkapi data produk untuk generate QR!", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+
+            val total = hargaStr.toLong() * qtyStr.toInt()
+            val qrContent = "Produk: $produk\nHarga: Rp $hargaStr\nQty: $qtyStr\nTotal: Rp $total"
+            
+            val bitmap = generateQRCode(qrContent)
+            if (bitmap != null) {
+                ivQR.setImageBitmap(bitmap)
+                ivQR.visibility = View.VISIBLE
+            } else {
+                Toast.makeText(this, "Gagal generate QR Code", Toast.LENGTH_SHORT).show()
+            }
         }
 
         btnBatal.setOnClickListener { dialog.dismiss() }
@@ -251,7 +326,7 @@ class KasirDashboardActivity : AppCompatActivity() {
 
             val newId = dbHelper.simpanTransaksiLangsung(
                 pembeli, "Beli di Toko", "Tunai", total, null, 
-                if (catatan.isEmpty()) "Penjualan Toko" else catatan, itemsArray.toString()
+                if (catatan.isEmpty()) "Penjualan Toko" else catatan, itemsArray.toString(), generateKodeTransaksi()
             )
 
             if (newId != -1L) {
@@ -260,6 +335,22 @@ class KasirDashboardActivity : AppCompatActivity() {
             }
         }
         dialog.show()
+    }
+
+    private fun generateKodeTransaksi(): String {
+        val timestamp = SimpleDateFormat("yyyyMMddHHmmss", Locale.getDefault()).format(Date())
+        val random = (1000..9999).random()
+        return "SMG-$timestamp-$random"
+    }
+
+    private fun generateQRCode(text: String): Bitmap? {
+        return try {
+            val barcodeEncoder = BarcodeEncoder()
+            barcodeEncoder.encodeBitmap(text, BarcodeFormat.QR_CODE, 400, 400)
+        } catch (e: Exception) {
+            e.printStackTrace()
+            null
+        }
     }
 
     private fun setupSearchAutoComplete() {
@@ -306,10 +397,10 @@ class KasirDashboardActivity : AppCompatActivity() {
             findViewById<TextView>(R.id.tvKasirProfileName).text = 
                 cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COLUMN_NAME))
             findViewById<TextView>(R.id.tvKasirProfileEmail).text = email
-            findViewById<TextView>(R.id.tvKasirProfileUsername).text = "Username: " + 
-                cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COLUMN_USERNAME))
-            findViewById<TextView>(R.id.tvKasirProfilePhone).text = "Telepon: " + 
-                cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COLUMN_PHONE))
+            findViewById<TextView>(R.id.tvKasirProfileUsername).text = String.format(Locale.getDefault(), "Username: %s",
+                cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COLUMN_USERNAME)))
+            findViewById<TextView>(R.id.tvKasirProfilePhone).text = String.format(Locale.getDefault(), "Telepon: %s",
+                cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COLUMN_PHONE)))
             cursor.close()
         }
     }

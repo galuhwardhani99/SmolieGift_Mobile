@@ -1,6 +1,5 @@
 package nicolla.coco.smoliegiftmobile
 
-import android.database.Cursor
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
@@ -18,16 +17,13 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.Toolbar
-import com.example.smoliegift.database.DatabaseHelper
 import org.json.JSONArray
 import org.json.JSONObject
 
 class AdminTransaksiActivity : AppCompatActivity() {
 
-    private lateinit var dbHelper: DatabaseHelper
     private var llDaftar: LinearLayout? = null
-    
-    // Data sementara untuk PDF
+
     private var pdfDataId: Int = 0
     private var pdfDataNama: String = ""
     private var pdfDataTotal: Int = 0
@@ -35,143 +31,160 @@ class AdminTransaksiActivity : AppCompatActivity() {
     private var pdfDataTanggal: String = ""
     private var pdfDataItems: String? = null
 
-    private val createPdfLauncher = registerForActivityResult(ActivityResultContracts.CreateDocument("application/pdf")) { uri: Uri? ->
-        uri?.let {
-            generateAndSavePdf(it)
-        }
-    }
+    private val createPdfLauncher = registerForActivityResult(
+        ActivityResultContracts.CreateDocument("application/pdf")
+    ) { uri: Uri? -> uri?.let { generateAndSavePdf(it) } }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        try {
-            setContentView(R.layout.activity_admin_transaksi)
+        setContentView(R.layout.activity_admin_transaksi)
 
-            val toolbar = findViewById<Toolbar>(R.id.toolbarTransaksi)
-            if (toolbar != null) {
-                setSupportActionBar(toolbar)
-                supportActionBar?.setDisplayHomeAsUpEnabled(true)
-                toolbar.setNavigationOnClickListener { finish() }
-            }
+        val toolbar = findViewById<Toolbar>(R.id.toolbarTransaksi)
+        setSupportActionBar(toolbar)
+        supportActionBar?.setDisplayHomeAsUpEnabled(true)
+        toolbar.setNavigationOnClickListener { finish() }
 
-            dbHelper = DatabaseHelper(this)
-            llDaftar = findViewById(R.id.llDaftarTransaksi)
-
-            muatSeluruhTransaksi()
-        } catch (e: Exception) {
-            e.printStackTrace()
-            Toast.makeText(this, "Gagal memuat halaman: " + e.message, Toast.LENGTH_LONG).show()
-        }
+        llDaftar = findViewById(R.id.llDaftarTransaksi)
+        muatSeluruhTransaksi()
     }
 
     private fun muatSeluruhTransaksi() {
         val container = llDaftar ?: return
         container.removeAllViews()
-        
-        val cursor: Cursor = try {
-            dbHelper.getSeluruhTransaksi()
-        } catch (e: Exception) {
-            val tvError = TextView(this)
-            tvError.text = "Gagal memuat database: ${e.message}"
-            tvError.setPadding(32, 32, 32, 32)
-            container.addView(tvError)
-            return
-        }
-        
-        val inflater = LayoutInflater.from(this)
 
-        if (cursor.count == 0) {
-            val tvKosong = TextView(this)
-            tvKosong.text = "Belum ada riwayat transaksi."
-            tvKosong.setPadding(32, 32, 32, 32)
-            tvKosong.gravity = android.view.Gravity.CENTER
-            container.addView(tvKosong)
-        } else {
-            // Get column indices safely
-            val idIdx = cursor.getColumnIndex("_id")
-            val nameIdx = cursor.getColumnIndex(DatabaseHelper.COLUMN_CUSTOMER_NAME)
-            val waIdx = cursor.getColumnIndex(DatabaseHelper.COLUMN_CUSTOMER_WA)
-            val methodIdx = cursor.getColumnIndex(DatabaseHelper.COLUMN_PAYMENT_METHOD)
-            val totalIdx = cursor.getColumnIndex(DatabaseHelper.COLUMN_GRAND_TOTAL)
-            val dateIdx = cursor.getColumnIndex(DatabaseHelper.COLUMN_TRANS_DATE)
-            val itemsIdx = cursor.getColumnIndex(DatabaseHelper.COLUMN_ITEMS_JSON)
-            val eventIdx = cursor.getColumnIndex(DatabaseHelper.COLUMN_EVENT_INFO)
-            val statusIdx = cursor.getColumnIndex("status")
+        val tvLoading = TextView(this)
+        tvLoading.text = "Memuat data transaksi..."
+        tvLoading.setPadding(32, 32, 32, 32)
+        tvLoading.gravity = android.view.Gravity.CENTER
+        container.addView(tvLoading)
 
-            while (cursor.moveToNext()) {
+        ApiClient.getAllTransaksi { response ->
+            runOnUiThread {
+                container.removeAllViews()
+
+                if (response == null) {
+                    val tv = TextView(this)
+                    tv.text = "Gagal memuat data. Periksa koneksi internet."
+                    tv.setPadding(32, 32, 32, 32)
+                    tv.gravity = android.view.Gravity.CENTER
+                    container.addView(tv)
+                    return@runOnUiThread
+                }
+
                 try {
-                    val id = if (idIdx != -1) cursor.getInt(idIdx) else 0
-                    val nama = if (nameIdx != -1) cursor.getString(nameIdx) ?: "-" else "-"
-                    val wa = if (waIdx != -1) cursor.getString(waIdx) ?: "-" else "-"
-                    val metode = if (methodIdx != -1) cursor.getString(methodIdx) ?: "-" else "-"
-                    val total = if (totalIdx != -1) cursor.getInt(totalIdx) else 0
-                    val rawDate = if (dateIdx != -1) cursor.getString(dateIdx) ?: "-" else "-"
-                    val itemsJson = if (itemsIdx != -1) cursor.getString(itemsIdx) else null
-                    val eventInfo = if (eventIdx != -1) cursor.getString(eventIdx) else null
-                    val status = if (statusIdx != -1) cursor.getString(statusIdx) ?: "AKTIF" else "AKTIF"
+                    val json = JSONObject(response)
+                    val data = json.getJSONArray("data")
+                    val inflater = LayoutInflater.from(this)
 
-                    val itemView = inflater.inflate(R.layout.item_transaksi_admin, container, false)
-
-                    val tvStatus = itemView.findViewById<TextView>(R.id.tvAdminTransStatusLabel)
-                    val btnSelesai = itemView.findViewById<Button>(R.id.btnSelesaiPesanan)
-                    val btnCetak = itemView.findViewById<Button>(R.id.btnCetakStruk)
-                    val tvCatatan = itemView.findViewById<TextView>(R.id.tvAdminTransCatatan)
-
-                    itemView.findViewById<TextView>(R.id.tvAdminTransId)?.text = "#INV-0$id"
-                    itemView.findViewById<TextView>(R.id.tvAdminTransNama)?.text = nama
-                    itemView.findViewById<TextView>(R.id.tvAdminTransWa)?.text = "WhatsApp: $wa"
-                    itemView.findViewById<TextView>(R.id.tvAdminTransMetode)?.text = "Bayar: $metode"
-                    itemView.findViewById<TextView>(R.id.tvAdminTransTotal)?.text = "Rp $total"
-                    itemView.findViewById<TextView>(R.id.tvAdminTransTanggal)?.text = "Tgl: $rawDate"
-                    
-                    tvCatatan?.text = "Catatan: ${eventInfo ?: "-"}"
-
-                    if (status == "SELESAI") {
-                        tvStatus?.text = "SELESAI"
-                        tvStatus?.setTextColor(Color.parseColor("#10B981"))
-                        btnSelesai?.visibility = View.GONE
-                    } else {
-                        tvStatus?.text = "AKTIF"
-                        tvStatus?.setTextColor(Color.parseColor("#EF4444"))
-                        btnSelesai?.visibility = View.VISIBLE
-                        btnSelesai?.setOnClickListener { konfirmasiSelesai(id, nama) }
+                    if (data.length() == 0) {
+                        val tv = TextView(this)
+                        tv.text = "Belum ada transaksi."
+                        tv.setPadding(32, 32, 32, 32)
+                        tv.gravity = android.view.Gravity.CENTER
+                        container.addView(tv)
+                        return@runOnUiThread
                     }
 
-                    val tvProduk = itemView.findViewById<TextView>(R.id.tvAdminTransProduk)
-                    if (!itemsJson.isNullOrEmpty()) {
-                        try {
-                            val jsonArray = JSONArray(itemsJson)
-                            val sb = StringBuilder()
-                            for (i in 0 until jsonArray.length()) {
-                                val obj = jsonArray.getJSONObject(i)
-                                sb.append("• ${obj.optString("name", "Produk")} (${obj.optInt("qty", 1)}x)\n")
+                    for (i in 0 until data.length()) {
+                        val item     = data.getJSONObject(i)
+                        val id       = item.getInt("id")
+                        val nama     = item.optString("nama_pembeli", "-")
+                        val noHp     = item.optString("no_hp", "-")
+                        val metode   = item.optString("metode_pembayaran", "-")
+                        val total    = item.optInt("total_harga", 0)
+                        val kode     = item.optString("kode_transaksi", "-")
+                        val status   = item.optString("status", "pending")
+                        val tanggal  = item.optString("created_at", "-")
+
+                        val itemView = inflater.inflate(R.layout.item_transaksi_admin, container, false)
+
+                        itemView.findViewById<TextView>(R.id.tvAdminTransId)?.text = "#$kode"
+                        itemView.findViewById<TextView>(R.id.tvAdminTransNama)?.text = nama
+                        itemView.findViewById<TextView>(R.id.tvAdminTransWa)?.text = "HP: $noHp"
+                        itemView.findViewById<TextView>(R.id.tvAdminTransMetode)?.text = "Bayar: $metode"
+                        itemView.findViewById<TextView>(R.id.tvAdminTransTotal)?.text = "Rp $total"
+                        itemView.findViewById<TextView>(R.id.tvAdminTransTanggal)?.text = "Tgl: $tanggal"
+                        itemView.findViewById<TextView>(R.id.tvAdminTransCatatan)?.text = "Pesanan Online"
+
+                        val tvProdukTrans = itemView.findViewById<TextView>(R.id.tvAdminTransProduk)
+                        val itemsJsonTrans = item.optString("items_json", "")
+                        if (itemsJsonTrans.isNotEmpty() && itemsJsonTrans != "null") {
+                            try {
+                                val arr = org.json.JSONArray(itemsJsonTrans)
+                                val sb = StringBuilder()
+                                for (j in 0 until arr.length()) {
+                                    val obj = arr.getJSONObject(j)
+                                    val nm = obj.optString("nama", obj.optString("name", "Produk"))
+                                    val qt = obj.optInt("jumlah", obj.optInt("qty", 1))
+                                    sb.append("• $nm × $qt\n")
+                                }
+                                tvProdukTrans?.text = sb.toString().trim()
+                            } catch (_: Exception) {
+                                tvProdukTrans?.text = "Pesanan Online"
                             }
-                            tvProduk?.text = sb.toString().trim()
-                        } catch (e: Exception) { tvProduk?.text = "Detail tidak tersedia" }
-                    }
-
-                    btnCetak?.setOnClickListener {
-                        pdfDataId = id
-                        pdfDataNama = nama
-                        pdfDataTotal = total
-                        pdfDataMetode = metode
-                        pdfDataTanggal = rawDate
-                        pdfDataItems = itemsJson
-                        
-                        val fileName = "Struk_Smolie_#INV-0$id.pdf"
-                        try {
-                            createPdfLauncher.launch(fileName)
-                        } catch (e: Exception) {
-                            Toast.makeText(this, "Gagal mencetak: ${e.message}", Toast.LENGTH_SHORT).show()
+                        } else {
+                            tvProdukTrans?.text = "Pesanan Online"
                         }
-                    }
 
-                    container.addView(itemView)
+                        val tvStatus   = itemView.findViewById<TextView>(R.id.tvAdminTransStatusLabel)
+                        val btnSelesai = itemView.findViewById<Button>(R.id.btnSelesaiPesanan)
+                        val btnCetak   = itemView.findViewById<Button>(R.id.btnCetakStruk)
+
+                        if (status == "selesai") {
+                            tvStatus?.text = "SELESAI"
+                            tvStatus?.setTextColor(Color.parseColor("#10B981"))
+                            btnSelesai?.visibility = View.GONE
+                        } else {
+                            tvStatus?.text = "PENDING"
+                            tvStatus?.setTextColor(Color.parseColor("#EF4444"))
+                            btnSelesai?.visibility = View.VISIBLE
+                            btnSelesai?.setOnClickListener { konfirmasiSelesai(id, nama) }
+                        }
+
+                        btnCetak?.setOnClickListener {
+                            pdfDataId      = id
+                            pdfDataNama    = nama
+                            pdfDataTotal   = total
+                            pdfDataMetode  = metode
+                            pdfDataTanggal = tanggal
+                            pdfDataItems   = null
+                            try {
+                                createPdfLauncher.launch("Struk_Smolie_$kode.pdf")
+                            } catch (e: Exception) {
+                                Toast.makeText(this, "Gagal mencetak: ${e.message}", Toast.LENGTH_SHORT).show()
+                            }
+                        }
+
+                        container.addView(itemView)
+                    }
                 } catch (e: Exception) {
-                    e.printStackTrace()
+                    val tv = TextView(this)
+                    tv.text = "Error: ${e.message}"
+                    tv.setPadding(32, 32, 32, 32)
+                    container.addView(tv)
                 }
             }
         }
-        cursor.close()
+    }
+
+    private fun konfirmasiSelesai(id: Int, nama: String) {
+        AlertDialog.Builder(this)
+            .setTitle("Konfirmasi Pesanan")
+            .setMessage("Tandai pesanan dari $nama sebagai selesai?")
+            .setPositiveButton("Ya") { _, _ ->
+                ApiClient.konfirmasiTransaksi(id) { berhasil ->
+                    runOnUiThread {
+                        if (berhasil) {
+                            Toast.makeText(this, "Pesanan dikonfirmasi!", Toast.LENGTH_SHORT).show()
+                            muatSeluruhTransaksi()
+                        } else {
+                            Toast.makeText(this, "Gagal konfirmasi. Coba lagi.", Toast.LENGTH_SHORT).show()
+                        }
+                    }
+                }
+            }
+            .setNegativeButton("Batal", null)
+            .show()
     }
 
     private fun generateAndSavePdf(uri: Uri) {
@@ -179,67 +192,58 @@ class AdminTransaksiActivity : AppCompatActivity() {
         try {
             val paint = Paint()
             val titlePaint = Paint()
-            
-            // Ukuran struk mini
             val pageInfo = PdfDocument.PageInfo.Builder(300, 500, 1).create()
             val page = pdfDocument.startPage(pageInfo)
             val canvas: Canvas = page.canvas
 
-            // Header Toko
             titlePaint.textAlign = Paint.Align.CENTER
             titlePaint.typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
             titlePaint.textSize = 18f
             canvas.drawText("SMOLIE GIFT", 150f, 40f, titlePaint)
-            
+
             paint.textSize = 10f
             paint.textAlign = Paint.Align.CENTER
             canvas.drawText("Surabaya, Jawa Timur", 150f, 55f, paint)
             canvas.drawLine(20f, 70f, 280f, 70f, paint)
 
-            // Detail Transaksi
             paint.textAlign = Paint.Align.LEFT
             paint.textSize = 9f
             canvas.drawText("No. Inv  : #INV-0$pdfDataId", 20f, 90f, paint)
             canvas.drawText("Tgl      : $pdfDataTanggal", 20f, 105f, paint)
             canvas.drawText("Kasir    : Smolie Admin", 20f, 120f, paint)
             canvas.drawText("Customer : $pdfDataNama", 20f, 135f, paint)
-            
+
             canvas.drawLine(20f, 150f, 280f, 150f, paint)
-            
-            // List Item
+
             var yPos = 170f
             if (!pdfDataItems.isNullOrEmpty()) {
                 try {
                     val jsonArray = JSONArray(pdfDataItems)
                     for (i in 0 until jsonArray.length()) {
                         val obj = jsonArray.getJSONObject(i)
-                        val name = obj.optString("name", "Produk")
-                        val qty = obj.optInt("qty", 1)
-                        
+                        val name = obj.optString("nama", "Produk")
+                        val qty = obj.optInt("jumlah", 1)
                         canvas.drawText(name, 20f, yPos, paint)
                         paint.textAlign = Paint.Align.RIGHT
                         canvas.drawText("x$qty", 280f, yPos, paint)
-                        
                         paint.textAlign = Paint.Align.LEFT
                         yPos += 15f
                     }
                 } catch (e: Exception) {
-                    canvas.drawText("- Detail Error -", 20f, yPos, paint)
+                    canvas.drawText("- Detail tidak tersedia -", 20f, yPos, paint)
                     yPos += 15f
                 }
             }
-            
+
             canvas.drawLine(20f, yPos + 10f, 280f, yPos + 10f, paint)
-            
-            // Total
             yPos += 35f
+
             paint.typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
             canvas.drawText("METODE : $pdfDataMetode", 20f, yPos, paint)
             paint.textSize = 14f
             paint.textAlign = Paint.Align.RIGHT
             canvas.drawText("TOTAL : Rp $pdfDataTotal", 280f, yPos, paint)
-            
-            // Footer
+
             paint.textAlign = Paint.Align.CENTER
             paint.typeface = Typeface.create(Typeface.DEFAULT, Typeface.NORMAL)
             paint.textSize = 9f
@@ -247,35 +251,12 @@ class AdminTransaksiActivity : AppCompatActivity() {
             canvas.drawText("~ Smolie Gift Mobile ~", 150f, yPos + 55f, paint)
 
             pdfDocument.finishPage(page)
-
-            contentResolver.openOutputStream(uri)?.use { outputStream ->
-                pdfDocument.writeTo(outputStream)
-            }
+            contentResolver.openOutputStream(uri)?.use { pdfDocument.writeTo(it) }
             Toast.makeText(this, "Struk PDF Berhasil Disimpan!", Toast.LENGTH_LONG).show()
         } catch (e: Exception) {
-            Toast.makeText(this, "Gagal menyimpan PDF: " + e.message, Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, "Gagal menyimpan PDF: ${e.message}", Toast.LENGTH_SHORT).show()
         } finally {
-            try {
-                pdfDocument.close()
-            } catch (e: Exception) {}
+            try { pdfDocument.close() } catch (_: Exception) {}
         }
-    }
-
-    private fun konfirmasiSelesai(id: Int, nama: String) {
-        AlertDialog.Builder(this)
-            .setTitle("Pesanan Selesai?")
-            .setMessage("Tandai pesanan $nama sebagai selesai?")
-            .setPositiveButton("Ya") { _, _ ->
-                try {
-                    if (dbHelper.selesaikanPesanan(id)) {
-                        Toast.makeText(this, "Berhasil!", Toast.LENGTH_SHORT).show()
-                        muatSeluruhTransaksi()
-                    }
-                } catch (e: Exception) {
-                    Toast.makeText(this, "Gagal: ${e.message}", Toast.LENGTH_SHORT).show()
-                }
-            }
-            .setNegativeButton("Batal", null)
-            .show()
     }
 }

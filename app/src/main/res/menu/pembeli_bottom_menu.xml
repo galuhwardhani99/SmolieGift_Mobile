@@ -5,6 +5,10 @@
         android:icon="@drawable/ic_home"
         android:title="Beranda" />
     <item
+        android:id="@+id/navigation_location"
+        android:icon="@drawable/ic_location"
+        android:title="Lokasi" />
+    <item
         android:id="@+id/navigation_history"
         android:icon="@drawable/receipt"
         android:title="Riwayat" />

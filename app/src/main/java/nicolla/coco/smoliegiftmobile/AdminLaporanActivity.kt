@@ -112,17 +112,30 @@ class AdminLaporanActivity : AppCompatActivity() {
                     if (!itemsJson.isNullOrEmpty()) {
                         try {
                             val jsonArray = JSONArray(itemsJson)
-                            val sb = StringBuilder("Produk:\n")
+                            val sb = StringBuilder()
                             for (i in 0 until jsonArray.length()) {
                                 val obj = jsonArray.getJSONObject(i)
-                                sb.append("- ${obj.optString("name", "Produk")} (${obj.optInt("qty", 1)} pcs)\n")
+                                // ✅ Support key "nama" (baru) dan "name" (lama)
+                                val namaProduk = obj.optString("nama",
+                                    obj.optString("name", "Produk"))
+                                // ✅ Support key "jumlah" (baru) dan "qty" (lama)
+                                val qtyProduk = obj.optInt("jumlah",
+                                    obj.optInt("qty", 1))
+                                // ✅ Tampilkan harga jika ada
+                                val hargaProduk = obj.optInt("harga", 0)
+                                if (hargaProduk > 0) {
+                                    sb.append("• $namaProduk × $qtyProduk (Rp $hargaProduk)\n")
+                                } else {
+                                    sb.append("• $namaProduk × $qtyProduk\n")
+                                }
                             }
                             tvProduk?.text = sb.toString().trim()
                         } catch (e: Exception) {
                             tvProduk?.text = "Detail produk tidak tersedia"
                         }
+                    } else {
+                        tvProduk?.text = "Tidak ada detail produk"
                     }
-
                     val tvTanggal = itemView.findViewById<TextView>(R.id.tvAdminTransTanggal)
                     if (!eventInfo.isNullOrEmpty() && eventInfo != "Tanpa catatan") {
                         tvTanggal?.text = "Info: $eventInfo"
@@ -130,7 +143,7 @@ class AdminLaporanActivity : AppCompatActivity() {
                         try {
                             val inputFormat = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
                             inputFormat.timeZone = TimeZone.getTimeZone("UTC")
-                            val outputFormat = SimpleDateFormat("dd/MM/yyyy HH:mm", Locale("id", "ID"))
+                            val outputFormat = SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.forLanguageTag("id-ID"))
                             outputFormat.timeZone = TimeZone.getTimeZone("Asia/Jakarta")
                             val date = inputFormat.parse(rawDate)
                             tvTanggal?.text = if (date != null) "Selesai: ${outputFormat.format(date)}" else "Tgl: $rawDate"
