@@ -7,6 +7,7 @@ import android.content.Intent
 import android.database.Cursor
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.net.Uri
 import android.os.Bundle
 import android.util.Base64
 import android.view.LayoutInflater
@@ -22,6 +23,7 @@ import androidx.core.widget.addTextChangedListener
 import com.example.smoliegift.database.DatabaseHelper
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.google.android.material.card.MaterialCardView
+import com.google.android.material.textfield.TextInputEditText
 import com.google.zxing.BarcodeFormat
 import com.journeyapps.barcodescanner.BarcodeEncoder
 import org.json.JSONArray
@@ -33,10 +35,11 @@ class KasirDashboardActivity : AppCompatActivity() {
 
     private lateinit var dbHelper: DatabaseHelper
     private lateinit var layoutHome: ScrollView
-    private lateinit var layoutProfile: LinearLayout
+    private lateinit var layoutProfile: ScrollView
     private lateinit var toolbar: Toolbar
     private lateinit var gridLayoutProduk: GridLayout
     private lateinit var acSearchProduk: AutoCompleteTextView
+    private lateinit var ivKasirProfile: ImageView
     private var currentUserEmail: String? = null
 
     private val listNamaProdukKatalog = mutableListOf<String>()
@@ -57,9 +60,12 @@ class KasirDashboardActivity : AppCompatActivity() {
         gridLayoutProduk = findViewById(R.id.glDaftarProdukKasir)
         acSearchProduk = findViewById(R.id.acSearchProdukKasir)
 
+        ivKasirProfile = findViewById(R.id.ivKasirProfile)
+
         val cvMenuKatalog = findViewById<MaterialCardView>(R.id.cvMenuKatalog)
         val cvMenuTransaksi = findViewById<MaterialCardView>(R.id.cvMenuTransaksi)
         val bottomNav = findViewById<BottomNavigationView>(R.id.bottomNavKasir)
+        val btnEditProfile = findViewById<Button>(R.id.btnEditProfileKasir)
 
         cvMenuKatalog.setOnClickListener {
             tampilkanDialogInputManual()
@@ -67,6 +73,10 @@ class KasirDashboardActivity : AppCompatActivity() {
 
         cvMenuTransaksi.setOnClickListener {
             startActivity(Intent(this, AdminTransaksiActivity::class.java))
+        }
+
+        btnEditProfile.setOnClickListener {
+            showEditProfileDialog()
         }
 
         bottomNav.setOnItemSelectedListener { item ->
@@ -394,15 +404,85 @@ class KasirDashboardActivity : AppCompatActivity() {
     private fun loadKasirProfile(email: String) {
         val cursor = dbHelper.getUserByEmail(email)
         if (cursor != null && cursor.moveToFirst()) {
-            findViewById<TextView>(R.id.tvKasirProfileName).text = 
-                cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COLUMN_NAME))
+            val name = cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COLUMN_NAME))
+            val username = cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COLUMN_USERNAME))
+            val phone = cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COLUMN_PHONE))
+            val gender = cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COLUMN_GENDER))
+            val address = cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COLUMN_ADDRESS))
+
+            findViewById<TextView>(R.id.tvKasirProfileName).text = name ?: "Kasir Smolie"
             findViewById<TextView>(R.id.tvKasirProfileEmail).text = email
-            findViewById<TextView>(R.id.tvKasirProfileUsername).text = String.format(Locale.getDefault(), "Username: %s",
-                cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COLUMN_USERNAME)))
-            findViewById<TextView>(R.id.tvKasirProfilePhone).text = String.format(Locale.getDefault(), "Telepon: %s",
-                cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COLUMN_PHONE)))
+            findViewById<TextView>(R.id.tvKasirProfileUsername).text = "Username: ${username ?: "-"}"
+            findViewById<TextView>(R.id.tvKasirProfilePhone).text = "Telepon: ${phone ?: "-"}"
+            findViewById<TextView>(R.id.tvKasirProfileGender).text = "Jenis Kelamin: ${gender ?: "-"}"
+            findViewById<TextView>(R.id.tvKasirProfileAddress).text = "Alamat: ${address ?: "-"}"
+            
             cursor.close()
         }
+    }
+
+    private fun showEditProfileDialog() {
+        val dialog = Dialog(this)
+        dialog.setContentView(R.layout.dialog_edit_profile)
+        dialog.window?.setLayout(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT)
+        dialog.window?.setBackgroundDrawableResource(android.R.color.transparent)
+
+        dialog.findViewById<TextView>(android.R.id.title)?.text = "Edit Profil Kasir"
+        // Update header text in layout if possible, otherwise it will say "Edit Profil Admin"
+        val tvHeader = dialog.findViewById<TextView>(R.id.tvDialogJudul) ?: dialog.findViewById<LinearLayout>(0)?.getChildAt(0) as? TextView
+        tvHeader?.text = "Edit Profil Kasir"
+
+        val etNama = dialog.findViewById<TextInputEditText>(R.id.etEditAdminNama)
+        val etUsername = dialog.findViewById<TextInputEditText>(R.id.etEditAdminUsername)
+        val etPhone = dialog.findViewById<TextInputEditText>(R.id.etEditAdminPhone)
+        val spGender = dialog.findViewById<Spinner>(R.id.spEditAdminGender)
+        val etAddress = dialog.findViewById<TextInputEditText>(R.id.etEditAdminAddress)
+        val btnSimpan = dialog.findViewById<Button>(R.id.btnSimpanEditAdmin)
+        val btnBatal = dialog.findViewById<Button>(R.id.btnBatalEditAdmin)
+
+        val genderOptions = arrayOf("Laki-laki", "Perempuan")
+        val adapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, genderOptions)
+        spGender.adapter = adapter
+
+        // Fill current data
+        val cursor = dbHelper.getUserByEmail(currentUserEmail!!)
+        if (cursor != null && cursor.moveToFirst()) {
+            etNama.setText(cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COLUMN_NAME)))
+            etUsername.setText(cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COLUMN_USERNAME)))
+            etPhone.setText(cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COLUMN_PHONE)))
+            etAddress.setText(cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COLUMN_ADDRESS)))
+            
+            val gender = cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COLUMN_GENDER))
+            val selection = genderOptions.indexOf(gender)
+            if (selection >= 0) spGender.setSelection(selection)
+            
+            cursor.close()
+        }
+
+        btnSimpan.setOnClickListener {
+            val name = etNama.text.toString().trim()
+            val user = etUsername.text.toString().trim()
+            val phone = etPhone.text.toString().trim()
+            val gender = spGender.selectedItem.toString()
+            val addr = etAddress.text.toString().trim()
+
+            if (name.isEmpty() || user.isEmpty() || phone.isEmpty()) {
+                Toast.makeText(this, "Nama, Username, dan Telepon wajib diisi!", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+
+            val success = dbHelper.updateUser(currentUserEmail!!, name, user, phone, gender, addr)
+            if (success) {
+                Toast.makeText(this, "Profil berhasil diperbarui", Toast.LENGTH_SHORT).show()
+                loadKasirProfile(currentUserEmail!!)
+                dialog.dismiss()
+            } else {
+                Toast.makeText(this, "Gagal memperbarui profil", Toast.LENGTH_SHORT).show()
+            }
+        }
+
+        btnBatal.setOnClickListener { dialog.dismiss() }
+        dialog.show()
     }
 
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {

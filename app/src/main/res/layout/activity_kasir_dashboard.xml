@@ -172,69 +172,104 @@
         </ScrollView>
 
         <!-- PROFILE CONTENT -->
-        <LinearLayout
+        <ScrollView
             android:id="@+id/layoutProfileKasir"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:orientation="vertical"
-            android:padding="24dp"
-            android:gravity="center_horizontal"
             android:visibility="gone">
-            <!-- Profile UI tetap sama -->
-            <com.google.android.material.card.MaterialCardView
-                android:layout_width="120dp"
-                android:layout_height="120dp"
-                app:cardCornerRadius="60dp"
-                app:cardElevation="4dp"
-                android:layout_marginBottom="24dp">
-                <ImageView
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:src="@drawable/smolie"
-                    android:scaleType="centerCrop"/>
-            </com.google.android.material.card.MaterialCardView>
 
-            <TextView
-                android:id="@+id/tvKasirProfileName"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Nama Kasir"
-                android:textSize="22sp"
-                android:textStyle="bold"
-                android:textColor="#2D3142"/>
-
-            <TextView
-                android:id="@+id/tvKasirProfileEmail"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="kasir@smolie.com"
-                android:textColor="#64748B"
-                android:layout_marginBottom="24dp"/>
-
-            <com.google.android.material.card.MaterialCardView
+            <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                app:cardCornerRadius="16dp"
-                app:cardElevation="2dp">
-                <LinearLayout
+                android:orientation="vertical"
+                android:padding="24dp"
+                android:gravity="center_horizontal">
+
+                <com.google.android.material.card.MaterialCardView
+                    android:layout_width="120dp"
+                    android:layout_height="120dp"
+                    app:cardCornerRadius="60dp"
+                    app:cardElevation="4dp"
+                    android:layout_marginBottom="24dp">
+                    <ImageView
+                        android:id="@+id/ivKasirProfile"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:src="@drawable/smolie"
+                        android:scaleType="centerCrop"/>
+                </com.google.android.material.card.MaterialCardView>
+
+                <TextView
+                    android:id="@+id/tvKasirProfileName"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Nama Kasir"
+                    android:textSize="22sp"
+                    android:textStyle="bold"
+                    android:textColor="#2D3142"/>
+
+                <TextView
+                    android:id="@+id/tvKasirProfileEmail"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="kasir@smolie.com"
+                    android:textColor="#64748B"
+                    android:layout_marginBottom="24dp"/>
+
+                <com.google.android.material.card.MaterialCardView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:orientation="vertical"
-                    android:padding="20dp">
-                    <TextView
-                        android:id="@+id/tvKasirProfileUsername"
-                        android:layout_width="wrap_content"
+                    app:cardCornerRadius="16dp"
+                    app:cardElevation="2dp"
+                    android:layout_marginBottom="24dp">
+                    <LinearLayout
+                        android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:text="Username: -"
-                        android:layout_marginBottom="8dp"/>
-                    <TextView
-                        android:id="@+id/tvKasirProfilePhone"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Telepon: -"/>
-                </LinearLayout>
-            </com.google.android.material.card.MaterialCardView>
-        </LinearLayout>
+                        android:orientation="vertical"
+                        android:padding="20dp">
+                        <TextView
+                            android:id="@+id/tvKasirProfileUsername"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Username: -"
+                            android:layout_marginBottom="8dp"/>
+                        <View android:layout_width="match_parent" android:layout_height="1dp" android:background="#F1F5F9" android:layout_marginTop="4dp" android:layout_marginBottom="12dp"/>
+                        <TextView
+                            android:id="@+id/tvKasirProfilePhone"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Telepon: -"
+                            android:layout_marginBottom="8dp"/>
+                        <View android:layout_width="match_parent" android:layout_height="1dp" android:background="#F1F5F9" android:layout_marginTop="4dp" android:layout_marginBottom="12dp"/>
+                        <TextView
+                            android:id="@+id/tvKasirProfileGender"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Jenis Kelamin: -"
+                            android:layout_marginBottom="8dp"/>
+                        <View android:layout_width="match_parent" android:layout_height="1dp" android:background="#F1F5F9" android:layout_marginTop="4dp" android:layout_marginBottom="12dp"/>
+                        <TextView
+                            android:id="@+id/tvKasirProfileAddress"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Alamat: -"/>
+                    </LinearLayout>
+                </com.google.android.material.card.MaterialCardView>
+
+                <Button
+                    android:id="@+id/btnEditProfileKasir"
+                    android:layout_width="match_parent"
+                    android:layout_height="55dp"
+                    android:text="Edit Profil"
+                    android:backgroundTint="#2D3142"
+                    android:textColor="#FFFFFF"
+                    android:textStyle="bold"
+                    app:cornerRadius="12dp"
+                    app:icon="@drawable/edit"
+                    app:iconGravity="textStart"
+                    app:iconPadding="8dp"/>
+            </LinearLayout>
+        </ScrollView>
     </FrameLayout>
 
     <com.google.android.material.bottomnavigation.BottomNavigationView
