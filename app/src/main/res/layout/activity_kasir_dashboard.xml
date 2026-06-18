@@ -280,6 +280,7 @@
         app:itemIconTint="#DD3827"
         app:itemTextColor="#DD3827"
         app:menu="@menu/admin_bottom_menu"
+        app:labelVisibilityMode="selected"
         app:layout_constraintBottom_toBottomOf="parent" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

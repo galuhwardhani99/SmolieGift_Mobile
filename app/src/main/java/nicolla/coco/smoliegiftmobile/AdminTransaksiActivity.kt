@@ -23,7 +23,7 @@ import org.json.JSONObject
 class AdminTransaksiActivity : AppCompatActivity() {
 
     private var llDaftar: LinearLayout? = null
-
+    private var isKasirMode: Boolean = false
     private var pdfDataId: Int = 0
     private var pdfDataNama: String = ""
     private var pdfDataTotal: Int = 0
@@ -39,10 +39,16 @@ class AdminTransaksiActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_admin_transaksi)
 
+        isKasirMode = intent.getBooleanExtra("IS_KASIR_MODE", false)   // ← tambahkan ini
+
         val toolbar = findViewById<Toolbar>(R.id.toolbarTransaksi)
         setSupportActionBar(toolbar)
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
         toolbar.setNavigationOnClickListener { finish() }
+
+        if (isKasirMode) {
+            toolbar.title = "Riwayat Transaksi (Read Only)"   // ← opsional, perjelas konteks
+        }
 
         llDaftar = findViewById(R.id.llDaftarTransaksi)
         muatSeluruhTransaksi()
@@ -86,25 +92,41 @@ class AdminTransaksiActivity : AppCompatActivity() {
                     }
 
                     for (i in 0 until data.length()) {
-                        val item     = data.getJSONObject(i)
-                        val id       = item.getInt("id")
-                        val nama     = item.optString("nama_pembeli", "-")
-                        val noHp     = item.optString("no_hp", "-")
-                        val metode   = item.optString("metode_pembayaran", "-")
-                        val total    = item.optInt("total_harga", 0)
-                        val kode     = item.optString("kode_transaksi", "-")
-                        val status   = item.optString("status", "pending")
-                        val tanggal  = item.optString("created_at", "-")
-
+                        val item    = data.getJSONObject(i)
+                        val id      = item.getInt("id")
+                        val nama    = item.optString("nama_pembeli", "-")
+                        val noHp    = item.optString("no_hp", "-")
+                        val metode  = item.optString("metode_pembayaran", "-")
+                        val total   = item.optInt("total_harga", 0)
+                        val kode    = item.optString("kode_transaksi", "-")
+                        val status  = item.optString("status", "pending")
+                        val tanggal = item.optString("created_at", "-")
+                        val jenis   = item.optString("jenis_pesanan", "Online")
                         val itemView = inflater.inflate(R.layout.item_transaksi_admin, container, false)
-
+                        val tvTanggal = itemView.findViewById<TextView>(R.id.tvAdminTransTanggal)
+                        try {
+                            val cleanDate = tanggal
+                                .replace(Regex("\\.\\d{1,6}Z?$"), "")
+                                .replace("T", " ")
+                            val inputFormat = java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss", java.util.Locale.getDefault())
+                            inputFormat.timeZone = java.util.TimeZone.getTimeZone("Asia/Jakarta")
+                            val outputFormat = java.text.SimpleDateFormat("dd/MM/yyyy HH:mm", java.util.Locale.forLanguageTag("id-ID"))
+                            outputFormat.timeZone = java.util.TimeZone.getTimeZone("Asia/Jakarta")
+                            val date = inputFormat.parse(cleanDate)
+                            tvTanggal?.text = if (date != null) outputFormat.format(date) else tanggal
+                        } catch (e: Exception) {
+                            tvTanggal?.text = tanggal
+                        }
                         itemView.findViewById<TextView>(R.id.tvAdminTransId)?.text = "#$kode"
                         itemView.findViewById<TextView>(R.id.tvAdminTransNama)?.text = nama
                         itemView.findViewById<TextView>(R.id.tvAdminTransWa)?.text = "HP: $noHp"
                         itemView.findViewById<TextView>(R.id.tvAdminTransMetode)?.text = "Bayar: $metode"
                         itemView.findViewById<TextView>(R.id.tvAdminTransTotal)?.text = "Rp $total"
-                        itemView.findViewById<TextView>(R.id.tvAdminTransTanggal)?.text = "Tgl: $tanggal"
-                        itemView.findViewById<TextView>(R.id.tvAdminTransCatatan)?.text = "Pesanan Online"
+                        itemView.findViewById<TextView>(R.id.tvAdminTransCatatan)?.text =
+                            if (jenis.equals("offline", ignoreCase = true) || jenis.equals("Beli di Toko", ignoreCase = true))
+                                "Pesanan Offline"
+                            else
+                                "Pesanan Online"
 
                         val tvProdukTrans = itemView.findViewById<TextView>(R.id.tvAdminTransProduk)
                         val itemsJsonTrans = item.optString("items_json", "")
@@ -129,18 +151,32 @@ class AdminTransaksiActivity : AppCompatActivity() {
                         val tvStatus   = itemView.findViewById<TextView>(R.id.tvAdminTransStatusLabel)
                         val btnSelesai = itemView.findViewById<Button>(R.id.btnSelesaiPesanan)
                         val btnCetak   = itemView.findViewById<Button>(R.id.btnCetakStruk)
+                        val btnBatalkan  = itemView.findViewById<Button>(R.id.btnBatalkanPesanan)
 
-                        if (status == "selesai") {
-                            tvStatus?.text = "SELESAI"
-                            tvStatus?.setTextColor(Color.parseColor("#10B981"))
-                            btnSelesai?.visibility = View.GONE
-                        } else {
-                            tvStatus?.text = "PENDING"
-                            tvStatus?.setTextColor(Color.parseColor("#EF4444"))
-                            btnSelesai?.visibility = View.VISIBLE
-                            btnSelesai?.setOnClickListener { konfirmasiSelesai(id, nama) }
+                        when (status) {
+                            "selesai" -> {
+                                tvStatus?.text = "SELESAI"
+                                tvStatus?.setTextColor(Color.parseColor("#10B981"))
+                                btnSelesai?.visibility  = View.GONE
+                                btnBatalkan?.visibility = View.GONE
+                            }
+                            "dibatalkan" -> {
+                                tvStatus?.text = "DIBATALKAN"
+                                tvStatus?.setTextColor(Color.parseColor("#94A3B8"))
+                                btnSelesai?.visibility  = View.GONE
+                                btnBatalkan?.visibility = View.GONE
+                            }
+                            else -> {
+                                tvStatus?.text = "PENDING"
+                                tvStatus?.setTextColor(Color.parseColor("#EF4444"))
+                                btnSelesai?.visibility  = if (isKasirMode) View.GONE else View.VISIBLE
+                                btnBatalkan?.visibility = if (isKasirMode) View.GONE else View.VISIBLE
+                                btnSelesai?.setOnClickListener { konfirmasiSelesai(id, nama) }
+                                btnBatalkan?.setOnClickListener { konfirmasiBatalkan(id, nama) }
+                            }
                         }
 
+                        btnCetak?.visibility = if (isKasirMode) View.GONE else View.VISIBLE
                         btnCetak?.setOnClickListener {
                             pdfDataId      = id
                             pdfDataNama    = nama
@@ -179,6 +215,26 @@ class AdminTransaksiActivity : AppCompatActivity() {
                             muatSeluruhTransaksi()
                         } else {
                             Toast.makeText(this, "Gagal konfirmasi. Coba lagi.", Toast.LENGTH_SHORT).show()
+                        }
+                    }
+                }
+            }
+            .setNegativeButton("Batal", null)
+            .show()
+    }
+
+    private fun konfirmasiBatalkan(id: Int, nama: String) {
+        AlertDialog.Builder(this)
+            .setTitle("Batalkan Pesanan")
+            .setMessage("Batalkan pesanan dari $nama? Aksi ini tidak bisa dibatalkan kembali.")
+            .setPositiveButton("Ya, Batalkan") { _, _ ->
+                ApiClient.batalkanTransaksi(id) { berhasil ->
+                    runOnUiThread {
+                        if (berhasil) {
+                            Toast.makeText(this, "Pesanan dibatalkan", Toast.LENGTH_SHORT).show()
+                            muatSeluruhTransaksi()
+                        } else {
+                            Toast.makeText(this, "Gagal membatalkan. Coba lagi.", Toast.LENGTH_SHORT).show()
                         }
                     }
                 }

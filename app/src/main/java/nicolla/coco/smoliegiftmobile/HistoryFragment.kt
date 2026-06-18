@@ -1,5 +1,6 @@
 package nicolla.coco.smoliegiftmobile
 
+import android.content.Intent
 import android.graphics.Color
 import android.os.Bundle
 import android.view.LayoutInflater
@@ -7,7 +8,11 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.*
 import androidx.fragment.app.Fragment
+import org.json.JSONArray
 import org.json.JSONObject
+import java.text.SimpleDateFormat
+import java.util.Locale
+import java.util.TimeZone
 
 class HistoryFragment : Fragment() {
 
@@ -74,26 +79,80 @@ class HistoryFragment : Fragment() {
                         val id      = item.getInt("id")
                         val total   = item.optInt("total_harga", 0)
                         val kode    = item.optString("kode_transaksi", "-")
-                        val tanggal = item.optString("created_at", "-")
+                        val rawDate = item.optString("created_at", "-")
                         val metode  = item.optString("metode_pembayaran", "-")
+                        val itemsJson = item.optString("items_json", "")
 
                         val itemView = inflater.inflate(R.layout.item_transaksi_admin, llDaftarHistory, false)
 
                         itemView.findViewById<TextView>(R.id.tvAdminTransId)?.text = "#$kode"
                         itemView.findViewById<TextView>(R.id.tvAdminTransNama)?.text = "Pesanan Saya"
                         itemView.findViewById<TextView>(R.id.tvAdminTransTotal)?.text = "Total: Rp $total"
-                        itemView.findViewById<TextView>(R.id.tvAdminTransTanggal)?.text = "Waktu: $tanggal"
                         itemView.findViewById<TextView>(R.id.tvAdminTransMetode)?.text = "Bayar: $metode"
 
+                        val tvTanggal = itemView.findViewById<TextView>(R.id.tvAdminTransTanggal)
+                        try {
+                            val cleanDate = rawDate
+                                .replace(Regex("\\.\\d{1,6}Z?$"), "")
+                                .replace("T", " ")
+
+                            val inputFormat = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
+                            inputFormat.timeZone = TimeZone.getTimeZone("Asia/Jakarta")
+
+                            val outputFormat = SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.forLanguageTag("id-ID"))
+                            outputFormat.timeZone = TimeZone.getTimeZone("Asia/Jakarta")
+
+                            val date = inputFormat.parse(cleanDate)
+                            tvTanggal?.text = "Waktu: " + if (date != null) outputFormat.format(date) else rawDate
+                        } catch (e: Exception) {
+                            tvTanggal?.text = "Waktu: $rawDate"
+                        }
+
+                        // ── Daftar produk dari items_json ─────────────────────
+                        val tvProduk = itemView.findViewById<TextView>(R.id.tvAdminTransProduk)
+                        if (itemsJson.isNotEmpty() && itemsJson != "null") {
+                            try {
+                                val jsonArray = JSONArray(itemsJson)
+                                val sb = StringBuilder()
+                                for (j in 0 until jsonArray.length()) {
+                                    val obj = jsonArray.getJSONObject(j)
+                                    val namaProduk  = obj.optString("nama", obj.optString("name", "Produk"))
+                                    val qtyProduk   = obj.optInt("jumlah", obj.optInt("qty", 1))
+                                    val hargaProduk = obj.optInt("harga", 0)
+                                    if (hargaProduk > 0) {
+                                        sb.append("• $namaProduk × $qtyProduk (Rp $hargaProduk)\n")
+                                    } else {
+                                        sb.append("• $namaProduk × $qtyProduk\n")
+                                    }
+                                }
+                                tvProduk?.text = sb.toString().trim()
+                            } catch (e: Exception) {
+                                tvProduk?.text = "Detail produk tidak tersedia"
+                            }
+                        } else {
+                            tvProduk?.text = "Tidak ada detail produk"
+                        }
+
+                        // ── Status ────────────────────────────────────────────
                         itemView.findViewById<TextView>(R.id.tvAdminTransStatusLabel)?.apply {
                             text = "TERKONFIRMASI"
                             setTextColor(Color.parseColor("#2E7D32"))
                         }
 
-                        // Sembunyikan tombol aksi admin
+                        // ── Sembunyikan tombol aksi admin ─────────────────────
                         itemView.findViewById<View>(R.id.btnSelesaiPesanan)?.visibility = View.GONE
                         itemView.findViewById<View>(R.id.btnCetakStruk)?.visibility = View.GONE
                         itemView.findViewById<View>(R.id.tvAdminTransWa)?.visibility = View.GONE
+
+                        // ── Tombol ulasan ─────────────────────────────────────
+                        val btnUlasan = itemView.findViewById<Button>(R.id.btnUlasan)
+                        btnUlasan?.visibility = View.VISIBLE
+                        btnUlasan?.setOnClickListener {
+                            val intent = Intent(context, ReviewActivity::class.java)
+                            intent.putExtra("TRANSAKSI_ID", id)
+                            intent.putExtra("KODE_TRANSAKSI", kode)
+                            startActivity(intent)
+                        }
 
                         llDaftarHistory.addView(itemView)
                     }

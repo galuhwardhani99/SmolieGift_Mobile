@@ -23,6 +23,8 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.Toolbar
 import androidx.core.app.ActivityCompat
+import androidx.core.view.isVisible
+import com.bumptech.glide.Glide
 import com.example.smoliegift.database.DatabaseHelper
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.google.android.material.floatingactionbutton.FloatingActionButton
@@ -35,7 +37,7 @@ import org.osmdroid.views.overlay.Marker
 import org.osmdroid.views.overlay.mylocation.GpsMyLocationProvider
 import org.osmdroid.views.overlay.mylocation.MyLocationNewOverlay
 import java.io.InputStream
-import java.util.Calendar
+import java.util.*
 
 class PembeliDashboardActivity : AppCompatActivity() {
 
@@ -48,7 +50,6 @@ class PembeliDashboardActivity : AppCompatActivity() {
     private lateinit var toolbar: Toolbar
     private lateinit var acSearchProduk: AutoCompleteTextView
 
-    // ✅ OSMDroid MapView
     private var mapOsm: MapView? = null
     private var mapSudahDiset = false
     private var locationOverlay: MyLocationNewOverlay? = null
@@ -96,9 +97,7 @@ class PembeliDashboardActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        // ✅ Wajib untuk OSMDroid
         Configuration.getInstance().load(this, getSharedPreferences("osm_prefs", MODE_PRIVATE))
-
         setContentView(R.layout.activity_pembeli_dashboard)
 
         dbHelper = DatabaseHelper(this)
@@ -157,6 +156,8 @@ class PembeliDashboardActivity : AppCompatActivity() {
         applySettings()
     }
 
+    // ── Navigasi ─────────────────────────────────────────────────────────────
+
     private fun showHome() {
         layoutHome.visibility = View.VISIBLE
         fragmentContainer.visibility = View.GONE
@@ -171,14 +172,34 @@ class PembeliDashboardActivity : AppCompatActivity() {
         layoutProfile.visibility = View.GONE
         layoutLocation.visibility = View.VISIBLE
         toolbar.title = "Lokasi Toko"
-
         setupOsmMap()
     }
 
+    private fun showHistory() {
+        layoutHome.visibility = View.GONE
+        fragmentContainer.visibility = View.VISIBLE
+        layoutProfile.visibility = View.GONE
+        layoutLocation.visibility = View.GONE
+        toolbar.title = "Riwayat Pesanan"
+        if (currentUserEmail != null) {
+            supportFragmentManager.beginTransaction()
+                .replace(R.id.fragmentContainerPembeli, HistoryFragment.newInstance(currentUserEmail!!))
+                .commit()
+        }
+    }
+
+    private fun showProfile() {
+        layoutHome.visibility = View.GONE
+        fragmentContainer.visibility = View.GONE
+        layoutProfile.visibility = View.VISIBLE
+        layoutLocation.visibility = View.GONE
+        toolbar.title = "Profil Saya"
+    }
+
+    // ── Map ──────────────────────────────────────────────────────────────────
+
     private fun setupOsmMap() {
         val map = mapOsm ?: return
-
-        // ✅ Koordinat Smolie Gift Surabaya (Pogot 9 No.60)
         val smolieGiftLoc = GeoPoint(-7.228519, 112.768652)
 
         if (!mapSudahDiset) {
@@ -192,23 +213,19 @@ class PembeliDashboardActivity : AppCompatActivity() {
             marker.setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM)
             marker.title = "Smolie Gift Surabaya"
             marker.snippet = "Jl. Pogot 9 No.60, Tanah Kali Kedinding, Surabaya\nKetuk untuk buka di Google Maps"
-
             marker.setOnMarkerClickListener { _, _ ->
                 val gmapsUri = Uri.parse("https://maps.app.goo.gl/vxLNPpnuToAu2NS5A")
-                val mapIntent = Intent(Intent.ACTION_VIEW, gmapsUri)
-                startActivity(mapIntent)
+                startActivity(Intent(Intent.ACTION_VIEW, gmapsUri))
                 true
             }
             map.overlays.add(marker)
 
             locationOverlay = MyLocationNewOverlay(GpsMyLocationProvider(this), map)
             locationOverlay?.enableMyLocation()
-            // Kita tidak memanggil enableFollowLocation() agar di awal fokus tetap ke Toko
             map.overlays.add(locationOverlay)
 
             mapSudahDiset = true
         }
-
         checkLocationPermission()
     }
 
@@ -236,48 +253,239 @@ class PembeliDashboardActivity : AppCompatActivity() {
         locationOverlay?.disableMyLocation()
     }
 
-    private fun showHistory() {
-        layoutHome.visibility = View.GONE
-        fragmentContainer.visibility = View.VISIBLE
-        layoutProfile.visibility = View.GONE
-        layoutLocation.visibility = View.GONE
-        toolbar.title = "Riwayat Pesanan"
-        if (currentUserEmail != null) {
-            supportFragmentManager.beginTransaction().replace(R.id.fragmentContainerPembeli, HistoryFragment.newInstance(currentUserEmail!!)).commit()
+    // ── Katalog Produk ───────────────────────────────────────────────────────
+
+    private fun loadKategori(onFinished: () -> Unit) {
+        ApiClient.getKategori { categories ->
+            listKategori.clear()
+            listKategori.addAll(categories)
+            runOnUiThread { onFinished() }
         }
     }
 
-    private fun showProfile() {
-        layoutHome.visibility = View.GONE
-        fragmentContainer.visibility = View.GONE
-        layoutProfile.visibility = View.VISIBLE
-        layoutLocation.visibility = View.GONE
-        toolbar.title = "Profil Saya"
+    private fun loadKatalogProduk() {
+        ApiClient.getAllProducts { jsonStr ->
+            if (jsonStr != null) {
+                try {
+                    val root = JSONObject(jsonStr)
+                    val data = root.getJSONArray("data")
+                    listProdukApi.clear()
+                    listNamaProdukKatalog.clear()
+                    for (i in 0 until data.length()) {
+                        val p = data.getJSONObject(i)
+                        listProdukApi.add(p)
+                        listNamaProdukKatalog.add(p.getString("nama_produk"))
+                    }
+                    runOnUiThread {
+                        displayProduk(listProdukApi)
+                        setupSearch()
+                    }
+                } catch (e: Exception) { e.printStackTrace() }
+            }
+        }
     }
+
+    private fun setupSearch() {
+        val adapter = ArrayAdapter(this, android.R.layout.simple_dropdown_item_1line, listNamaProdukKatalog)
+        acSearchProduk.setAdapter(adapter)
+        acSearchProduk.setOnItemClickListener { parent, _, position, _ ->
+            val selectedName = parent.getItemAtPosition(position) as String
+            val filtered = listProdukApi.filter { it.getString("nama_produk") == selectedName }
+            displayProduk(filtered)
+        }
+    }
+
+    private fun displayProduk(list: List<JSONObject>) {
+        gridLayoutProduk.removeAllViews()
+        for (produk in list) {
+            val view = LayoutInflater.from(this)
+                .inflate(R.layout.item_produk_pembeli, gridLayoutProduk, false)
+
+            val iv       = view.findViewById<ImageView>(R.id.ivPembeliProdImage)
+            val tvNama   = view.findViewById<TextView>(R.id.tvPembeliProdName)
+            val tvHarga  = view.findViewById<TextView>(R.id.tvPembeliProdPrice)
+            val btnPesan = view.findViewById<Button>(R.id.btnPesanKatalog)
+
+            tvNama.text  = produk.getString("nama_produk")
+            tvHarga.text = "Rp ${produk.getInt("harga")}"
+
+            val imgPath = produk.optString("gambar")
+            if (imgPath.isNotEmpty()) {
+                Glide.with(this)
+                    .load(ApiClient.IMAGE_BASE_URL + imgPath)
+                    .placeholder(R.drawable.ic_image_placeholder)
+                    .into(iv)
+            }
+
+            btnPesan.text = "Pesan"
+            btnPesan.setOnClickListener { showPesanDialog(produk) }
+            gridLayoutProduk.addView(view)
+        }
+    }
+
+    private fun showPesanDialog(produk: JSONObject) {
+        val namaProduk = produk.optString("nama_produk", "")
+        val hargaDasar = produk.optInt("harga", 0)
+        val fotoBase64 = produk.optString("gambar", "")
+
+        val dialog = Dialog(this)
+        dialog.setContentView(R.layout.dialog_pesan_produk)
+        dialog.window?.setLayout(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT)
+        dialog.window?.setBackgroundDrawableResource(android.R.color.transparent)
+
+        val tvQty              = dialog.findViewById<TextView>(R.id.tvQty)
+        val btnTambah          = dialog.findViewById<Button>(R.id.btnTambahKeranjang)
+        val spWarna            = dialog.findViewById<Spinner>(R.id.spWarna)
+        val rgKemasan          = dialog.findViewById<RadioGroup>(R.id.rgKemasan)
+        val cbSablon           = dialog.findViewById<CheckBox>(R.id.cbSablon)
+        val cbThanksCard       = dialog.findViewById<CheckBox>(R.id.cbThanksCard)
+        val cbInvitedCard      = dialog.findViewById<CheckBox>(R.id.cbInvitedCard)
+        val llContainerTanggal = dialog.findViewById<LinearLayout>(R.id.llContainerTanggalAcara)
+        val btnPilihTanggal    = dialog.findViewById<Button>(R.id.btnPilihTanggal)
+        val btnPilihWaktu      = dialog.findViewById<Button>(R.id.btnPilihWaktu)
+        val tvWaktuTerpilih    = dialog.findViewById<TextView>(R.id.tvWaktuTerpilih)
+        val etCatatan          = dialog.findViewById<EditText>(R.id.etCatatan)
+
+        var selectedTanggal = ""
+        var selectedWaktu   = ""
+        var qty             = 1
+
+        // 1) Fungsi-fungsi lokal didefinisikan PALING ATAS dulu,
+        //    sebelum dipakai di listener manapun di bawah.
+
+        fun hitungFeeTambahan(): Int {
+            var fee = 0
+            fee += when (rgKemasan.checkedRadioButtonId) {
+                R.id.rbTile -> 1000
+                R.id.rbBox  -> 2500
+                else        -> 0
+            }
+            if (cbSablon.isChecked)      fee += 500
+            if (cbThanksCard.isChecked)  fee += 300
+            if (cbInvitedCard.isChecked) fee += 400
+            return fee
+        }
+
+        fun updateHarga() {
+            val totalHarga = (hargaDasar + hitungFeeTambahan()) * qty
+            btnTambah.text = String.format(Locale.getDefault(), "Tambah — Rp %d", totalHarga)
+        }
+
+        fun updateVisibility() {
+            val varian = spWarna.selectedItem.toString()
+            llContainerTanggal.isVisible = (varian == "Custom Desain Sendiri" || cbInvitedCard.isChecked)
+        }
+
+        // 2) Setup Spinner Varian
+        val varianOptions = arrayOf(
+            "Pilih varian...", "Warna Pastel", "Monokrom",
+            "Aksen Emas", "Random", "Custom Desain Sendiri"
+        )
+        spWarna.adapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, varianOptions)
+
+        spWarna.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
+            override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) { updateVisibility() }
+            override fun onNothingSelected(parent: AdapterView<*>?) {}
+        }
+
+        // 3) Sekarang baru pasang semua listener yang memanggil updateHarga()/updateVisibility()
+        //    — aman karena keduanya sudah didefinisikan di atas.
+
+        rgKemasan.setOnCheckedChangeListener { _, _ -> updateHarga() }
+        cbSablon.setOnCheckedChangeListener { _, _ -> updateHarga() }
+        cbThanksCard.setOnCheckedChangeListener { _, _ -> updateHarga() }
+        cbInvitedCard.setOnCheckedChangeListener { _, _ ->
+            updateVisibility()
+            updateHarga()
+        }
+
+        btnPilihTanggal.setOnClickListener {
+            val c = Calendar.getInstance()
+            DatePickerDialog(this, { _, year, month, day ->
+                selectedTanggal = "$day/${month + 1}/$year"
+                tvWaktuTerpilih.text = String.format(Locale.getDefault(), "Waktu: %s %s", selectedTanggal, selectedWaktu)
+            }, c.get(Calendar.YEAR), c.get(Calendar.MONTH), c.get(Calendar.DAY_OF_MONTH)).show()
+        }
+
+        btnPilihWaktu.setOnClickListener {
+            val c = Calendar.getInstance()
+            TimePickerDialog(this, { _, hour, minute ->
+                selectedWaktu = String.format(Locale.getDefault(), "%02d:%02d", hour, minute)
+                tvWaktuTerpilih.text = String.format(Locale.getDefault(), "Waktu: %s %s", selectedTanggal, selectedWaktu)
+            }, c.get(Calendar.HOUR_OF_DAY), c.get(Calendar.MINUTE), true).show()
+        }
+
+        dialog.findViewById<TextView>(R.id.tvDialogJudul).text = namaProduk
+        dialog.findViewById<Button>(R.id.btnPlusQty).setOnClickListener { qty++; tvQty.text = qty.toString(); updateHarga() }
+        dialog.findViewById<Button>(R.id.btnMinQty).setOnClickListener  { if (qty > 1) { qty--; tvQty.text = qty.toString(); updateHarga() } }
+
+        dialog.findViewById<Button>(R.id.btnPilihFile).visibility = View.GONE
+        dialog.findViewById<TextView>(R.id.btnTutupDialog).setOnClickListener { dialog.dismiss() }
+
+        btnTambah.setOnClickListener {
+            if (spWarna.selectedItemPosition == 0) {
+                Toast.makeText(this, "Pilih varian terlebih dahulu!", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+
+            val total = (hargaDasar + hitungFeeTambahan()) * qty
+            val catatanExtra = if (llContainerTanggal.isVisible) "\nWaktu Acara: $selectedTanggal $selectedWaktu" else ""
+            val finalCatatan = etCatatan.text.toString() + catatanExtra
+
+            if (dbHelper.tambahKeKeranjang(namaProduk, qty, total, null, fotoBase64)) {
+                Toast.makeText(this, "Ditambahkan ke keranjang!", Toast.LENGTH_SHORT).show()
+                dialog.dismiss()
+                val intent = Intent(this, CartActivity::class.java)
+                intent.putExtra("USER_EMAIL", currentUserEmail)
+                startActivity(intent)
+            } else {
+                Toast.makeText(this, "Gagal menambahkan ke keranjang!", Toast.LENGTH_SHORT).show()
+            }
+        }
+
+        updateHarga()
+        dialog.show()
+    }
+    // ── Settings ─────────────────────────────────────────────────────────────
 
     private fun showSettingDialog() {
         val dialog = Dialog(this)
         dialog.setContentView(R.layout.dialog_setting)
+        dialog.window?.setLayout(
+            (resources.displayMetrics.widthPixels * 0.92).toInt(),
+            ViewGroup.LayoutParams.WRAP_CONTENT
+        )
         dialog.window?.setBackgroundDrawableResource(android.R.color.transparent)
 
-        val etFont = dialog.findViewById<EditText>(R.id.etFontSize)
-        val etBtn = dialog.findViewById<EditText>(R.id.etButtonText)
-        val etTv = dialog.findViewById<EditText>(R.id.etTextViewText)
-        val spinner = dialog.findViewById<Spinner>(R.id.spinnerBgColor)
-        val btnSimpan = dialog.findViewById<Button>(R.id.btnSimpanSetting)
-        val btnBatal = dialog.findViewById<Button>(R.id.btnBatalSetting)
+        val etFontSize   = dialog.findViewById<EditText>(R.id.etFontSize)
+        val etButtonText = dialog.findViewById<EditText>(R.id.etButtonText)
+        val etTvText     = dialog.findViewById<EditText>(R.id.etTextViewText)
+        val spinner      = dialog.findViewById<Spinner>(R.id.spinnerBgColor)
+        val btnSimpan    = dialog.findViewById<Button>(R.id.btnSimpanSetting)
+        val btnBatal     = dialog.findViewById<Button>(R.id.btnBatalSetting)
 
         val colors = arrayOf("Default", "Abu-abu", "Merah Maroon", "Biru", "Hijau")
-        val adapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, colors)
-        spinner.adapter = adapter
+        spinner.adapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, colors)
 
         val prefs = getSharedPreferences("SmoliePrefs", Context.MODE_PRIVATE)
-        spinner.setSelection(colors.indexOf(prefs.getString("bg_color", "Default")))
+        val savedColor = try { prefs.getString("bg_color", "Default") } catch (e: ClassCastException) { "Default" }
+        val savedFont  = try { prefs.getString("font_size", "") }       catch (e: ClassCastException) { "" }
+        val savedBtn   = try { prefs.getString("button_text", "") }     catch (e: ClassCastException) { "" }
+        val savedTv    = try { prefs.getString("textview_text", "") }   catch (e: ClassCastException) { "" }
+
+        spinner.setSelection(colors.indexOf(savedColor).coerceAtLeast(0))
+        etFontSize.setText(savedFont)
+        etButtonText.setText(savedBtn)
+        etTvText.setText(savedTv)
 
         btnSimpan.setOnClickListener {
-            val editor = prefs.edit()
-            editor.putString("bg_color", spinner.selectedItem.toString())
-            editor.apply()
+            prefs.edit().clear().apply()
+            prefs.edit()
+                .putString("bg_color",      spinner.selectedItem.toString())
+                .putString("font_size",     etFontSize.text.toString())
+                .putString("button_text",   etButtonText.text.toString())
+                .putString("textview_text", etTvText.text.toString())
+                .apply()
             applySettings()
             dialog.dismiss()
             Toast.makeText(this, "Pengaturan disimpan", Toast.LENGTH_SHORT).show()
@@ -287,279 +495,99 @@ class PembeliDashboardActivity : AppCompatActivity() {
         dialog.show()
     }
 
-    private fun showPesanDialog(produk: JSONObject) {
-        val dialog = Dialog(this)
-        dialog.setContentView(R.layout.dialog_pesan_produk)
-        dialog.window?.setLayout(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT)
-        dialog.window?.setBackgroundDrawableResource(android.R.color.transparent)
-
-        val tvJudul    = dialog.findViewById<TextView>(R.id.tvDialogJudul)
-        val btnTutup   = dialog.findViewById<TextView>(R.id.btnTutupDialog)
-        val spWarna    = dialog.findViewById<Spinner>(R.id.spWarna)
-        val rgKemasan  = dialog.findViewById<RadioGroup>(R.id.rgKemasan)
-        val cbSablon   = dialog.findViewById<CheckBox>(R.id.cbSablon)
-        val cbThanks   = dialog.findViewById<CheckBox>(R.id.cbThanksCard)
-        val cbInvited  = dialog.findViewById<CheckBox>(R.id.cbInvitedCard)
-        val btnPilihFile = dialog.findViewById<Button>(R.id.btnPilihFile)
-        val etCatatan  = dialog.findViewById<EditText>(R.id.etCatatan)
-        val btnMin     = dialog.findViewById<Button>(R.id.btnMinQty)
-        val btnPlus    = dialog.findViewById<Button>(R.id.btnPlusQty)
-        val tvQty      = dialog.findViewById<TextView>(R.id.tvQty)
-        val btnTambah  = dialog.findViewById<Button>(R.id.btnTambahKeranjang)
-
-        // Container tanggal acara
-        val llTanggal  = dialog.findViewById<LinearLayout>(R.id.llContainerTanggalAcara)
-        val btnTanggal = dialog.findViewById<Button>(R.id.btnPilihTanggal)
-        val btnWaktu   = dialog.findViewById<Button>(R.id.btnPilihWaktu)
-        val tvWaktu    = dialog.findViewById<TextView>(R.id.tvWaktuTerpilih)
-
-        val namaProd  = produk.getString("nama_produk")
-        val hargaBase = produk.getInt("harga")
-        val prodImage = produk.optString("prod_image", null)
-
-        tvJudul.text = namaProd
-        btnPilihFileRef = btnPilihFile
-        currentCustomImageBase64 = null
-
-        // Spinner Warna
-        val listWarna = arrayOf("Random / Mix", "Merah", "Biru", "Hijau", "Kuning", "Pink", "Ungu")
-        spWarna.adapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, listWarna)
-
-        var qty = 1
-        var tglAcara = ""
-        var jamAcara = ""
-
-        fun updateHarga() {
-            var hargaTambahan = 0
-            when (rgKemasan.checkedRadioButtonId) {
-                R.id.rbTile -> hargaTambahan += 1000
-                R.id.rbBox  -> hargaTambahan += 2500
-            }
-            if (cbSablon.isChecked)  hargaTambahan += 500
-            if (cbThanks.isChecked)  hargaTambahan += 300
-            if (cbInvited.isChecked) hargaTambahan += 400
-
-            val totalBayar = (hargaBase + hargaTambahan) * qty
-            btnTambah.text = "Tambah — Rp $totalBayar"
-        }
-
-        rgKemasan.setOnCheckedChangeListener { _, _ -> updateHarga() }
-        cbSablon.setOnCheckedChangeListener  { _, _ -> updateHarga() }
-        cbThanks.setOnCheckedChangeListener  { _, _ -> updateHarga() }
-
-        // ✅ FIX: cbInvited hanya di-set SEKALI — handle visibility DAN updateHarga sekaligus
-        cbInvited.setOnCheckedChangeListener { _, isChecked ->
-            llTanggal.visibility = if (isChecked) View.VISIBLE else View.GONE
-            if (!isChecked) {
-                // Reset waktu jika unchecked
-                tglAcara = ""
-                jamAcara = ""
-                tvWaktu.text = "Belum memilih waktu"
-                btnTanggal.text = "Pilih Tanggal"
-                btnWaktu.text = "Pilih Waktu"
-            }
-            updateHarga()
-        }
-
-        // ✅ Date Picker
-        btnTanggal.setOnClickListener {
-            val c = Calendar.getInstance()
-            DatePickerDialog(
-                this,
-                { _, y, m, d ->
-                    tglAcara = String.format("%02d/%02d/%04d", d, m + 1, y)
-                    btnTanggal.text = tglAcara
-                    tvWaktu.text = "$tglAcara $jamAcara".trim()
-                },
-                c.get(Calendar.YEAR),
-                c.get(Calendar.MONTH),
-                c.get(Calendar.DAY_OF_MONTH)
-            ).show()
-        }
-
-        // ✅ Time Picker
-        btnWaktu.setOnClickListener {
-            val c = Calendar.getInstance()
-            TimePickerDialog(
-                this,
-                { _, h, m ->
-                    jamAcara = String.format("%02d:%02d", h, m)
-                    btnWaktu.text = jamAcara
-                    tvWaktu.text = "$tglAcara $jamAcara".trim()
-                },
-                c.get(Calendar.HOUR_OF_DAY),
-                c.get(Calendar.MINUTE),
-                true
-            ).show()
-        }
-
-        btnMin.setOnClickListener {
-            if (qty > 1) { qty--; tvQty.text = qty.toString(); updateHarga() }
-        }
-        btnPlus.setOnClickListener {
-            qty++; tvQty.text = qty.toString(); updateHarga()
-        }
-
-        btnPilihFile.setOnClickListener { pickImageLauncher.launch("image/*") }
-        btnTutup.setOnClickListener { dialog.dismiss() }
-
-        btnTambah.setOnClickListener {
-            val kemasan = when (rgKemasan.checkedRadioButtonId) {
-                R.id.rbTile -> "Tile"
-                R.id.rbBox  -> "Box"
-                else        -> "Plastik"
-            }
-            val catatan = etCatatan.text.toString()
-            val waktuAcara = if (cbInvited.isChecked && tglAcara.isNotEmpty()) "$tglAcara $jamAcara".trim() else ""
-            val fullEventInfo = buildString {
-                append("Warna: ${spWarna.selectedItem}, Kemasan: $kemasan")
-                val extras = mutableListOf<String>()
-                if (cbSablon.isChecked)  extras.add("Sablon")
-                if (cbThanks.isChecked)  extras.add("Thanks Card")
-                if (cbInvited.isChecked) extras.add("Invited Card${if (waktuAcara.isNotEmpty()) " ($waktuAcara)" else ""}")
-                if (extras.isNotEmpty()) append(", Extras: ${extras.joinToString(", ")}")
-                if (catatan.isNotEmpty()) append("\nCatatan: $catatan")
-            }
-
-            // Ambil harga per item dari tombol (sudah termasuk tambahan)
-            val totalText = btnTambah.text.toString()
-            val totalBayar = totalText.substringAfter("Rp ").replace(".", "").replace(",", "").trim().toIntOrNull() ?: (hargaBase * qty)
-            val itemPrice = totalBayar / qty
-
-            val success = dbHelper.tambahKeKeranjang(namaProd, qty, itemPrice, currentCustomImageBase64, prodImage)
-            if (success) {
-                Toast.makeText(this, "✓ Berhasil masuk keranjang", Toast.LENGTH_SHORT).show()
-                dialog.dismiss()
-            } else {
-                Toast.makeText(this, "Gagal menambahkan ke keranjang", Toast.LENGTH_SHORT).show()
-            }
-        }
-
-        updateHarga()
-        dialog.show()
-    }
-
     private fun applySettings() {
         val prefs = getSharedPreferences("SmoliePrefs", Context.MODE_PRIVATE)
-        val selectedColor = prefs.getString("bg_color", "Default")
-        val rootLayout = findViewById<View>(R.id.layoutHomePembeli)
-        when (selectedColor) {
-            "Abu-abu" -> rootLayout.setBackgroundColor(Color.LTGRAY)
-            "Merah Maroon" -> rootLayout.setBackgroundColor(Color.parseColor("#800000"))
-            "Biru" -> rootLayout.setBackgroundColor(Color.parseColor("#E3F2FD"))
-            "Hijau" -> rootLayout.setBackgroundColor(Color.parseColor("#E8F5E9"))
-            else -> rootLayout.setBackgroundColor(Color.parseColor("#F8F9FA"))
+
+        val bgColor = try { prefs.getString("bg_color", "Default") }
+        catch (e: ClassCastException) { prefs.edit().remove("bg_color").apply(); "Default" }
+        val layout = findViewById<View>(R.id.layoutHomePembeli)
+        when (bgColor) {
+            "Abu-abu"      -> layout.setBackgroundColor(Color.LTGRAY)
+            "Merah Maroon" -> layout.setBackgroundColor(Color.parseColor("#800000"))
+            "Biru"         -> layout.setBackgroundColor(Color.parseColor("#ADD8E6"))
+            "Hijau"        -> layout.setBackgroundColor(Color.parseColor("#90EE90"))
+            else           -> layout.setBackgroundColor(Color.WHITE)
+        }
+
+        val buttonText = try { prefs.getString("button_text", "") }
+        catch (e: ClassCastException) { prefs.edit().remove("button_text").apply(); "" }
+        val btnKeranjang = findViewById<Button>(R.id.btnLihatKeranjang)
+        btnKeranjang?.text = if (!buttonText.isNullOrEmpty()) buttonText else "Keranjang Belanja"
+
+        val tvText = try { prefs.getString("textview_text", "") }
+        catch (e: ClassCastException) { prefs.edit().remove("textview_text").apply(); "" }
+        val tvHeader = findViewById<TextView>(R.id.tvHeaderTitle)
+        tvHeader?.text = if (!tvText.isNullOrEmpty()) tvText else "Cari Souvenir Unik & Cantik?"
+
+        val fontSizeStr = try { prefs.getString("font_size", "") }
+        catch (e: ClassCastException) { prefs.edit().remove("font_size").apply(); "" }
+        if (!fontSizeStr.isNullOrEmpty()) {
+            val fontSize = fontSizeStr.toFloatOrNull()
+            if (fontSize != null && fontSize in 8f..40f) tvHeader?.textSize = fontSize
         }
     }
 
-    private fun loadKatalogProduk() {
-        gridLayoutProduk.removeAllViews()
-        ApiClient.getAllProducts { response ->
-            runOnUiThread {
-                if (response != null) {
-                    try {
-                        val json = JSONObject(response)
-                        val data = json.getJSONArray("data")
-                        listProdukApi.clear()
-                        for (i in 0 until data.length()) { listProdukApi.add(data.getJSONObject(i)) }
-                        tampilkanDataKatalogApi(listProdukApi)
-                    } catch (e: Exception) { tampilkanDataKatalogLocal(dbHelper.getSemuaProduk()) }
-                } else { tampilkanDataKatalogLocal(dbHelper.getSemuaProduk()) }
-            }
-        }
-    }
-
-    private fun tampilkanDataKatalogApi(data: List<JSONObject>) {
-        val inflater = LayoutInflater.from(this)
-        val itemWidth = (resources.displayMetrics.widthPixels / 2) - 48
-        for (produk in data) {
-            val itemView = inflater.inflate(R.layout.item_produk_pembeli, gridLayoutProduk, false)
-            itemView.findViewById<TextView>(R.id.tvPembeliProdName).text = produk.getString("nama_produk")
-            itemView.findViewById<TextView>(R.id.tvPembeliProdPrice).text = "Rp ${produk.getInt("harga")}"
-
-            itemView.findViewById<Button>(R.id.btnPesanKatalog).setOnClickListener {
-                showPesanDialog(produk)
-            }
-
-            val params = GridLayout.LayoutParams(); params.width = itemWidth; params.setMargins(12, 16, 12, 16)
-            itemView.layoutParams = params; gridLayoutProduk.addView(itemView)
-        }
-    }
-
-    private fun tampilkanDataKatalogLocal(cursor: Cursor) {
-        val inflater = LayoutInflater.from(this)
-        val itemWidth = (resources.displayMetrics.widthPixels / 2) - 48
-        while (cursor.moveToNext()) {
-            val name = cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COLUMN_PROD_NAME))
-            val price = cursor.getInt(cursor.getColumnIndexOrThrow(DatabaseHelper.COLUMN_PROD_PRICE))
-            val category = cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COLUMN_PROD_CAT))
-            val image = cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COLUMN_PROD_IMAGE))
-
-            val itemView = inflater.inflate(R.layout.item_produk_pembeli, gridLayoutProduk, false)
-            itemView.findViewById<TextView>(R.id.tvPembeliProdName).text = name
-            itemView.findViewById<TextView>(R.id.tvPembeliProdPrice).text = "Rp $price"
-
-            itemView.findViewById<Button>(R.id.btnPesanKatalog).setOnClickListener {
-                val obj = JSONObject()
-                obj.put("nama_produk", name)
-                obj.put("harga", price)
-                obj.put("prod_image", image)
-                showPesanDialog(obj)
-            }
-
-            val params = GridLayout.LayoutParams(); params.width = itemWidth; params.setMargins(12, 16, 12, 16)
-            itemView.layoutParams = params; gridLayoutProduk.addView(itemView)
-        }
-        cursor.close()
-    }
-
-    private fun loadKategori(onDone: () -> Unit) {
-        ApiClient.getKategori { list ->
-            runOnUiThread { listKategori.clear(); listKategori.addAll(list); onDone() }
-        }
-    }
+    // ── Profile ──────────────────────────────────────────────────────────────
 
     private fun loadUserProfile(email: String) {
         val cursor = dbHelper.getUserByEmail(email)
         if (cursor != null && cursor.moveToFirst()) {
-            val name = cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COLUMN_NAME))
+            val name     = cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COLUMN_NAME))
+            val phone    = cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COLUMN_PHONE))
             val username = cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COLUMN_USERNAME))
-            val gender = cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COLUMN_GENDER))
-            val phone = cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COLUMN_PHONE))
-            val address = cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COLUMN_ADDRESS))
-
-            findViewById<TextView>(R.id.tvProfileName).text = name
-            findViewById<TextView>(R.id.tvProfileEmail).text = email
-            findViewById<TextView>(R.id.tvProfileUsername).text = "Username: ${username ?: "-"}"
-            findViewById<TextView>(R.id.tvProfileGender).text = "Jenis Kelamin: ${gender ?: "-"}"
-            findViewById<TextView>(R.id.tvProfilePhone).text = "Telepon: ${phone ?: "-"}"
-            findViewById<TextView>(R.id.tvProfileAddress).text = "Alamat: ${address ?: "-"}"
-            
+            val gender   = cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COLUMN_GENDER))
+            val address  = cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COLUMN_ADDRESS))
             cursor.close()
+
+            runOnUiThread {
+                findViewById<TextView>(R.id.tvProfileName)?.text     = name
+                findViewById<TextView>(R.id.tvProfileEmail)?.text    = email  // ← tambahkan ini
+                findViewById<TextView>(R.id.tvProfilePhone)?.text    = "Telepon: $phone"
+                findViewById<TextView>(R.id.tvProfileUsername)?.text = "Username: $username"
+                findViewById<TextView>(R.id.tvProfileGender)?.text   = "Jenis Kelamin: $gender"
+                findViewById<TextView>(R.id.tvProfileAddress)?.text  = "Alamat: $address"
+            }
         }
     }
+
+    // ── Helper ───────────────────────────────────────────────────────────────
 
     private fun getFileName(uri: Uri): String {
-        var res: String? = null
+        var result: String? = null
         if (uri.scheme == "content") {
-            val cursor = contentResolver.query(uri, null, null, null, null)
-            cursor?.use { if (it.moveToFirst()) res = it.getString(it.getColumnIndexOrThrow(OpenableColumns.DISPLAY_NAME)) }
+            val cursor: Cursor? = contentResolver.query(uri, null, null, null, null)
+            try {
+                if (cursor != null && cursor.moveToFirst()) {
+                    result = cursor.getString(cursor.getColumnIndexOrThrow(OpenableColumns.DISPLAY_NAME))
+                }
+            } finally { cursor?.close() }
         }
-        return res ?: uri.path?.substringAfterLast('/') ?: "image"
+        if (result == null) {
+            result = uri.path
+            val cut = result?.lastIndexOf('/')
+            if (cut != -1) result = result?.substring(cut!! + 1)
+        }
+        return result ?: "unknown"
     }
 
-    override fun onCreateOptionsMenu(menu: Menu?): Boolean { menuInflater.inflate(R.menu.pembeli_menu, menu); return true }
+    // ── Menu ─────────────────────────────────────────────────────────────────
+
+    override fun onCreateOptionsMenu(menu: Menu?): Boolean {
+        menuInflater.inflate(R.menu.pembeli_menu, menu)
+        return true
+    }
+
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
-        when (item.itemId) {
+        return when (item.itemId) {
+            R.id.menuSetting -> { showSettingDialog(); true }
             R.id.menuLogoutPembeli -> {
-                startActivity(Intent(this, LoginActivity::class.java).apply { flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK }); finish()
-                return true
+                val intent = Intent(this, LoginActivity::class.java)
+                intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+                startActivity(intent)
+                finish()
+                true
             }
-            R.id.menuSetting -> {
-                showSettingDialog()
-                return true
-            }
+            else -> super.onOptionsItemSelected(item)
         }
-        return super.onOptionsItemSelected(item)
     }
 }

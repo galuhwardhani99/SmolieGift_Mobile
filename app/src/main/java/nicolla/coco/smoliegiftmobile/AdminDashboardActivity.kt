@@ -47,6 +47,7 @@ class AdminDashboardActivity : AppCompatActivity() {
         val cvMenuProduk = findViewById<CardView>(R.id.cvMenuProduk)
         val cvMenuTransaksi = findViewById<CardView>(R.id.cvMenuTransaksi)
         val cvMenuLaporan = findViewById<CardView>(R.id.cvMenuLaporan)
+        val cvMenuReview = findViewById<CardView>(R.id.cvMenuReview)
         val bottomNav = findViewById<BottomNavigationView>(R.id.bottomNavigation)
         val btnEditProfile = findViewById<Button>(R.id.btnEditProfileAdmin)
 
@@ -100,6 +101,10 @@ class AdminDashboardActivity : AppCompatActivity() {
         
         cvMenuLaporan.setOnClickListener {
             startActivity(Intent(this@AdminDashboardActivity, AdminLaporanActivity::class.java))
+        }
+
+        cvMenuReview.setOnClickListener {
+            startActivity(Intent(this@AdminDashboardActivity, AdminReviewActivity::class.java))
         }
 
         btnEditProfile.setOnClickListener {

@@ -6,7 +6,6 @@ import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothDevice
 import android.bluetooth.BluetoothSocket
 import android.content.pm.PackageManager
-import android.database.Cursor
 import android.graphics.Bitmap
 import android.graphics.Color
 import android.os.Build
@@ -54,8 +53,11 @@ class CartActivity : AppCompatActivity() {
     private var btSocket: BluetoothSocket? = null
     private var btOutputStream: OutputStream? = null
 
+    // Menyimpan teks struk yang sedang menunggu izin Bluetooth diberikan
+    private var pendingStrukText: String? = null
+
     companion object {
-        const val BASE_URL = "http://192.168.1.29/toko-smolie/public"
+        const val BASE_URL = "http://192.168.1.28/toko-smolie/public"
         const val REQUEST_BLUETOOTH_PERMISSION = 101
         private val SPP_UUID = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB")
     }
@@ -144,27 +146,41 @@ class CartActivity : AppCompatActivity() {
             }
 
             // ✅ UPDATED: Kirim ke Laravel API
+            // Ambil no_hp dari database sebelum kirim transaksi
             btnKonfirmasi.setOnClickListener {
                 val namaPembeli = etNama.text.toString().trim()
                 if (grandTotal <= 0 || namaPembeli.isEmpty()) return@setOnClickListener
 
-                val kode = generateKodeTransaksi()
+                // Ambil no_hp dari DB
+                val noHp = try {
+                    val cursor = dbHelper.getUserByEmail(currentUserEmail ?: "")
+                    if (cursor != null && cursor.moveToFirst()) {
+                        val hp = cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COLUMN_PHONE)) ?: "-"
+                        cursor.close()
+                        hp
+                    } else "-"
+                } catch (e: Exception) { "-" }
 
+                val kode = generateKodeTransaksi()
                 btnKonfirmasi.isEnabled = false
                 btnKonfirmasi.text = "Mengirim pesanan..."
 
+                // Kirim items keranjang juga
+                val itemsJson = getCartItemsAsJson()
+
                 ApiClient.buatTransaksi(
                     namaPembeli      = namaPembeli,
-                    noHp             = "-",
+                    noHp             = noHp,        // ← sudah ada no_hp
                     metodePembayaran = metodeDipilih,
                     jenisPesanan     = "Online",
                     kodeTransaksi    = kode,
-                    totalHarga       = grandTotal
+                    totalHarga       = grandTotal,
+                    itemsJson        = itemsJson    // ← tambah parameter ini
                 ) { berhasil ->
                     runOnUiThread {
                         if (berhasil) {
                             dbHelper.kosongkanKeranjang()
-                            Toast.makeText(this, "Pesanan berhasil dikirim! Tunggu konfirmasi admin.", Toast.LENGTH_LONG).show()
+                            Toast.makeText(this, "Pesanan berhasil dikirim!", Toast.LENGTH_LONG).show()
                             finish()
                         } else {
                             btnKonfirmasi.isEnabled = true
@@ -195,14 +211,17 @@ class CartActivity : AppCompatActivity() {
             return
         }
 
-        // Juga kirim ke API agar admin bisa lihat
+        // Juga kirim ke API agar admin bisa lihat (jenisPesanan harus konsisten
+        // dengan pengecekan "offline"/"Beli di Toko" di AdminTransaksiActivity
+        // & AdminLaporanActivity, supaya tampil sebagai "Pesanan Offline")
         ApiClient.buatTransaksi(
             namaPembeli      = namaPembeli,
             noHp             = "-",
             metodePembayaran = "Tunai",
-            jenisPesanan     = "Toko",
+            jenisPesanan     = "Beli di Toko",
             kodeTransaksi    = kode,
-            totalHarga       = grandTotal
+            totalHarga       = grandTotal,
+            itemsJson        = itemsJson
         ) { _ -> }
 
         val rincianStruk = buildStrukText(namaPembeli, itemsJson, grandTotal, 0, 0)
@@ -272,18 +291,34 @@ class CartActivity : AppCompatActivity() {
         dialog.show()
     }
 
+    // ===================== BLUETOOTH PRINT =====================
+
     private fun printViaBluetoothAtauPilih(strukteks: String) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             if (ContextCompat.checkSelfPermission(this, Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED) {
+                // Simpan teks struk supaya bisa dilanjutkan otomatis
+                // setelah user memberi izin di onRequestPermissionsResult
+                pendingStrukText = strukteks
                 ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.BLUETOOTH_CONNECT), REQUEST_BLUETOOTH_PERMISSION)
                 return
             }
         }
+        lanjutkanProsesPrint(strukteks)
+    }
+
+    private fun lanjutkanProsesPrint(strukteks: String) {
         val btAdapter = BluetoothAdapter.getDefaultAdapter()
         if (btAdapter == null || !btAdapter.isEnabled) {
             Toast.makeText(this, "Bluetooth tidak aktif!", Toast.LENGTH_SHORT).show()
             return
         }
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S &&
+            ContextCompat.checkSelfPermission(this, Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED) {
+            Toast.makeText(this, "Izin Bluetooth diperlukan untuk mencetak.", Toast.LENGTH_SHORT).show()
+            return
+        }
+
         val pairedDevices: Set<BluetoothDevice> = btAdapter.bondedDevices
         if (pairedDevices.isEmpty()) {
             Toast.makeText(this, "Tidak ada printer Bluetooth!", Toast.LENGTH_LONG).show()
@@ -296,6 +331,23 @@ class CartActivity : AppCompatActivity() {
             .setItems(deviceNames) { _, index -> koneksiDanPrint(deviceList[index], strukteks) }
             .setNegativeButton("Batal", null)
             .show()
+    }
+
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<out String>,
+        grantResults: IntArray
+    ) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        if (requestCode == REQUEST_BLUETOOTH_PERMISSION) {
+            if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                // Izin diberikan → lanjutkan proses print yang tertunda
+                pendingStrukText?.let { lanjutkanProsesPrint(it) }
+            } else {
+                Toast.makeText(this, "Izin Bluetooth ditolak. Tidak bisa mencetak.", Toast.LENGTH_SHORT).show()
+            }
+            pendingStrukText = null
+        }
     }
 
     private fun koneksiDanPrint(device: BluetoothDevice, strukteks: String) {

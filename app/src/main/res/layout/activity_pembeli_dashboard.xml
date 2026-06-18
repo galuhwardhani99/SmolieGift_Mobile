@@ -233,12 +233,13 @@
 
                 <TextView
                     android:id="@+id/tvProfileEmail"
-                    android:layout_width="wrap_content"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:text="email@example.com"
-                    android:textSize="16sp"
-                    android:textColor="#64748B"
-                    android:layout_marginBottom="32dp"/>
+                    android:textSize="18sp"
+                    android:textColor="#666666"
+                    android:gravity="center"
+                    android:textAlignment="center" />
 
                 <androidx.cardview.widget.CardView
                     android:layout_width="match_parent"
@@ -308,8 +309,11 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:background="#FFFFFF"
+        app:itemIconTint="#DD3827"
+        app:itemTextColor="#DD3827"
         app:elevation="8dp"
         app:menu="@menu/pembeli_bottom_menu"
+        app:labelVisibilityMode="selected"
         app:layout_constraintBottom_toBottomOf="parent" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

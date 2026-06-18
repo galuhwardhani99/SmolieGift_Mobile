@@ -62,7 +62,7 @@
         <RelativeLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="8dp">
+            android:layout_marginBottom="4dp">
             <TextView
                 android:id="@+id/tvAdminTransNama"
                 android:layout_width="wrap_content"
@@ -92,9 +92,10 @@
             android:layout_height="wrap_content"
             android:text="Daftar produk belanjaan..."
             android:textColor="#64748B"
-            android:textSize="14sp"
-            android:lineSpacingExtra="3dp"
-            android:layout_marginBottom="12dp"/>
+            android:textSize="13sp"
+            android:lineSpacingExtra="4dp"
+            android:layout_marginTop="8dp"
+            android:layout_marginBottom="16dp"/>
 
         <!-- Note Section -->
         <LinearLayout
@@ -104,7 +105,7 @@
             android:background="#F8FAFC"
             android:padding="12dp"
             android:gravity="center_vertical"
-            android:layout_marginBottom="12dp">
+            android:layout_marginBottom="16dp">
             <ImageView
                 android:layout_width="14dp"
                 android:layout_height="14dp"
@@ -121,13 +122,14 @@
                 android:layout_marginStart="8dp"/>
         </LinearLayout>
 
-        <!-- Image Container (Restored for AdminLaporan & History) -->
+        <!-- Image Container -->
         <LinearLayout
             android:id="@+id/llContainerImage"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
             android:layout_marginTop="4dp"
+            android:layout_marginBottom="12dp"
             android:visibility="gone">
             <TextView
                 android:layout_width="wrap_content"
@@ -151,52 +153,76 @@
             </com.google.android.material.card.MaterialCardView>
         </LinearLayout>
 
-        <!-- Additional Info -->
+        <!-- Additional Info: 2 baris agar tidak mepet -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:layout_marginTop="12dp"
-            android:gravity="center_vertical">
+            android:orientation="vertical"
+            android:layout_marginTop="4dp">
 
-            <TextView
-                android:id="@+id/tvAdminTransWa"
-                android:layout_width="wrap_content"
+            <!-- Baris 1: HP & Metode Bayar -->
+            <LinearLayout
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="WhatsApp"
-                android:textColor="#94A3B8"
-                android:textSize="11sp"/>
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:layout_marginBottom="6dp">
 
-            <TextView
-                android:layout_width="wrap_content"
+                <ImageView
+                    android:layout_width="12dp"
+                    android:layout_height="12dp"
+                    android:src="@drawable/ic_person"
+                    app:tint="#94A3B8"
+                    android:layout_marginEnd="4dp"/>
+
+                <TextView
+                    android:id="@+id/tvAdminTransWa"
+                    android:layout_width="0dp"
+                    android:layout_weight="1"
+                    android:layout_height="wrap_content"
+                    android:text="HP: -"
+                    android:textColor="#64748B"
+                    android:textSize="12sp"/>
+
+                <TextView
+                    android:id="@+id/tvAdminTransMetode"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Tunai"
+                    android:textColor="#94A3B8"
+                    android:textSize="12sp"/>
+            </LinearLayout>
+
+            <!-- Baris 2: Tanggal -->
+            <LinearLayout
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text=" • "
-                android:textColor="#CBD5E1"/>
+                android:orientation="horizontal"
+                android:gravity="center_vertical">
 
-            <TextView
-                android:id="@+id/tvAdminTransMetode"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Tunai"
-                android:textColor="#94A3B8"
-                android:textSize="11sp"/>
+                <ImageView
+                    android:layout_width="12dp"
+                    android:layout_height="12dp"
+                    android:src="@drawable/ic_schedule"
+                    app:tint="#94A3B8"
+                    android:layout_marginEnd="4dp"/>
 
-            <View
-                android:layout_width="0dp"
-                android:layout_height="0dp"
-                android:layout_weight="1"/>
-
-            <TextView
-                android:id="@+id/tvAdminTransTanggal"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Waktu"
-                android:textColor="#94A3B8"
-                android:textSize="11sp"/>
-
+                <TextView
+                    android:id="@+id/tvAdminTransTanggal"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Waktu: -"
+                    android:textColor="#64748B"
+                    android:textSize="12sp"/>
+            </LinearLayout>
         </LinearLayout>
 
-        <View android:layout_width="match_parent" android:layout_height="1dp" android:background="#F1F5F9" android:layout_marginTop="16dp" android:layout_marginBottom="16dp"/>
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="#F1F5F9"
+            android:layout_marginTop="16dp"
+            android:layout_marginBottom="16dp"/>
 
         <!-- Action Buttons -->
         <LinearLayout
@@ -208,30 +234,60 @@
                 android:id="@+id/btnCetakStruk"
                 android:layout_width="0dp"
                 android:layout_weight="1"
-                android:layout_height="54dp"
-                android:text="SIMPAN PDF"
+                android:layout_height="48dp"
+                android:text="PDF"
                 android:textColor="#FFFFFF"
                 android:textSize="12sp"
                 android:textStyle="bold"
-                app:cornerRadius="16dp"
+                app:cornerRadius="14dp"
                 app:icon="@drawable/receipt"
                 app:iconGravity="textStart"
                 app:iconTint="#FFFFFF"
+                app:iconSize="16dp"
+                app:iconPadding="4dp"
                 android:backgroundTint="#475569"
                 android:layout_marginEnd="8dp"
                 android:elevation="0dp"/>
 
             <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnBatalkanPesanan"
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:layout_height="48dp"
+                android:text="BATAL"
+                android:backgroundTint="#94A3B8"
+                android:textColor="#FFFFFF"
+                android:textSize="11sp"
+                android:textStyle="bold"
+                app:cornerRadius="14dp"
+                android:layout_marginEnd="8dp"
+                android:elevation="2dp"/>
+
+            <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnSelesaiPesanan"
                 android:layout_width="0dp"
-                android:layout_weight="1.2"
-                android:layout_height="54dp"
-                android:text="SELESAIKAN"
+                android:layout_weight="1.3"
+                android:layout_height="48dp"
+                android:text="SELESAI"
                 android:backgroundTint="#DD3827"
                 android:textColor="#FFFFFF"
-                android:textSize="12sp"
+                android:textSize="11sp"
                 android:textStyle="bold"
-                app:cornerRadius="16dp"
+                app:cornerRadius="14dp"
+                android:elevation="2dp"/>
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnUlasan"
+                android:layout_width="0dp"
+                android:layout_weight="1.3"
+                android:layout_height="48dp"
+                android:text="ULASAN"
+                android:backgroundTint="#FF9800"
+                android:textColor="#FFFFFF"
+                android:textSize="11sp"
+                android:textStyle="bold"
+                app:cornerRadius="14dp"
+                android:visibility="gone"
                 android:elevation="2dp"/>
         </LinearLayout>
 

@@ -67,12 +67,13 @@ class KasirDashboardActivity : AppCompatActivity() {
         val bottomNav = findViewById<BottomNavigationView>(R.id.bottomNavKasir)
         val btnEditProfile = findViewById<Button>(R.id.btnEditProfileKasir)
 
+        cvMenuTransaksi.setOnClickListener {
+            val intent = Intent(this, AdminTransaksiActivity::class.java)
+            intent.putExtra("IS_KASIR_MODE", true)
+            startActivity(intent)
+        }
         cvMenuKatalog.setOnClickListener {
             tampilkanDialogInputManual()
-        }
-
-        cvMenuTransaksi.setOnClickListener {
-            startActivity(Intent(this, AdminTransaksiActivity::class.java))
         }
 
         btnEditProfile.setOnClickListener {
@@ -192,31 +193,66 @@ class KasirDashboardActivity : AppCompatActivity() {
         val tvQty = dialog.findViewById<TextView>(R.id.tvQty)
         val btnTambah = dialog.findViewById<Button>(R.id.btnTambahKeranjang)
         val spWarna = dialog.findViewById<Spinner>(R.id.spWarna)
+        val rgKemasan = dialog.findViewById<RadioGroup>(R.id.rgKemasan)
+        val cbSablon = dialog.findViewById<CheckBox>(R.id.cbSablon)
+        val cbThanksCard = dialog.findViewById<CheckBox>(R.id.cbThanksCard)
         val cbInvitedCard = dialog.findViewById<CheckBox>(R.id.cbInvitedCard)
         val llContainerTanggal = dialog.findViewById<LinearLayout>(R.id.llContainerTanggalAcara)
         val btnPilihTanggal = dialog.findViewById<Button>(R.id.btnPilihTanggal)
         val btnPilihWaktu = dialog.findViewById<Button>(R.id.btnPilihWaktu)
         val tvWaktuTerpilih = dialog.findViewById<TextView>(R.id.tvWaktuTerpilih)
-        
+        val etCatatan = dialog.findViewById<EditText>(R.id.etCatatan)
+
         var selectedTanggal = ""
         var selectedWaktu = ""
         var qty = 1
 
-        val varianOptions = arrayOf("Pilih varian...", "Warna Pastel", "Monokrom", "Aksen Emas", "Random", "Custom Desain Sendiri")
-        val adapterVarian = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, varianOptions)
-        spWarna.adapter = adapterVarian
+        // 1) Fungsi-fungsi lokal didefinisikan PALING ATAS dulu,
+        //    sebelum dipakai di listener manapun di bawah.
+
+        fun hitungFeeTambahan(): Int {
+            var fee = 0
+            fee += when (rgKemasan.checkedRadioButtonId) {
+                R.id.rbTile -> 1000
+                R.id.rbBox  -> 2500
+                else        -> 0
+            }
+            if (cbSablon.isChecked)      fee += 500
+            if (cbThanksCard.isChecked)  fee += 300
+            if (cbInvitedCard.isChecked) fee += 400
+            return fee
+        }
+
+        fun updateHarga() {
+            val totalHarga = (hargaDasar + hitungFeeTambahan()) * qty
+            btnTambah.text = String.format(Locale.getDefault(), "Tambah — Rp %d", totalHarga)
+        }
 
         fun updateVisibility() {
             val varian = spWarna.selectedItem.toString()
             llContainerTanggal.isVisible = (varian == "Custom Desain Sendiri" || cbInvitedCard.isChecked)
         }
 
+        // 2) Setup Spinner Varian
+        val varianOptions = arrayOf("Pilih varian...", "Warna Pastel", "Monokrom", "Aksen Emas", "Random", "Custom Desain Sendiri")
+        val adapterVarian = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, varianOptions)
+        spWarna.adapter = adapterVarian
+
         spWarna.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
             override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) { updateVisibility() }
             override fun onNothingSelected(parent: AdapterView<*>?) {}
         }
 
-        cbInvitedCard.setOnCheckedChangeListener { _, _ -> updateVisibility() }
+        // 3) Sekarang baru pasang semua listener yang memanggil updateHarga()/updateVisibility()
+        //    — aman karena keduanya sudah didefinisikan di atas.
+
+        rgKemasan.setOnCheckedChangeListener { _, _ -> updateHarga() }
+        cbSablon.setOnCheckedChangeListener { _, _ -> updateHarga() }
+        cbThanksCard.setOnCheckedChangeListener { _, _ -> updateHarga() }
+        cbInvitedCard.setOnCheckedChangeListener { _, _ ->
+            updateVisibility()
+            updateHarga()
+        }
 
         btnPilihTanggal.setOnClickListener {
             val c = Calendar.getInstance()
@@ -234,32 +270,30 @@ class KasirDashboardActivity : AppCompatActivity() {
             }, c.get(Calendar.HOUR_OF_DAY), c.get(Calendar.MINUTE), true).show()
         }
 
-        fun updateHarga() { btnTambah.text = String.format(Locale.getDefault(), "Tambah — Rp %d", hargaDasar * qty) }
-
         dialog.findViewById<TextView>(R.id.tvDialogJudul).text = namaProduk
         dialog.findViewById<Button>(R.id.btnPlusQty).setOnClickListener { qty++; tvQty.text = qty.toString(); updateHarga() }
         dialog.findViewById<Button>(R.id.btnMinQty).setOnClickListener { if(qty>1) {qty--; tvQty.text = qty.toString(); updateHarga()} }
-        
+
         dialog.findViewById<Button>(R.id.btnPilihFile).visibility = View.GONE
         dialog.findViewById<TextView>(R.id.btnTutupDialog).setOnClickListener { dialog.dismiss() }
 
         btnTambah.setOnClickListener {
-            val total = hargaDasar * qty
+            val total = (hargaDasar + hitungFeeTambahan()) * qty
             val catatanExtra = if(llContainerTanggal.isVisible) "\nWaktu Acara: $selectedTanggal $selectedWaktu" else ""
-            val etCatatan = dialog.findViewById<EditText>(R.id.etCatatan)
             val finalCatatan = etCatatan.text.toString() + catatanExtra
 
             if (dbHelper.tambahKeKeranjang(namaProduk, qty, total, null, fotoProdukBase64)) {
                 Toast.makeText(this, "Ditambahkan ke keranjang kasir!", Toast.LENGTH_SHORT).show()
                 dialog.dismiss()
-                
+
                 val intent = Intent(this, CartActivity::class.java)
                 intent.putExtra("USER_EMAIL", currentUserEmail)
                 intent.putExtra("IS_KASIR_MODE", true)
                 startActivity(intent)
             }
         }
-        updateHarga(); dialog.show()
+        updateHarga()
+        dialog.show()
     }
 
     private fun tampilkanDialogInputManual() {
