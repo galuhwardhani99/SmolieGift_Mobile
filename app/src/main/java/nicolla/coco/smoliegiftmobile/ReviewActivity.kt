@@ -51,7 +51,7 @@ class ReviewActivity : AppCompatActivity() {
     private var scaleFactor = 1.0f
     private lateinit var scaleGestureDetector: ScaleGestureDetector
 
-    // Batas ukuran video maksimal 20MB
+    // Batas uk vid
     private val MAX_VIDEO_SIZE = 20 * 1024 * 1024L
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -85,7 +85,7 @@ class ReviewActivity : AppCompatActivity() {
         }
     }
 
-    // ─── Kamera ───────────────────────────────────────────────────────────────
+    // Kamera
 
     private fun checkCameraPermission() {
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA)
@@ -124,7 +124,7 @@ class ReviewActivity : AppCompatActivity() {
             }
         }
 
-    // ─── Pilih Foto dari Galeri ───────────────────────────────────────────────
+    // foto dr galeri
 
     private val pickPhotoGallery =
         registerForActivityResult(ActivityResultContracts.GetContent()) { uri ->
@@ -136,12 +136,10 @@ class ReviewActivity : AppCompatActivity() {
             }
         }
 
-    // ─── Pilih Video dari Galeri ──────────────────────────────────────────────
-
+    // vidio dr galeri
     private val pickVideoGallery =
         registerForActivityResult(ActivityResultContracts.GetContent()) { uri ->
             uri?.let {
-                // FIX: cek ukuran file sebelum diterima
                 val fileSize = contentResolver.openFileDescriptor(it, "r")?.statSize ?: 0L
                 if (fileSize > MAX_VIDEO_SIZE) {
                     Toast.makeText(
@@ -161,7 +159,6 @@ class ReviewActivity : AppCompatActivity() {
             }
         }
 
-    // ─── Kontrol Video ────────────────────────────────────────────────────────
 
     private fun setupVideoControls() {
         vvReviewVideo.setOnPreparedListener { mp ->
@@ -241,7 +238,7 @@ class ReviewActivity : AppCompatActivity() {
         })
     }
 
-    // ─── Zoom Foto ────────────────────────────────────────────────────────────
+
 
     private fun setupPhotoZoom() {
         scaleGestureDetector = ScaleGestureDetector(
@@ -270,7 +267,6 @@ class ReviewActivity : AppCompatActivity() {
         ivReviewPhoto.scaleY = 1.0f
     }
 
-    // ─── Konversi URI ke Base64 (Foto) ───────────────────────────────────────
 
     private fun uriToBase64Photo(uri: Uri): String? {
         return try {
@@ -305,9 +301,6 @@ class ReviewActivity : AppCompatActivity() {
         }
     }
 
-    // ─── Konversi URI ke Base64 (Video) ──────────────────────────────────────
-    // FIX: fungsi ini sebelumnya tidak ada — video selalu null saat dikirim
-
     private fun uriToBase64Video(uri: Uri): String? {
         return try {
             contentResolver.openInputStream(uri)?.use { input ->
@@ -319,8 +312,6 @@ class ReviewActivity : AppCompatActivity() {
             null
         }
     }
-
-    // ─── Submit Review ────────────────────────────────────────────────────────
 
     private fun submitReview() {
         val ulasan = etReviewText.text.toString().trim()
@@ -338,10 +329,9 @@ class ReviewActivity : AppCompatActivity() {
 
         Toast.makeText(this, "Mengirim ulasan...", Toast.LENGTH_SHORT).show()
 
-        // FIX: jalankan di Thread background agar UI tidak freeze saat encode video besar
         Thread {
             val fotoBase64  = selectedPhotoUri?.let { uriToBase64Photo(it) }
-            // FIX: sebelumnya selalu null — sekarang encode video jika dipilih
+
             val videoBase64 = selectedVideoUri?.let { uriToBase64Video(it) }
 
             ApiClient.submitReview(

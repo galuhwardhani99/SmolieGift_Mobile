@@ -108,7 +108,7 @@ class HistoryFragment : Fragment() {
                             tvTanggal?.text = "Waktu: $rawDate"
                         }
 
-                        // ── Daftar produk dari items_json ─────────────────────
+                        // Daftar produk
                         val tvProduk = itemView.findViewById<TextView>(R.id.tvAdminTransProduk)
                         if (itemsJson.isNotEmpty() && itemsJson != "null") {
                             try {
@@ -133,18 +133,16 @@ class HistoryFragment : Fragment() {
                             tvProduk?.text = "Tidak ada detail produk"
                         }
 
-                        // ── Status ────────────────────────────────────────────
                         itemView.findViewById<TextView>(R.id.tvAdminTransStatusLabel)?.apply {
                             text = "TERKONFIRMASI"
                             setTextColor(Color.parseColor("#2E7D32"))
                         }
 
-                        // ── Sembunyikan tombol aksi admin ─────────────────────
                         itemView.findViewById<View>(R.id.btnSelesaiPesanan)?.visibility = View.GONE
                         itemView.findViewById<View>(R.id.btnCetakStruk)?.visibility = View.GONE
                         itemView.findViewById<View>(R.id.tvAdminTransWa)?.visibility = View.GONE
 
-                        // ── Tombol ulasan ─────────────────────────────────────
+                        // Tombol ulasan
                         val btnUlasan = itemView.findViewById<Button>(R.id.btnUlasan)
                         btnUlasan?.visibility = View.VISIBLE
                         btnUlasan?.setOnClickListener {

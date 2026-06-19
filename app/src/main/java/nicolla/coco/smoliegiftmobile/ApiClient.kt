@@ -4,6 +4,7 @@ import android.graphics.Bitmap
 import okhttp3.*
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.RequestBody.Companion.toRequestBody
+import org.json.JSONArray
 import org.json.JSONObject
 import java.io.ByteArrayOutputStream
 import java.io.IOException
@@ -16,14 +17,14 @@ object ApiClient {
         .writeTimeout(60, TimeUnit.SECONDS)
         .build()
 
-    private const val BASE_URL_API    = "http://192.168.1.28/toko-smolie/public/api/"
+    private const val BASE_URL_API    = "http://192.168.43.3/toko-smolie/public/api/"
     private const val BASE_URL_PRODUK = "${BASE_URL_API}produk"
     private const val UPLOAD_URL      = "${BASE_URL_PRODUK}/upload-image"
     private const val KATEGORI_URL    = "${BASE_URL_API}kategori"
     private const val TRANSAKSI_URL   = "${BASE_URL_API}transaksi"
-    const val IMAGE_BASE_URL          = "http://192.168.1.28/toko-smolie/public/img/produk/"
+    const val IMAGE_BASE_URL          = "http://192.168.43.3/toko-smolie/public/img/produk/"
 
-    // ===================== PRODUK =====================
+    // PRODUK
 
     fun getAllProducts(callback: (String?) -> Unit) {
         val request = Request.Builder().url(BASE_URL_PRODUK).get().build()
@@ -75,6 +76,52 @@ object ApiClient {
         })
     }
 
+    /**
+     * Mengurangi stok produk di server berdasarkan JSON items transaksi.
+     */
+    fun kurangiStokProdukServer(itemsJson: String) {
+        if (itemsJson.isEmpty() || itemsJson == "null") return
+
+        getAllProducts { response ->
+            if (response == null) return@getAllProducts
+            try {
+                val json = JSONObject(response)
+                val serverProducts = json.getJSONArray("data")
+                val items = JSONArray(itemsJson)
+
+                for (i in 0 until items.length()) {
+                    val item = items.getJSONObject(i)
+                    val itemName = item.optString("nama", item.optString("name", ""))
+                    val itemQty = item.optInt("jumlah", item.optInt("qty", 0))
+                    
+                    if (itemName.isNotEmpty() && itemQty > 0) {
+                        for (j in 0 until serverProducts.length()) {
+                            val prod = serverProducts.getJSONObject(j)
+                            if (prod.getString("nama_produk").equals(itemName, ignoreCase = true)) {
+                                val id = prod.getInt("id")
+                                val currentStock = prod.optInt("stock", 0)
+                                val newStock = (currentStock - itemQty).coerceAtLeast(0)
+
+                                updateProduct(
+                                    id = id,
+                                    name = prod.getString("nama_produk"),
+                                    category = prod.optString("kategori_id", "1"),
+                                    price = prod.optInt("harga", 0),
+                                    stock = newStock,
+                                    image = prod.optString("gambar", ""),
+                                    callback = { }
+                                )
+                                break
+                            }
+                        }
+                    }
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        }
+    }
+
     fun deleteProduct(id: Int, callback: (Boolean) -> Unit) {
         val request = Request.Builder().url("$BASE_URL_PRODUK/$id").delete().build()
         client.newCall(request).enqueue(object : Callback {
@@ -110,7 +157,7 @@ object ApiClient {
         })
     }
 
-    // ===================== KATEGORI =====================
+    // KATEGORI
 
     fun getKategori(callback: (List<Pair<Int, String>>) -> Unit) {
         val request = Request.Builder().url(KATEGORI_URL).get().build()
@@ -174,8 +221,7 @@ object ApiClient {
         })
     }
 
-    // ===================== TRANSAKSI =====================
-
+    // TRANSAKSI
     fun getAllTransaksi(callback: (String?) -> Unit) {
         val request = Request.Builder()
             .url("$TRANSAKSI_URL/all")
@@ -231,7 +277,7 @@ object ApiClient {
         jenisPesanan: String,
         kodeTransaksi: String,
         totalHarga: Int,
-        itemsJson: String = "",   // ← tambah parameter ini
+        itemsJson: String = "",
         callback: (Boolean) -> Unit
     ) {
         val json = JSONObject().apply {
@@ -241,7 +287,7 @@ object ApiClient {
             put("jenis_pesanan",     jenisPesanan)
             put("kode_transaksi",    kodeTransaksi)
             put("total_harga",       totalHarga)
-            put("items_json",        itemsJson)   // ← kirim items
+            put("items_json",        itemsJson)
         }
         val body = json.toString().toRequestBody("application/json".toMediaType())
         val request = Request.Builder().url(TRANSAKSI_URL).post(body).build()
@@ -264,7 +310,7 @@ object ApiClient {
         })
     }
 
-    // ===================== ULASAN (REVIEW) =====================
+    // ULASAN
 
     fun submitReview(transaksiId: Int, kodeTransaksi: String, ulasan: String, rating: Int, foto: String?, video: String?, callback: (Boolean, String?) -> Unit) {
         val json = JSONObject().apply {

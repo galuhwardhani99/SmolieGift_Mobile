@@ -20,7 +20,7 @@ class AdminReviewActivity : AppCompatActivity() {
     private lateinit var swipeRefresh: SwipeRefreshLayout
     private lateinit var pbLoading: ProgressBar
 
-    private val REVIEW_IMAGE_BASE_URL = "http://192.168.1.28/toko-smolie/public/reviews/"
+    private val REVIEW_IMAGE_BASE_URL = "http://192.168.43.3/toko-smolie/public/reviews/"
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)

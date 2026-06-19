@@ -156,8 +156,6 @@ class PembeliDashboardActivity : AppCompatActivity() {
         applySettings()
     }
 
-    // ── Navigasi ─────────────────────────────────────────────────────────────
-
     private fun showHome() {
         layoutHome.visibility = View.VISIBLE
         fragmentContainer.visibility = View.GONE
@@ -196,7 +194,6 @@ class PembeliDashboardActivity : AppCompatActivity() {
         toolbar.title = "Profil Saya"
     }
 
-    // ── Map ──────────────────────────────────────────────────────────────────
 
     private fun setupOsmMap() {
         val map = mapOsm ?: return
@@ -252,8 +249,6 @@ class PembeliDashboardActivity : AppCompatActivity() {
         mapOsm?.onPause()
         locationOverlay?.disableMyLocation()
     }
-
-    // ── Katalog Produk ───────────────────────────────────────────────────────
 
     private fun loadKategori(onFinished: () -> Unit) {
         ApiClient.getKategori { categories ->
@@ -350,8 +345,6 @@ class PembeliDashboardActivity : AppCompatActivity() {
         var selectedWaktu   = ""
         var qty             = 1
 
-        // 1) Fungsi-fungsi lokal didefinisikan PALING ATAS dulu,
-        //    sebelum dipakai di listener manapun di bawah.
 
         fun hitungFeeTambahan(): Int {
             var fee = 0
@@ -376,7 +369,7 @@ class PembeliDashboardActivity : AppCompatActivity() {
             llContainerTanggal.isVisible = (varian == "Custom Desain Sendiri" || cbInvitedCard.isChecked)
         }
 
-        // 2) Setup Spinner Varian
+        // spinner varian
         val varianOptions = arrayOf(
             "Pilih varian...", "Warna Pastel", "Monokrom",
             "Aksen Emas", "Random", "Custom Desain Sendiri"
@@ -388,8 +381,6 @@ class PembeliDashboardActivity : AppCompatActivity() {
             override fun onNothingSelected(parent: AdapterView<*>?) {}
         }
 
-        // 3) Sekarang baru pasang semua listener yang memanggil updateHarga()/updateVisibility()
-        //    — aman karena keduanya sudah didefinisikan di atas.
 
         rgKemasan.setOnCheckedChangeListener { _, _ -> updateHarga() }
         cbSablon.setOnCheckedChangeListener { _, _ -> updateHarga() }
@@ -446,7 +437,6 @@ class PembeliDashboardActivity : AppCompatActivity() {
         updateHarga()
         dialog.show()
     }
-    // ── Settings ─────────────────────────────────────────────────────────────
 
     private fun showSettingDialog() {
         val dialog = Dialog(this)
@@ -527,7 +517,6 @@ class PembeliDashboardActivity : AppCompatActivity() {
         }
     }
 
-    // ── Profile ──────────────────────────────────────────────────────────────
 
     private fun loadUserProfile(email: String) {
         val cursor = dbHelper.getUserByEmail(email)
@@ -550,7 +539,6 @@ class PembeliDashboardActivity : AppCompatActivity() {
         }
     }
 
-    // ── Helper ───────────────────────────────────────────────────────────────
 
     private fun getFileName(uri: Uri): String {
         var result: String? = null
@@ -570,7 +558,6 @@ class PembeliDashboardActivity : AppCompatActivity() {
         return result ?: "unknown"
     }
 
-    // ── Menu ─────────────────────────────────────────────────────────────────
 
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {
         menuInflater.inflate(R.menu.pembeli_menu, menu)

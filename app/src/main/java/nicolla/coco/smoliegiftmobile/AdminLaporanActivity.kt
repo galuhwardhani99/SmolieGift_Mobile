@@ -106,10 +106,8 @@ class AdminLaporanActivity : AppCompatActivity() {
 
                         val itemView = inflater.inflate(R.layout.item_transaksi_admin, container, false)
 
-                        // ── ID ────────────────────────────────────────────────
                         itemView.findViewById<TextView>(R.id.tvAdminTransId)?.text = "#INV-0$id"
 
-                        // ── Status ────────────────────────────────────────────
                         val tvStatus = itemView.findViewById<TextView>(R.id.tvAdminTransStatusLabel)
                         when (status) {
                             "selesai" -> {
@@ -126,13 +124,11 @@ class AdminLaporanActivity : AppCompatActivity() {
                             }
                         }
 
-                        // ── Info dasar ────────────────────────────────────────
                         itemView.findViewById<TextView>(R.id.tvAdminTransNama)?.text = "Pemesan: $nama"
                         itemView.findViewById<TextView>(R.id.tvAdminTransTotal)?.text = "Rp $totalHarga"
                         itemView.findViewById<TextView>(R.id.tvAdminTransWa)?.text = "HP: $noHp"
                         itemView.findViewById<TextView>(R.id.tvAdminTransMetode)?.text = "Bayar: $metode"
 
-                        // ── Jenis pesanan: Online / Offline ───────────────────
                         itemView.findViewById<TextView>(R.id.tvAdminTransCatatan)?.text =
                             if (jenis.equals("offline", ignoreCase = true) ||
                                 jenis.equals("Beli di Toko", ignoreCase = true))
@@ -140,7 +136,7 @@ class AdminLaporanActivity : AppCompatActivity() {
                             else
                                 "Pesanan Online"
 
-                        // ── Daftar produk ─────────────────────────────────────
+                        // Daftar produk
                         val tvProduk = itemView.findViewById<TextView>(R.id.tvAdminTransProduk)
                         if (itemsJson.isNotEmpty() && itemsJson != "null") {
                             try {
@@ -165,7 +161,7 @@ class AdminLaporanActivity : AppCompatActivity() {
                             tvProduk?.text = "Tidak ada detail produk"
                         }
 
-                        // ── Tanggal → format WIB ──────────────────────────────
+                        // Tanggal dlm format WIB
                         val tvTanggal = itemView.findViewById<TextView>(R.id.tvAdminTransTanggal)
                         try {
                             val cleanDate = rawDate
@@ -181,7 +177,7 @@ class AdminLaporanActivity : AppCompatActivity() {
                             tvTanggal?.text = rawDate
                         }
 
-                        // ── Sembunyikan tombol aksi (read-only) ───────────────
+
                         itemView.findViewById<View>(R.id.btnSelesaiPesanan)?.visibility = View.GONE
                         itemView.findViewById<View>(R.id.btnBatalkanPesanan)?.visibility = View.GONE
                         itemView.findViewById<View>(R.id.btnCetakStruk)?.visibility = View.GONE

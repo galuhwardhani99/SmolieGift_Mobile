@@ -207,8 +207,6 @@ class KasirDashboardActivity : AppCompatActivity() {
         var selectedWaktu = ""
         var qty = 1
 
-        // 1) Fungsi-fungsi lokal didefinisikan PALING ATAS dulu,
-        //    sebelum dipakai di listener manapun di bawah.
 
         fun hitungFeeTambahan(): Int {
             var fee = 0
@@ -243,8 +241,6 @@ class KasirDashboardActivity : AppCompatActivity() {
             override fun onNothingSelected(parent: AdapterView<*>?) {}
         }
 
-        // 3) Sekarang baru pasang semua listener yang memanggil updateHarga()/updateVisibility()
-        //    — aman karena keduanya sudah didefinisikan di atas.
 
         rgKemasan.setOnCheckedChangeListener { _, _ -> updateHarga() }
         cbSablon.setOnCheckedChangeListener { _, _ -> updateHarga() }

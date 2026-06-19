@@ -53,11 +53,11 @@ class CartActivity : AppCompatActivity() {
     private var btSocket: BluetoothSocket? = null
     private var btOutputStream: OutputStream? = null
 
-    // Menyimpan teks struk yang sedang menunggu izin Bluetooth diberikan
+    // Simpan struk utk izin bluetooth
     private var pendingStrukText: String? = null
 
     companion object {
-        const val BASE_URL = "http://192.168.1.28/toko-smolie/public"
+        const val BASE_URL = "http://192.168.43.3/toko-smolie/public"
         const val REQUEST_BLUETOOTH_PERMISSION = 101
         private val SPP_UUID = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB")
     }
@@ -145,13 +145,11 @@ class CartActivity : AppCompatActivity() {
                 llContainerQris.visibility = View.VISIBLE
             }
 
-            // ✅ UPDATED: Kirim ke Laravel API
-            // Ambil no_hp dari database sebelum kirim transaksi
+            // Ambil no hp dr database sebelum kirim transaksi
             btnKonfirmasi.setOnClickListener {
                 val namaPembeli = etNama.text.toString().trim()
                 if (grandTotal <= 0 || namaPembeli.isEmpty()) return@setOnClickListener
 
-                // Ambil no_hp dari DB
                 val noHp = try {
                     val cursor = dbHelper.getUserByEmail(currentUserEmail ?: "")
                     if (cursor != null && cursor.moveToFirst()) {
@@ -165,20 +163,22 @@ class CartActivity : AppCompatActivity() {
                 btnKonfirmasi.isEnabled = false
                 btnKonfirmasi.text = "Mengirim pesanan..."
 
-                // Kirim items keranjang juga
+                // Kirim items keranjang
                 val itemsJson = getCartItemsAsJson()
 
                 ApiClient.buatTransaksi(
                     namaPembeli      = namaPembeli,
-                    noHp             = noHp,        // ← sudah ada no_hp
+                    noHp             = noHp,
                     metodePembayaran = metodeDipilih,
                     jenisPesanan     = "Online",
                     kodeTransaksi    = kode,
                     totalHarga       = grandTotal,
-                    itemsJson        = itemsJson    // ← tambah parameter ini
+                    itemsJson        = itemsJson
                 ) { berhasil ->
                     runOnUiThread {
                         if (berhasil) {
+                            // Sinkronkan stok ke server
+                            ApiClient.kurangiStokProdukServer(itemsJson)
                             dbHelper.kosongkanKeranjang()
                             Toast.makeText(this, "Pesanan berhasil dikirim!", Toast.LENGTH_LONG).show()
                             finish()
@@ -211,9 +211,7 @@ class CartActivity : AppCompatActivity() {
             return
         }
 
-        // Juga kirim ke API agar admin bisa lihat (jenisPesanan harus konsisten
-        // dengan pengecekan "offline"/"Beli di Toko" di AdminTransaksiActivity
-        // & AdminLaporanActivity, supaya tampil sebagai "Pesanan Offline")
+
         ApiClient.buatTransaksi(
             namaPembeli      = namaPembeli,
             noHp             = "-",
@@ -282,6 +280,8 @@ class CartActivity : AppCompatActivity() {
         dialog.findViewById<Button>(R.id.btnTutupStruk).setOnClickListener {
             dbHelper.updateStatusTransaksi(currentKodeTransaksi ?: "", "selesai")
             if (currentTransaksiId != -1L) {
+                // Sinkronkan stok ke server saat transaksi selesai
+                ApiClient.kurangiStokProdukServer(itemsJson)
                 kurangiStokDariKeranjang()
                 dbHelper.kosongkanKeranjang()
             }
@@ -291,13 +291,11 @@ class CartActivity : AppCompatActivity() {
         dialog.show()
     }
 
-    // ===================== BLUETOOTH PRINT =====================
+    // print bluetooth
 
     private fun printViaBluetoothAtauPilih(strukteks: String) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             if (ContextCompat.checkSelfPermission(this, Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED) {
-                // Simpan teks struk supaya bisa dilanjutkan otomatis
-                // setelah user memberi izin di onRequestPermissionsResult
                 pendingStrukText = strukteks
                 ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.BLUETOOTH_CONNECT), REQUEST_BLUETOOTH_PERMISSION)
                 return
@@ -387,7 +385,7 @@ class CartActivity : AppCompatActivity() {
         val dateStr = sdf.format(Date())
         val sb = StringBuilder()
         sb.append("      SMOLIE GIFT      \n")
-        sb.append("   Jl. Contoh No. 123  \n")
+        sb.append("   Jl. Pogot 5 no.77, RT.009/RW.005, Kel. Tanah Kali Kedinding, Kec. Kenjeran, Kota Surabaya  \n")
         sb.append("------------------------------\n")
         sb.append("Tgl: $dateStr\n")
         sb.append("Pembeli: $pembeli\n")

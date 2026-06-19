@@ -19,7 +19,7 @@ class RegisterActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_register)
 
-        // Setup Toolbar as back button
+        // Setup Toolbar
         val toolbar = findViewById<Toolbar>(R.id.toolbarRegister)
         setSupportActionBar(toolbar)
         supportActionBar?.setDisplayHomeAsUpEnabled(true)

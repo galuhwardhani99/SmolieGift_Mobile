@@ -24,7 +24,6 @@ class KelolaProdukActivity : AppCompatActivity() {
     private var selectedBitmap: Bitmap? = null
     private val listProduk = mutableListOf<JSONObject>()
 
-    // ✅ Simpan kategori dari Laravel: Pair(id, nama)
     private val listKategori = mutableListOf<Pair<Int, String>>()
 
     private val imagePickerLauncher = registerForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
@@ -55,7 +54,6 @@ class KelolaProdukActivity : AppCompatActivity() {
         lvDaftarProduk = findViewById(R.id.lvDaftarProdukAdmin)
         val btnTambah = findViewById<Button>(R.id.btnTambahProdukBaru)
 
-        // ✅ Load kategori dulu, baru load produk
         loadKategori {
             loadDataProduk()
         }
@@ -66,7 +64,6 @@ class KelolaProdukActivity : AppCompatActivity() {
         }
     }
 
-    // ✅ Load kategori dari Laravel API
     private fun loadKategori(onDone: () -> Unit) {
         ApiClient.getKategori { list ->
             runOnUiThread {
@@ -111,7 +108,6 @@ class KelolaProdukActivity : AppCompatActivity() {
                             val stok     = produk.getString("stock")
                             val image    = produk.optString("gambar", "")
 
-                            // ✅ Tampilkan nama kategori, bukan ID
                             val namaKategori = listKategori.find { it.first.toString() == kategoriId }?.second ?: kategoriId
 
                             view.findViewById<TextView>(R.id.tvAdminProdName).text  = nama
@@ -168,7 +164,7 @@ class KelolaProdukActivity : AppCompatActivity() {
         val tvFotoStatus = TextView(this).apply { text = "Belum ada foto dipilih"; textSize = 12f }
         val btnPilihFoto = Button(this).apply { text = "Pilih Foto Produk" }
 
-        // ✅ Spinner kategori dari Laravel
+        // Spinner kategori
         val spinnerKategori = Spinner(this)
         val namaKategoriList = listKategori.map { it.second }
         val katAdapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, namaKategoriList)
@@ -191,7 +187,7 @@ class KelolaProdukActivity : AppCompatActivity() {
         builder.setView(layout)
         builder.setPositiveButton("Simpan") { _, _ ->
             val nama  = inputNama.text.toString()
-            // ✅ Ambil ID kategori dari posisi spinner
+            // ambil ID kategori dr spinner
             val katId = if (listKategori.isNotEmpty()) listKategori[spinnerKategori.selectedItemPosition].first else 1
             val hrg   = inputHarga.text.toString().toIntOrNull() ?: 0
             val stk   = inputStok.text.toString().toIntOrNull() ?: 0
@@ -246,13 +242,13 @@ class KelolaProdukActivity : AppCompatActivity() {
         val inputHarga = EditText(this).apply { setText(harga.toString()); inputType = android.text.InputType.TYPE_CLASS_NUMBER }
         val inputStok  = EditText(this).apply { setText(stok.toString());  inputType = android.text.InputType.TYPE_CLASS_NUMBER }
 
-        // ✅ Spinner kategori dari Laravel
+        // Spinner kategori dr lrvel
         val spinnerKategori = Spinner(this)
         val namaKategoriList = listKategori.map { it.second }
         val katAdapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, namaKategoriList)
         katAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
         spinnerKategori.adapter = katAdapter
-        // Set posisi sesuai kategori lama
+
         val idxKat = listKategori.indexOfFirst { it.first.toString() == kategoriIdLama }
         if (idxKat >= 0) spinnerKategori.setSelection(idxKat)
 

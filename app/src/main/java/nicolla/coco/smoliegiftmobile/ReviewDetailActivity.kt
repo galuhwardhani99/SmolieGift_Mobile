@@ -34,15 +34,14 @@ class ReviewDetailActivity : AppCompatActivity() {
     private lateinit var btnDetailPause: ImageButton
     private lateinit var sbDetailVideo: SeekBar
 
-    // FIX 1: Pisahkan base URL foto dan video jika berbeda path,
-    // atau gunakan satu base URL yang sama jika file ada di folder yang sama
-    private val REVIEW_MEDIA_BASE_URL = "http://192.168.1.28/toko-smolie/public/reviews/"
+
+    private val REVIEW_MEDIA_BASE_URL = "http://192.168.43.3/toko-smolie/public/reviews/"
 
     private val handler = Handler(Looper.getMainLooper())
     private lateinit var requestQueue: RequestQueue
     private var updateRunnable: Runnable? = null
 
-    // FIX 2: Tambah flag untuk track status prepared
+
     private var isVideoPrepared = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -91,10 +90,8 @@ class ReviewDetailActivity : AppCompatActivity() {
         tvDetailHp.text        = "No HP: $hp"
         tvDetailTotal.text     = "Total: Rp $total"
 
-        // FIX 3: Produk bisa kosong atau "-", tampilkan dengan label jelas
         tvDetailProduk.text    = if (produk.isBlank() || produk == "-") "Produk: (tidak ada data)" else "Produk:\n$produk"
 
-        // FIX 4: Tanggal — potong suffix Z dan ubah format agar lebih readable
         val tanggalFormatted = tanggal
             .replace("T", " ")
             .replace(Regex("\\.\\d+Z$"), "")

@@ -34,7 +34,6 @@ class KelolaKategoriActivity : AppCompatActivity() {
         btnTambah.setOnClickListener { tampilkanDialogTambah() }
     }
 
-    // ── Muat ulang list dari server ────────────────────────────────────────
     private fun loadKategori() {
         ApiClient.getKategori { list ->
             runOnUiThread {
@@ -45,7 +44,6 @@ class KelolaKategoriActivity : AppCompatActivity() {
         }
     }
 
-    // ── Dialog Tambah ──────────────────────────────────────────────────────
     private fun tampilkanDialogTambah() {
         val input = EditText(this).apply {
             hint = "Nama Kategori Baru"
@@ -73,7 +71,6 @@ class KelolaKategoriActivity : AppCompatActivity() {
             .show()
     }
 
-    // ── Dialog Edit ────────────────────────────────────────────────────────
     private fun tampilkanDialogEdit(id: Int, namaLama: String) {
         val input = EditText(this).apply {
             setText(namaLama)
@@ -108,7 +105,7 @@ class KelolaKategoriActivity : AppCompatActivity() {
             .show()
     }
 
-    // ── Dialog Hapus ───────────────────────────────────────────────────────
+    // Dialog Hapus
     private fun tampilkanDialogHapus(id: Int, nama: String, position: Int) {
         AlertDialog.Builder(this)
             .setTitle("Hapus Kategori")
@@ -130,7 +127,7 @@ class KelolaKategoriActivity : AppCompatActivity() {
             .show()
     }
 
-    // ── Custom Adapter ─────────────────────────────────────────────────────
+    // Custom
     inner class KategoriAdapter(
         context: Context,
         private val list: MutableList<Pair<Int, String>>
